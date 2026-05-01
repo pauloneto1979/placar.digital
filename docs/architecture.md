@@ -53,3 +53,18 @@ A migration inicial segue estas regras:
 - regras de pontuacao ficam em tabela propria e sao configuraveis por bolao
 - pagamentos pertencem a uma participacao em um bolao
 - auditoria e obrigatoria para registrar eventos relevantes
+
+## Autenticacao por email
+
+O modulo `auth` expoe:
+
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/selecionar-bolao`
+- `GET /api/v1/auth/me`
+
+Fluxo:
+
+- proprietario autentica e recebe token direto
+- administrador ou apostador com um bolao recebe token com contexto do bolao
+- administrador ou apostador com mais de um bolao recebe token temporario de selecao
+- a selecao de bolao emite o token final com `bolaoId`, `participanteId` e `papel`

@@ -45,6 +45,9 @@ Esta etapa cria apenas a fundacao tecnica: estrutura modular, API base, ambiente
 - `GET /`
 - `GET /api/v1/health`
 - `GET /api/v1/auth`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/selecionar-bolao`
+- `GET /api/v1/auth/me`
 - `GET /api/v1/usuarios`
 - `GET /api/v1/boloes`
 - `GET /api/v1/participantes`
@@ -69,7 +72,36 @@ No servidor Linux:
 
 ```bash
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/001_initial_schema.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/002_auth_email_indexes.sql
 ```
+
+## Autenticacao
+
+O login por email usa `POST /api/v1/auth/login`:
+
+```json
+{
+  "email": "usuario@email.com",
+  "senha": "senha"
+}
+```
+
+Fluxo apos login:
+
+- Proprietario recebe `accessToken` direto.
+- Administrador ou apostador com um unico bolao recebe `accessToken` ja vinculado ao bolao.
+- Administrador ou apostador com mais de um bolao recebe `selectionToken` e lista de `boloes`.
+
+Para selecionar o bolao:
+
+```json
+{
+  "selectionToken": "token",
+  "bolaoId": "uuid-do-bolao"
+}
+```
+
+As senhas devem ser armazenadas em `usuarios.senha_hash` no formato PBKDF2 gerado pelo utilitario `src/shared/utils/password.js`.
 
 ## Organizacao
 
