@@ -1,6 +1,15 @@
 # placar.digital
 
-Projeto inicial do `placar.digital`, usando Node.js, Express e PostgreSQL.
+Sistema de bolao esportivo multi-tenant, preparado para operar como SaaS com perfis de Proprietario, Administrador e Apostador.
+
+Esta etapa cria apenas a fundacao tecnica: estrutura modular, API base, ambiente e conexao PostgreSQL. Regras de negocio serao implementadas nas proximas etapas.
+
+## Stack
+
+- Node.js
+- Express
+- PostgreSQL
+- Arquitetura modular por dominio
 
 ## Infraestrutura informada
 
@@ -23,7 +32,7 @@ Projeto inicial do `placar.digital`, usando Node.js, Express e PostgreSQL.
    cp .env.example .env
    ```
 
-3. Ajuste `DATABASE_URL` no `.env` com usuario, senha, banco e porta reais do PostgreSQL.
+3. Ajuste `DATABASE_URL` com usuario, senha, banco e porta reais do PostgreSQL.
 
 4. Inicie a aplicacao:
 
@@ -31,24 +40,35 @@ Projeto inicial do `placar.digital`, usando Node.js, Express e PostgreSQL.
    npm run dev
    ```
 
-5. Teste:
+## Rotas iniciais
 
-   ```bash
-   curl http://localhost:3001/health
-   ```
+- `GET /`
+- `GET /api/v1/health`
+- `GET /api/v1/auth`
+- `GET /api/v1/usuarios`
+- `GET /api/v1/boloes`
+- `GET /api/v1/participantes`
+- `GET /api/v1/fases`
+- `GET /api/v1/times`
+- `GET /api/v1/partidas`
+- `GET /api/v1/apostas`
+- `GET /api/v1/ranking`
+- `GET /api/v1/pagamentos`
+- `GET /api/v1/configuracoes-bolao`
+- `GET /api/v1/configuracoes-gerais`
+- `GET /api/v1/notificacoes`
+- `GET /api/v1/auditoria`
 
 ## Banco de dados
 
-O schema inicial esta em `db/schema.sql`.
+O arquivo base esta em `db/schema.sql`. As tabelas de dominio ainda nao foram criadas.
 
-No servidor Linux, um fluxo simples com `psql` seria:
+No servidor Linux:
 
 ```bash
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/schema.sql
 ```
 
-## Proximos passos sugeridos
+## Organizacao
 
-- Definir o modelo principal do placar: jogos, equipes, campeonatos e usuarios.
-- Criar as credenciais reais do banco no PostgreSQL.
-- Configurar deploy no servidor Linux.
+O padrao de arquitetura esta documentado em `docs/architecture.md`.
