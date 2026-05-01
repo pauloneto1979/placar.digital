@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Placar.digital - Proprietario</title>
+    <link rel="stylesheet" href="/app/proprietario.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <strong>Placar.digital</strong>
+        <span>Modulo Proprietario</span>
+      </div>
+      <input id="tokenInput" type="password" placeholder="Bearer token">
+      <button id="saveTokenButton" type="button">Entrar</button>
+    </header>
+
+    <main id="app" class="layout" hidden>
+      <nav class="tabs" aria-label="Secoes do modulo">
+        <button class="tab active" data-panel="boloesPanel" type="button">Boloes</button>
+        <button class="tab" data-panel="usuariosPanel" type="button">Usuarios</button>
+        <button class="tab" data-panel="vinculosPanel" type="button">Administradores</button>
+        <button class="tab" data-panel="configPanel" type="button">Configuracoes</button>
+      </nav>
+
+      <section id="boloesPanel" class="panel active">
+        <form id="bolaoForm" class="form">
+          <input name="id" type="hidden">
+          <label>Nome <input name="nome" required></label>
+          <label>Descricao <input name="descricao"></label>
+          <label>Data inicio <input name="dataInicio" type="datetime-local"></label>
+          <label>Data fim <input name="dataFim" type="datetime-local"></label>
+          <label>Status
+            <select name="status">
+              <option value="ativo">ativo</option>
+              <option value="fechado">fechado</option>
+              <option value="inativo">inativo</option>
+            </select>
+          </label>
+          <button type="submit">Salvar bolao</button>
+        </form>
+        <div id="boloesList" class="list"></div>
+      </section>
+
+      <section id="usuariosPanel" class="panel">
+        <form id="usuarioForm" class="form">
+          <input name="id" type="hidden">
+          <label>Nome <input name="nome" required></label>
+          <label>Email <input name="email" type="email" required></label>
+          <label>Senha <input name="senha" type="password"></label>
+          <label>Perfil
+            <select name="perfil">
+              <option value="administrador">Administrador</option>
+              <option value="proprietario">Proprietario</option>
+            </select>
+          </label>
+          <label>Status
+            <select name="status">
+              <option value="ativo">ativo</option>
+              <option value="inativo">inativo</option>
+            </select>
+          </label>
+          <button type="submit">Salvar usuario</button>
+        </form>
+        <div id="usuariosList" class="list"></div>
+      </section>
+
+      <section id="vinculosPanel" class="panel">
+        <form id="vinculoForm" class="form compact">
+          <label>Bolao <select name="bolaoId" required></select></label>
+          <label>Administrador <select name="usuarioId" required></select></label>
+          <button type="submit">Vincular</button>
+        </form>
+        <div id="administradoresList" class="list"></div>
+      </section>
+
+      <section id="configPanel" class="panel">
+        <form id="configForm" class="form">
+          <label>Tempo de sessao (segundos) <input name="tempoSessao" type="number" min="1"></label>
+          <label>Email do remetente <input name="emailRemetente" type="email"></label>
+          <label>Notificacoes ativas
+            <select name="notificacoesAtivas">
+              <option value="true">sim</option>
+              <option value="false">nao</option>
+            </select>
+          </label>
+          <label>Gateway de pagamento <input name="gatewayPagamento"></label>
+          <button type="submit">Salvar configuracoes</button>
+        </form>
+      </section>
+    </main>
+
+    <p id="message" class="message"></p>
+    <script src="/app/proprietario.js"></script>
+  </body>
+</html>

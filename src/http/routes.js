@@ -14,6 +14,7 @@ const { configuracoesBolaoRoutes } = require('../modules/configuracoes_bolao');
 const { configuracoesGeraisRoutes } = require('../modules/configuracoes_gerais');
 const { notificacoesRoutes } = require('../modules/notificacoes');
 const { auditoriaRoutes } = require('../modules/auditoria');
+const { proprietarioRoutes } = require('../modules/proprietario');
 
 const routes = Router();
 
@@ -36,6 +37,7 @@ routes.get('/health', async (req, res) => {
 });
 
 routes.use('/auth', authRoutes);
+routes.use('/proprietario', proprietarioRoutes);
 routes.use('/usuarios', usuariosRoutes);
 routes.use('/boloes', boloesRoutes);
 routes.use('/participantes', participantesRoutes);

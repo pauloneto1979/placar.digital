@@ -1,0 +1,154 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+  color: #182033;
+  font-family: Arial, sans-serif;
+}
+
+.topbar {
+  align-items: center;
+  background: #10223a;
+  color: #fff;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr minmax(220px, 360px) auto;
+  padding: 14px 20px;
+}
+
+.topbar span {
+  color: #b7c4d8;
+  display: block;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+input,
+select,
+button {
+  border: 1px solid #c7d0df;
+  border-radius: 6px;
+  font: inherit;
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
+button {
+  background: #1d6fd8;
+  border-color: #1d6fd8;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button.secondary {
+  background: #fff;
+  color: #1d3557;
+}
+
+button.danger {
+  background: #b42318;
+  border-color: #b42318;
+}
+
+.layout {
+  margin: 22px auto;
+  max-width: 1180px;
+  padding: 0 18px 40px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.tab {
+  background: #fff;
+  color: #1d3557;
+}
+
+.tab.active {
+  background: #1d6fd8;
+  color: #fff;
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+.form {
+  background: #fff;
+  border: 1px solid #d8e0ec;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 18px;
+  padding: 16px;
+}
+
+.form.compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+label {
+  color: #44546a;
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.item {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #d8e0ec;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr auto;
+  padding: 14px;
+}
+
+.meta {
+  color: #667085;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.message {
+  bottom: 18px;
+  left: 18px;
+  margin: 0;
+  position: fixed;
+}
+
+@media (max-width: 760px) {
+  .topbar,
+  .form,
+  .form.compact,
+  .item {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+}

@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { env } = require('../config/env');
 const { routes } = require('./routes');
 const { errorMiddleware } = require('../shared/errors/error.middleware');
@@ -9,6 +10,7 @@ function createApp() {
   const app = express();
 
   app.use(express.json());
+  app.use('/app', express.static(path.resolve(__dirname, '../../public')));
   app.use(requestContextMiddleware);
 
   app.get('/', (req, res) => {

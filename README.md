@@ -48,6 +48,19 @@ Esta etapa cria apenas a fundacao tecnica: estrutura modular, API base, ambiente
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/selecionar-bolao`
 - `GET /api/v1/auth/me`
+- `GET /api/v1/proprietario/boloes`
+- `POST /api/v1/proprietario/boloes`
+- `PUT /api/v1/proprietario/boloes/:id`
+- `POST /api/v1/proprietario/boloes/:id/fechar`
+- `GET /api/v1/proprietario/usuarios`
+- `POST /api/v1/proprietario/usuarios`
+- `PUT /api/v1/proprietario/usuarios/:id`
+- `PATCH /api/v1/proprietario/usuarios/:id/status`
+- `GET /api/v1/proprietario/boloes/:bolaoId/administradores`
+- `POST /api/v1/proprietario/boloes/:bolaoId/administradores`
+- `DELETE /api/v1/proprietario/boloes/:bolaoId/administradores/:usuarioId`
+- `GET /api/v1/proprietario/configuracoes-gerais`
+- `PUT /api/v1/proprietario/configuracoes-gerais`
 - `GET /api/v1/usuarios`
 - `GET /api/v1/boloes`
 - `GET /api/v1/participantes`
@@ -73,6 +86,7 @@ No servidor Linux:
 ```bash
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/001_initial_schema.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/002_auth_email_indexes.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/003_proprietario_module.sql
 ```
 
 ## Autenticacao
@@ -102,6 +116,18 @@ Para selecionar o bolao:
 ```
 
 As senhas devem ser armazenadas em `usuarios.senha_hash` no formato PBKDF2 gerado pelo utilitario `src/shared/utils/password.js`.
+
+## Modulo Proprietario
+
+O modulo do proprietario fica em `/api/v1/proprietario` e exige Bearer token com `perfilGlobal` igual a `proprietario`.
+
+A tela estatica de apoio fica em:
+
+```text
+/app/proprietario.html
+```
+
+Ela tambem valida o perfil no frontend usando `GET /api/v1/auth/me`, mas a protecao oficial continua no backend.
 
 ## Organizacao
 

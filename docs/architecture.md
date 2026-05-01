@@ -68,3 +68,26 @@ Fluxo:
 - administrador ou apostador com um bolao recebe token com contexto do bolao
 - administrador ou apostador com mais de um bolao recebe token temporario de selecao
 - a selecao de bolao emite o token final com `bolaoId`, `participanteId` e `papel`
+
+## Modulo Proprietario
+
+O modulo `src/modules/proprietario` concentra operacoes globais da plataforma:
+
+- cadastro, alteracao, fechamento e listagem de boloes
+- cadastro, alteracao e ativacao/inativacao de usuarios de sistema
+- vinculo e remocao de administradores em boloes
+- configuracoes gerais da plataforma
+
+Seguranca:
+
+- todas as rotas usam `authMiddleware`
+- todas as rotas exigem `perfilGlobal = proprietario`
+- usuarios de sistema aceitam apenas `proprietario` e `administrador`
+- vinculos em boloes aceitam apenas administradores ativos
+- remocao e feita por status, sem exclusao fisica
+
+Frontend:
+
+- `/app/proprietario.html` e uma tela estatica de apoio
+- a tela valida o token com `/api/v1/auth/me`
+- o bloqueio obrigatorio permanece no backend
