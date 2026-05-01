@@ -1,7 +1,10 @@
 const { HttpError } = require('../../shared/errors/http-error');
 const { ensureCanAdminBolao } = require('../../shared/permissions/bolao-access');
+const rankingRepository = require('../ranking/ranking.repository');
+const { createRankingService } = require('../ranking/ranking.service');
 
 const STATUS = ['agendada', 'em_andamento', 'finalizada', 'cancelada', 'inativa'];
+const rankingService = createRankingService(rankingRepository);
 
 function clean(v) { return typeof v === 'string' ? v.trim() : ''; }
 function intOrNull(v) { return v === undefined || v === null || v === '' ? null : Number(v); }
@@ -79,6 +82,9 @@ function createPartidasService(repository) {
       await validate(data);
       const after = await repository.update(id, data);
       await auditResultado(auth, context, before, after);
+      if (after.resultadoConfirmado) {
+        await rankingService.recalcularPartidaPorResultado(after.id, auth, context);
+      }
       return after;
     },
     async informarResultado(bolaoId, id, body, auth, context) {
@@ -88,6 +94,7 @@ function createPartidasService(repository) {
       if (data.placarMandante === null || data.placarVisitante === null) throw new HttpError(400, 'invalid_match_score', 'Informe os dois placares.');
       const after = await repository.update(id, data);
       await auditResultado(auth, context, before, after);
+      await rankingService.recalcularPartidaPorResultado(after.id, auth, context);
       return after;
     }
   };

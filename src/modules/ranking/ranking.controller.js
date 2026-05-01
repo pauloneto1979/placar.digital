@@ -7,6 +7,20 @@ function createRankingController(service) {
       } catch (error) {
         next(error);
       }
+    },
+    async recalcularPartida(req, res, next) {
+      try {
+        res.json(await service.recalcularPartida(req.params.bolaoId, req.params.partidaId, req.auth, req.context));
+      } catch (error) {
+        next(error);
+      }
+    },
+    async recalcularBolao(req, res, next) {
+      try {
+        res.json(await service.recalcularBolao(req.params.bolaoId, req.auth, req.context));
+      } catch (error) {
+        next(error);
+      }
     }
   };
 }

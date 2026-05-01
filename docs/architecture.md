@@ -156,3 +156,16 @@ Regras:
 - apostas usam `participanteId` do token
 - apostador nao altera cadastros administrativos
 - ranking e provisório ate o motor de pontuacao ser implementado
+
+## Motor De Pontuacao
+
+O motor fica no modulo `ranking`.
+
+Regras:
+
+- pontuacao nao cumulativa
+- maior prioridade vence
+- em empate de prioridade, maior pontuacao vence
+- partidas precisam estar finalizadas e com placar
+- apostas canceladas nao pontuam
+- recálculo de resultado atualiza `pontuacoes_apostas`, `apostas.pontos_calculados` e `ranking`

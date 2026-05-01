@@ -52,9 +52,10 @@ function createApostasService(repository) {
 
     async dashboard(bolaoId, auth) {
       await ensureCanViewBolao(auth, bolaoId);
-      const [dashboard, resumoStatus, jogosDoDia] = await Promise.all([
+      const [dashboard, resumoStatus, top3Ranking, jogosDoDia] = await Promise.all([
         repository.getDashboard(bolaoId),
         repository.getPartidasPorStatus(bolaoId),
+        repository.getTop3Ranking(bolaoId),
         repository.getJogosDoDia(bolaoId)
       ]);
 
@@ -63,7 +64,7 @@ function createApostasService(repository) {
         partidasTotal: dashboard.partidas_total,
         partidasFinalizadas: dashboard.partidas_finalizadas,
         totalArrecadado: Number(dashboard.total_arrecadado),
-        top3Ranking: [],
+        top3Ranking,
         jogosDoDia,
         partidasPorStatus: resumoStatus
       };

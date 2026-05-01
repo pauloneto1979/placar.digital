@@ -10,6 +10,8 @@ const controller = createRankingController(createRankingService(rankingRepositor
 rankingRoutes.use(authMiddleware);
 rankingRoutes.get('/', controller.status);
 rankingRoutes.get('/boloes/:bolaoId/provisorio', controller.provisorio);
+rankingRoutes.post('/boloes/:bolaoId/recalcular', controller.recalcularBolao);
+rankingRoutes.post('/boloes/:bolaoId/partidas/:partidaId/recalcular', controller.recalcularPartida);
 
 module.exports = {
   rankingRoutes

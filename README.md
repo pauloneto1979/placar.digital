@@ -107,6 +107,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/005_boloes_usuarios_admin_links.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/006_administrador_operacional.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/007_apostador_module.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/008_motor_pontuacao.sql
 ```
 
 ## Autenticacao
@@ -230,6 +231,8 @@ Rotas protegidas por Bearer token:
 - `GET /api/v1/apostas/boloes/:bolaoId/minhas`
 - `GET /api/v1/apostas/boloes/:bolaoId/regras`
 - `GET /api/v1/ranking/boloes/:bolaoId/provisorio`
+- `POST /api/v1/ranking/boloes/:bolaoId/recalcular`
+- `POST /api/v1/ranking/boloes/:bolaoId/partidas/:partidaId/recalcular`
 
 Permissoes:
 
@@ -242,6 +245,18 @@ Tela estatica de apoio:
 ```text
 /app/apostador.html
 ```
+
+## Motor de Pontuacao
+
+O motor aplica apenas uma regra por aposta. A regra vencedora e a de maior `prioridade`; em empate, a de maior `pontos`.
+
+Regras iniciais:
+
+- `PLACAR_EXATO`
+- `RESULTADO_CORRETO`
+- `PLACAR_INVERTIDO`
+
+O recálculo acontece automaticamente quando o administrador informa resultado de uma partida e também pode ser disparado manualmente pelas rotas de ranking.
 
 ## Organizacao
 

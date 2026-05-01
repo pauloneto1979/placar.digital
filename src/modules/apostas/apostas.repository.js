@@ -52,6 +52,28 @@ async function getPartidasPorStatus(bolaoId) {
   return result.rows;
 }
 
+async function getTop3Ranking(bolaoId) {
+  const result = await query(
+    `
+      select p.id as participante_id, p.nome, coalesce(r.pontos_total, 0)::int as pontos, coalesce(r.posicao, 999999)::int as posicao
+      from participantes p
+      left join ranking r on r.participante_id = p.id and r.bolao_id = p.bolao_id
+      where p.bolao_id = $1
+        and p.papel = 'apostador'
+        and p.status <> 'removido'
+      order by coalesce(r.pontos_total, 0) desc, p.nome asc
+      limit 3
+    `,
+    [bolaoId]
+  );
+  return result.rows.map((row, index) => ({
+    participanteId: row.participante_id,
+    participante: row.nome,
+    pontosAtuais: row.pontos,
+    posicao: row.posicao === 999999 ? index + 1 : row.posicao
+  }));
+}
+
 async function getJogosDoDia(bolaoId) {
   const result = await query(
     `
@@ -173,6 +195,7 @@ async function getRegras(bolaoId) {
 module.exports = {
   getDashboard,
   getPartidasPorStatus,
+  getTop3Ranking,
   getJogosDoDia,
   listJogos,
   findPartidaById,
