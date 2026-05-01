@@ -61,12 +61,14 @@ Esta etapa cria apenas a fundacao tecnica: estrutura modular, API base, ambiente
 
 ## Banco de dados
 
-O arquivo base esta em `db/schema.sql`. As tabelas de dominio ainda nao foram criadas.
+As migrations ficam em `db/migrations`.
+
+A migration inicial cria usuarios, participantes, boloes, configuracoes, regras de pontuacao, fases, times, partidas, apostas, ranking, pagamentos, notificacoes e auditoria.
 
 No servidor Linux:
 
 ```bash
-psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/schema.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/001_initial_schema.sql
 ```
 
 ## Organizacao

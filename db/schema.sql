@@ -1,2 +1,3 @@
--- Base inicial do banco do Placar.digital.
--- As tabelas de dominio serao criadas nas proximas etapas.
+-- Schema do Placar.digital.
+-- Fonte versionada: db/migrations/001_initial_schema.sql
+\i db/migrations/001_initial_schema.sql
