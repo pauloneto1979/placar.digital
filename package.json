@@ -1,0 +1,20 @@
+{
+  "name": "placar.digital",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aplicacao inicial do placar.digital com API Node.js e PostgreSQL.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "check": "node --check app.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
