@@ -42,7 +42,35 @@ async function ensureCanAdminBolao(auth, bolaoId) {
   throw new HttpError(403, 'forbidden_bolao_admin', 'Usuario sem permissao administrativa para este bolao.');
 }
 
+async function ensureCanViewBolao(auth, bolaoId) {
+  if (!(await bolaoExists(bolaoId))) {
+    throw new HttpError(404, 'bolao_not_found', 'Bolao nao encontrado.');
+  }
+
+  if (auth.perfilGlobal === 'proprietario') {
+    return;
+  }
+
+  if (auth.perfilGlobal === 'administrador' && (await isAdministradorVinculado(auth.usuarioId, bolaoId))) {
+    return;
+  }
+
+  if (auth.perfilGlobal === 'apostador' && auth.bolaoId === bolaoId && auth.participanteId) {
+    return;
+  }
+
+  throw new HttpError(403, 'forbidden_bolao_view', 'Usuario sem permissao para visualizar este bolao.');
+}
+
+function ensureApostadorSelecionado(auth, bolaoId) {
+  if (auth.perfilGlobal !== 'apostador' || auth.bolaoId !== bolaoId || !auth.participanteId) {
+    throw new HttpError(403, 'forbidden_bet_access', 'Acesso permitido apenas ao apostador do bolao selecionado.');
+  }
+}
+
 module.exports = {
   ensureCanAdminBolao,
+  ensureCanViewBolao,
+  ensureApostadorSelecionado,
   isAdministradorVinculado
 };

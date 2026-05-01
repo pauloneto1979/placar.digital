@@ -106,6 +106,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/004_configuracoes_bolao.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/005_boloes_usuarios_admin_links.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/006_administrador_operacional.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/007_apostador_module.sql
 ```
 
 ## Autenticacao
@@ -216,6 +217,30 @@ Tela estatica de apoio:
 
 ```text
 /app/administrador.html
+```
+
+## Modulo Apostador
+
+Rotas protegidas por Bearer token:
+
+- `GET /api/v1/apostas/boloes/:bolaoId/dashboard`
+- `GET /api/v1/apostas/boloes/:bolaoId/jogos`
+- `POST /api/v1/apostas/boloes/:bolaoId`
+- `PUT /api/v1/apostas/boloes/:bolaoId`
+- `GET /api/v1/apostas/boloes/:bolaoId/minhas`
+- `GET /api/v1/apostas/boloes/:bolaoId/regras`
+- `GET /api/v1/ranking/boloes/:bolaoId/provisorio`
+
+Permissoes:
+
+- apostador usa apenas o `bolaoId` e `participanteId` do token
+- proprietario e administrador podem visualizar dados do bolao
+- somente apostador pode registrar ou alterar aposta
+
+Tela estatica de apoio:
+
+```text
+/app/apostador.html
 ```
 
 ## Organizacao

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Placar.digital - Apostador</title>
+    <link rel="stylesheet" href="/app/proprietario.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div><strong>Placar.digital</strong><span>Modulo Apostador</span></div>
+      <input id="tokenInput" type="password" placeholder="Bearer token">
+      <button id="saveTokenButton" type="button">Entrar</button>
+    </header>
+    <main id="app" class="layout" hidden>
+      <nav class="tabs">
+        <button class="tab active" data-panel="dashboardPanel" type="button">Dashboard</button>
+        <button class="tab" data-panel="jogosPanel" type="button">Jogos</button>
+        <button class="tab" data-panel="apostasPanel" type="button">Minhas Apostas</button>
+        <button class="tab" data-panel="rankingPanel" type="button">Ranking</button>
+        <button class="tab" data-panel="regrasPanel" type="button">Regras</button>
+      </nav>
+      <section id="dashboardPanel" class="panel active"><div id="dashboardList" class="list"></div></section>
+      <section id="jogosPanel" class="panel"><div id="jogosList" class="list"></div></section>
+      <section id="apostasPanel" class="panel"><div id="apostasList" class="list"></div></section>
+      <section id="rankingPanel" class="panel"><div id="rankingList" class="list"></div></section>
+      <section id="regrasPanel" class="panel"><div id="regrasList" class="list"></div></section>
+    </main>
+    <p id="message" class="message"></p>
+    <script src="/app/apostador.js"></script>
+  </body>
+</html>

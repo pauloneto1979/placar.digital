@@ -140,3 +140,19 @@ Auditoria:
 
 - alteracao de resultado de partida registra `auditoria_logs`
 - a acao registrada e `informar_resultado`
+
+## Modulo Apostador
+
+O modulo do apostador usa:
+
+- `apostas`
+- `ranking`
+- `partidas`
+- `configuracoes_bolao`
+
+Regras:
+
+- apostador acessa apenas o bolao selecionado no token
+- apostas usam `participanteId` do token
+- apostador nao altera cadastros administrativos
+- ranking e provisório ate o motor de pontuacao ser implementado

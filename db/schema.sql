@@ -6,3 +6,4 @@
 \i db/migrations/004_configuracoes_bolao.sql
 \i db/migrations/005_boloes_usuarios_admin_links.sql
 \i db/migrations/006_administrador_operacional.sql
+\i db/migrations/007_apostador_module.sql
