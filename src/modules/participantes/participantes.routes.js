@@ -1,12 +1,17 @@
-const { createModuleRouter } = require('../../shared/utils/create-module');
+const { Router } = require('express');
+const { authMiddleware } = require('../../shared/middlewares/auth.middleware');
 const { createParticipantesController } = require('./participantes.controller');
-const { participantesRepository } = require('./participantes.repository');
+const participantesRepository = require('./participantes.repository');
 const { createParticipantesService } = require('./participantes.service');
 
-const participantesService = createParticipantesService(participantesRepository);
-const participantesController = createParticipantesController(participantesService);
-const participantesRoutes = createModuleRouter(participantesController);
+const participantesRoutes = Router();
+const controller = createParticipantesController(createParticipantesService(participantesRepository));
 
-module.exports = {
-  participantesRoutes
-};
+participantesRoutes.use(authMiddleware);
+participantesRoutes.get('/', controller.status);
+participantesRoutes.get('/boloes/:bolaoId', controller.list);
+participantesRoutes.post('/boloes/:bolaoId', controller.create);
+participantesRoutes.put('/boloes/:bolaoId/:id', controller.update);
+participantesRoutes.patch('/boloes/:bolaoId/:id/status', controller.updateStatus);
+
+module.exports = { participantesRoutes };

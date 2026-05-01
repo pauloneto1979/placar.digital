@@ -1,12 +1,14 @@
-const { createModuleRouter } = require('../../shared/utils/create-module');
+const { Router } = require('express');
+const { authMiddleware } = require('../../shared/middlewares/auth.middleware');
 const { createPartidasController } = require('./partidas.controller');
-const { partidasRepository } = require('./partidas.repository');
+const partidasRepository = require('./partidas.repository');
 const { createPartidasService } = require('./partidas.service');
-
-const partidasService = createPartidasService(partidasRepository);
-const partidasController = createPartidasController(partidasService);
-const partidasRoutes = createModuleRouter(partidasController);
-
-module.exports = {
-  partidasRoutes
-};
+const partidasRoutes = Router();
+const controller = createPartidasController(createPartidasService(partidasRepository));
+partidasRoutes.use(authMiddleware);
+partidasRoutes.get('/', controller.status);
+partidasRoutes.get('/boloes/:bolaoId', controller.list);
+partidasRoutes.post('/boloes/:bolaoId', controller.create);
+partidasRoutes.put('/boloes/:bolaoId/:id', controller.update);
+partidasRoutes.post('/boloes/:bolaoId/:id/resultado', controller.informarResultado);
+module.exports = { partidasRoutes };

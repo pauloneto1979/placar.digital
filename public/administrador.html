@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Placar.digital - Administrador</title>
+    <link rel="stylesheet" href="/app/proprietario.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div><strong>Placar.digital</strong><span>Modulo Administrador</span></div>
+      <input id="tokenInput" type="password" placeholder="Bearer token">
+      <button id="saveTokenButton" type="button">Entrar</button>
+    </header>
+    <main id="app" class="layout" hidden>
+      <form id="bolaoForm" class="form compact">
+        <label>Bolao ID <input name="bolaoId" required></label>
+        <button type="submit">Carregar</button>
+      </form>
+      <nav class="tabs">
+        <button class="tab active" data-panel="participantes" type="button">Participantes</button>
+        <button class="tab" data-panel="pagamentos" type="button">Pagamentos</button>
+        <button class="tab" data-panel="fases" type="button">Fases</button>
+        <button class="tab" data-panel="times" type="button">Times</button>
+        <button class="tab" data-panel="partidas" type="button">Partidas</button>
+      </nav>
+      <section id="participantes" class="panel active"><div id="participantesList" class="list"></div></section>
+      <section id="pagamentos" class="panel"><div id="pagamentosList" class="list"></div></section>
+      <section id="fases" class="panel"><div id="fasesList" class="list"></div></section>
+      <section id="times" class="panel"><div id="timesList" class="list"></div></section>
+      <section id="partidas" class="panel"><div id="partidasList" class="list"></div></section>
+    </main>
+    <p id="message" class="message"></p>
+    <script src="/app/administrador.js"></script>
+  </body>
+</html>

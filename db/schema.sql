@@ -5,3 +5,4 @@
 \i db/migrations/003_proprietario_module.sql
 \i db/migrations/004_configuracoes_bolao.sql
 \i db/migrations/005_boloes_usuarios_admin_links.sql
+\i db/migrations/006_administrador_operacional.sql

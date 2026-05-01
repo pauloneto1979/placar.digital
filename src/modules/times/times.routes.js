@@ -1,12 +1,14 @@
-const { createModuleRouter } = require('../../shared/utils/create-module');
+const { Router } = require('express');
+const { authMiddleware } = require('../../shared/middlewares/auth.middleware');
 const { createTimesController } = require('./times.controller');
-const { timesRepository } = require('./times.repository');
+const timesRepository = require('./times.repository');
 const { createTimesService } = require('./times.service');
-
-const timesService = createTimesService(timesRepository);
-const timesController = createTimesController(timesService);
-const timesRoutes = createModuleRouter(timesController);
-
-module.exports = {
-  timesRoutes
-};
+const timesRoutes = Router();
+const controller = createTimesController(createTimesService(timesRepository));
+timesRoutes.use(authMiddleware);
+timesRoutes.get('/', controller.status);
+timesRoutes.get('/boloes/:bolaoId', controller.list);
+timesRoutes.post('/boloes/:bolaoId', controller.create);
+timesRoutes.put('/boloes/:bolaoId/:id', controller.update);
+timesRoutes.patch('/boloes/:bolaoId/:id/status', controller.updateStatus);
+module.exports = { timesRoutes };

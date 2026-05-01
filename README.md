@@ -105,6 +105,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/003_proprietario_module.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/004_configuracoes_bolao.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/005_boloes_usuarios_admin_links.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/006_administrador_operacional.sql
 ```
 
 ## Autenticacao
@@ -182,6 +183,40 @@ Exemplo de regra de pontuacao:
 ```
 
 A pontuacao configurada e nao cumulativa. Quando mais de uma regra se aplicar, o calculo futuro devera usar a maior prioridade e depois a maior pontuacao.
+
+## Modulo Administrador
+
+Rotas operacionais protegidas por Bearer token:
+
+- `GET|POST /api/v1/participantes/boloes/:bolaoId`
+- `PUT /api/v1/participantes/boloes/:bolaoId/:id`
+- `PATCH /api/v1/participantes/boloes/:bolaoId/:id/status`
+- `GET|POST /api/v1/pagamentos/boloes/:bolaoId`
+- `PUT /api/v1/pagamentos/boloes/:bolaoId/:id`
+- `POST /api/v1/pagamentos/boloes/:bolaoId/:id/marcar-pago`
+- `POST /api/v1/pagamentos/boloes/:bolaoId/:id/voltar-pendente`
+- `POST /api/v1/pagamentos/boloes/:bolaoId/:id/cancelar`
+- `GET|POST /api/v1/fases/boloes/:bolaoId`
+- `PUT /api/v1/fases/boloes/:bolaoId/:id`
+- `PATCH /api/v1/fases/boloes/:bolaoId/:id/status`
+- `GET|POST /api/v1/times/boloes/:bolaoId`
+- `PUT /api/v1/times/boloes/:bolaoId/:id`
+- `PATCH /api/v1/times/boloes/:bolaoId/:id/status`
+- `GET|POST /api/v1/partidas/boloes/:bolaoId`
+- `PUT /api/v1/partidas/boloes/:bolaoId/:id`
+- `POST /api/v1/partidas/boloes/:bolaoId/:id/resultado`
+
+Permissoes:
+
+- proprietario administra qualquer bolao
+- administrador administra apenas boloes vinculados em `boloes_usuarios`
+- apostador nao acessa rotas administrativas
+
+Tela estatica de apoio:
+
+```text
+/app/administrador.html
+```
 
 ## Organizacao
 

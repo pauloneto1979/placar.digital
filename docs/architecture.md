@@ -117,3 +117,26 @@ Politica de pontuacao:
 - regras nao sao cumulativas
 - a aplicacao futura deve selecionar a regra de maior prioridade
 - em empate de prioridade, deve selecionar a regra de maior pontuacao
+
+## Modulo Administrador
+
+O modulo administrativo operacional usa os modulos existentes:
+
+- `participantes`
+- `pagamentos`
+- `fases`
+- `times`
+- `partidas`
+- `auditoria`
+
+Permissoes:
+
+- proprietario administra qualquer bolao
+- administrador administra somente boloes vinculados em `boloes_usuarios`
+- apostador/participante nao acessa operacoes administrativas
+- participantes nao sao usados para validar permissao de administrador
+
+Auditoria:
+
+- alteracao de resultado de partida registra `auditoria_logs`
+- a acao registrada e `informar_resultado`
