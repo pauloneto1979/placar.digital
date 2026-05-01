@@ -91,3 +91,29 @@ Frontend:
 - `/app/proprietario.html` e uma tela estatica de apoio
 - a tela valida o token com `/api/v1/auth/me`
 - o bloqueio obrigatorio permanece no backend
+
+## Configuracoes Do Bolao
+
+O modulo `src/modules/configuracoes_bolao` gerencia regras especificas de um bolao:
+
+- configuracao principal ativa do bolao
+- regras de pontuacao configuraveis
+- criterios de desempate
+- distribuicao de premios por posicao
+
+Separacao:
+
+- `configuracoes_gerais` pertence a plataforma
+- `configuracoes_bolao` pertence a um bolao
+
+Permissoes:
+
+- proprietario altera qualquer bolao
+- administrador altera apenas boloes vinculados em `participantes`
+- apostador visualiza apenas dados ativos do bolao selecionado no token
+
+Politica de pontuacao:
+
+- regras nao sao cumulativas
+- a aplicacao futura deve selecionar a regra de maior prioridade
+- em empate de prioridade, deve selecionar a regra de maior pontuacao

@@ -71,6 +71,22 @@ Esta etapa cria apenas a fundacao tecnica: estrutura modular, API base, ambiente
 - `GET /api/v1/ranking`
 - `GET /api/v1/pagamentos`
 - `GET /api/v1/configuracoes-bolao`
+- `GET /api/v1/configuracoes-bolao/:bolaoId`
+- `GET /api/v1/configuracoes-bolao/:bolaoId/configuracao`
+- `POST /api/v1/configuracoes-bolao/:bolaoId/configuracao`
+- `PUT /api/v1/configuracoes-bolao/:bolaoId/configuracao/:configuracaoId`
+- `GET /api/v1/configuracoes-bolao/:bolaoId/regras-pontuacao`
+- `POST /api/v1/configuracoes-bolao/:bolaoId/regras-pontuacao`
+- `PUT /api/v1/configuracoes-bolao/:bolaoId/regras-pontuacao/:regraId`
+- `DELETE /api/v1/configuracoes-bolao/:bolaoId/regras-pontuacao/:regraId`
+- `GET /api/v1/configuracoes-bolao/:bolaoId/criterios-desempate`
+- `POST /api/v1/configuracoes-bolao/:bolaoId/criterios-desempate`
+- `PUT /api/v1/configuracoes-bolao/:bolaoId/criterios-desempate/:criterioId`
+- `DELETE /api/v1/configuracoes-bolao/:bolaoId/criterios-desempate/:criterioId`
+- `GET /api/v1/configuracoes-bolao/:bolaoId/distribuicao-premios`
+- `POST /api/v1/configuracoes-bolao/:bolaoId/distribuicao-premios`
+- `PUT /api/v1/configuracoes-bolao/:bolaoId/distribuicao-premios/:distribuicaoId`
+- `DELETE /api/v1/configuracoes-bolao/:bolaoId/distribuicao-premios/:distribuicaoId`
 - `GET /api/v1/configuracoes-gerais`
 - `GET /api/v1/notificacoes`
 - `GET /api/v1/auditoria`
@@ -87,6 +103,7 @@ No servidor Linux:
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/001_initial_schema.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/002_auth_email_indexes.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/003_proprietario_module.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/004_configuracoes_bolao.sql
 ```
 
 ## Autenticacao
@@ -128,6 +145,42 @@ A tela estatica de apoio fica em:
 ```
 
 Ela tambem valida o perfil no frontend usando `GET /api/v1/auth/me`, mas a protecao oficial continua no backend.
+
+## Configuracoes do Bolao
+
+O modulo `configuracoes_bolao` pertence a um bolao especifico, diferente das configuracoes gerais da plataforma.
+
+Seguranca:
+
+- todas as rotas exigem Bearer token
+- proprietario pode alterar qualquer bolao
+- administrador pode alterar apenas bolao ao qual esta vinculado
+- apostador pode visualizar configuracoes ativas do bolao selecionado no token
+
+Exemplo de configuracao principal:
+
+```json
+{
+  "minutosAntecedenciaAposta": 15,
+  "tipoDistribuicaoPremio": "percentual",
+  "observacoesRegras": "Apostas bloqueiam 15 minutos antes da partida.",
+  "ativo": true
+}
+```
+
+Exemplo de regra de pontuacao:
+
+```json
+{
+  "codigo": "PLACAR_EXATO",
+  "descricao": "Acertou o placar exato",
+  "pontos": 10,
+  "prioridade": 100,
+  "ativo": true
+}
+```
+
+A pontuacao configurada e nao cumulativa. Quando mais de uma regra se aplicar, o calculo futuro devera usar a maior prioridade e depois a maior pontuacao.
 
 ## Organizacao
 
