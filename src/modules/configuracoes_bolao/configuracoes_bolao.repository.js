@@ -65,11 +65,14 @@ async function isAdministradorVinculado(usuarioId, bolaoId) {
   const result = await query(
     `
       select 1
-      from participantes
-      where usuario_id = $1
-        and bolao_id = $2
-        and papel = 'administrador'
-        and status = 'ativo'
+      from boloes_usuarios bu
+      join usuarios u on u.id = bu.usuario_id
+      where bu.usuario_id = $1
+        and bu.bolao_id = $2
+        and bu.perfil = 'administrador'
+        and bu.ativo = true
+        and u.perfil_global = 'administrador'
+        and u.ativo = true
       limit 1
     `,
     [usuarioId, bolaoId]

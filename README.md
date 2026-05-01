@@ -104,6 +104,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/002_auth_email_indexes.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/003_proprietario_module.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/004_configuracoes_bolao.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/005_boloes_usuarios_admin_links.sql
 ```
 
 ## Autenticacao
@@ -154,7 +155,7 @@ Seguranca:
 
 - todas as rotas exigem Bearer token
 - proprietario pode alterar qualquer bolao
-- administrador pode alterar apenas bolao ao qual esta vinculado
+- administrador pode alterar apenas bolao ao qual esta vinculado em `boloes_usuarios`
 - apostador pode visualizar configuracoes ativas do bolao selecionado no token
 
 Exemplo de configuracao principal:

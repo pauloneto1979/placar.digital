@@ -24,7 +24,27 @@ async function listUserBoloes(usuarioId) {
   const result = await query(
     `
       select
+        null::uuid as participante_id,
+        bu.id as vinculo_administrativo_id,
+        bu.perfil as papel,
+        case when bu.ativo then 'ativo' else 'inativo' end as participante_status,
+        b.id as bolao_id,
+        b.nome as bolao_nome,
+        b.slug as bolao_slug,
+        b.status as bolao_status
+      from boloes_usuarios bu
+      join usuarios u on u.id = bu.usuario_id
+      join boloes b on b.id = bu.bolao_id
+      where bu.usuario_id = $1
+        and bu.ativo = true
+        and bu.perfil = 'administrador'
+        and u.perfil_global = 'administrador'
+        and u.ativo = true
+        and b.ativo = true
+      union all
+      select
         p.id as participante_id,
+        null::uuid as vinculo_administrativo_id,
         p.papel,
         p.status as participante_status,
         b.id as bolao_id,
@@ -32,11 +52,15 @@ async function listUserBoloes(usuarioId) {
         b.slug as bolao_slug,
         b.status as bolao_status
       from participantes p
+      join usuarios u on u.id = p.usuario_id
       join boloes b on b.id = p.bolao_id
       where p.usuario_id = $1
         and p.status = 'ativo'
+        and p.papel = 'apostador'
+        and u.perfil_global = 'apostador'
+        and u.ativo = true
         and b.ativo = true
-      order by b.nome asc
+      order by bolao_nome asc
     `,
     [usuarioId]
   );
@@ -48,7 +72,28 @@ async function findUserBolao(usuarioId, bolaoId) {
   const result = await query(
     `
       select
+        null::uuid as participante_id,
+        bu.id as vinculo_administrativo_id,
+        bu.perfil as papel,
+        case when bu.ativo then 'ativo' else 'inativo' end as participante_status,
+        b.id as bolao_id,
+        b.nome as bolao_nome,
+        b.slug as bolao_slug,
+        b.status as bolao_status
+      from boloes_usuarios bu
+      join usuarios u on u.id = bu.usuario_id
+      join boloes b on b.id = bu.bolao_id
+      where bu.usuario_id = $1
+        and bu.bolao_id = $2
+        and bu.ativo = true
+        and bu.perfil = 'administrador'
+        and u.perfil_global = 'administrador'
+        and u.ativo = true
+        and b.ativo = true
+      union all
+      select
         p.id as participante_id,
+        null::uuid as vinculo_administrativo_id,
         p.papel,
         p.status as participante_status,
         b.id as bolao_id,
@@ -56,10 +101,14 @@ async function findUserBolao(usuarioId, bolaoId) {
         b.slug as bolao_slug,
         b.status as bolao_status
       from participantes p
+      join usuarios u on u.id = p.usuario_id
       join boloes b on b.id = p.bolao_id
       where p.usuario_id = $1
         and p.bolao_id = $2
         and p.status = 'ativo'
+        and p.papel = 'apostador'
+        and u.perfil_global = 'apostador'
+        and u.ativo = true
         and b.ativo = true
       limit 1
     `,

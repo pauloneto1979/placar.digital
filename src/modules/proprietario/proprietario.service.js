@@ -307,7 +307,7 @@ function createProprietarioService(repository) {
 
       await audit(auth, context, {
         bolaoId,
-        entidade: 'participantes',
+        entidade: 'boloes_usuarios',
         acao: 'proprietario.bolao.administrador_vinculado',
         dadosNovos: {
           bolaoId,
@@ -333,7 +333,7 @@ function createProprietarioService(repository) {
 
       await audit(auth, context, {
         bolaoId,
-        entidade: 'participantes',
+        entidade: 'boloes_usuarios',
         acao: 'proprietario.bolao.administrador_removido',
         dadosNovos: {
           bolaoId,

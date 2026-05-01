@@ -32,14 +32,14 @@ function mapUsuario(row) {
 
 function mapAdminVinculado(row) {
   return {
-    participanteId: row.participante_id,
+    vinculoId: row.vinculo_id,
     usuarioId: row.usuario_id,
     nome: row.nome,
     email: row.email,
     perfil: row.perfil_global,
-    papel: row.papel,
+    papel: row.perfil,
     status: row.status,
-    entrouAt: row.entrou_at
+    entrouAt: row.criado_at
   };
 }
 
@@ -226,10 +226,10 @@ async function updateUsuarioStatus(id, ativo) {
 async function vincularAdministrador(bolaoId, usuarioId) {
   const result = await query(
     `
-      insert into participantes (bolao_id, usuario_id, papel, status)
-      values ($1, $2, 'administrador', 'ativo')
+      insert into boloes_usuarios (bolao_id, usuario_id, perfil, ativo)
+      values ($1, $2, 'administrador', true)
       on conflict (bolao_id, usuario_id)
-      do update set papel = 'administrador', status = 'ativo'
+      do update set perfil = 'administrador', ativo = true
       returning id
     `,
     [bolaoId, usuarioId]
@@ -242,18 +242,19 @@ async function listAdministradoresBolao(bolaoId) {
   const result = await query(
     `
       select
-        p.id as participante_id,
-        p.usuario_id,
-        p.papel,
-        p.status,
-        p.entrou_at,
+        bu.id as vinculo_id,
+        bu.usuario_id,
+        bu.perfil,
+        case when bu.ativo then 'ativo' else 'removido' end as status,
+        bu.criado_at,
         u.nome,
         u.email,
         u.perfil_global
-      from participantes p
-      join usuarios u on u.id = p.usuario_id
-      where p.bolao_id = $1
-        and p.papel = 'administrador'
+      from boloes_usuarios bu
+      join usuarios u on u.id = bu.usuario_id
+      where bu.bolao_id = $1
+        and bu.perfil = 'administrador'
+        and bu.ativo = true
         and u.perfil_global = 'administrador'
       order by u.nome asc
     `,
@@ -266,11 +267,12 @@ async function listAdministradoresBolao(bolaoId) {
 async function removerVinculoAdministrador(bolaoId, usuarioId) {
   const result = await query(
     `
-      update participantes
-      set status = 'removido'
+      update boloes_usuarios
+      set ativo = false
       where bolao_id = $1
         and usuario_id = $2
-        and papel = 'administrador'
+        and perfil = 'administrador'
+        and ativo = true
       returning id
     `,
     [bolaoId, usuarioId]

@@ -19,6 +19,7 @@ function formatBolao(row) {
     slug: row.bolao_slug,
     status: row.bolao_status,
     participanteId: row.participante_id,
+    vinculoAdministrativoId: row.vinculo_administrativo_id,
     papel: row.papel
   };
 }
@@ -69,6 +70,7 @@ function createAuthService(repository) {
         perfilGlobal: user.perfil_global,
         bolaoId: selectedBolao ? selectedBolao.id : null,
         participanteId: selectedBolao ? selectedBolao.participanteId : null,
+        vinculoAdministrativoId: selectedBolao ? selectedBolao.vinculoAdministrativoId : null,
         papel: selectedBolao ? selectedBolao.papel : user.perfil_global
       },
       env.authTokenExpiresInSeconds
@@ -181,6 +183,7 @@ function createAuthService(repository) {
         acao: 'auth.bolao_selecionado',
         dadosNovos: {
           participanteId: formattedBolao.participanteId,
+          vinculoAdministrativoId: formattedBolao.vinculoAdministrativoId,
           papel: formattedBolao.papel
         },
         ip: context.ip,
@@ -207,6 +210,7 @@ function createAuthService(repository) {
           ? {
               id: auth.bolaoId,
               participanteId: auth.participanteId,
+              vinculoAdministrativoId: auth.vinculoAdministrativoId,
               papel: auth.papel
             }
           : null

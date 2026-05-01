@@ -67,7 +67,7 @@ Fluxo:
 - proprietario autentica e recebe token direto
 - administrador ou apostador com um bolao recebe token com contexto do bolao
 - administrador ou apostador com mais de um bolao recebe token temporario de selecao
-- a selecao de bolao emite o token final com `bolaoId`, `participanteId` e `papel`
+- a selecao de bolao emite o token final com `bolaoId`, `papel` e `participanteId` ou `vinculoAdministrativoId`
 
 ## Modulo Proprietario
 
@@ -75,7 +75,7 @@ O modulo `src/modules/proprietario` concentra operacoes globais da plataforma:
 
 - cadastro, alteracao, fechamento e listagem de boloes
 - cadastro, alteracao e ativacao/inativacao de usuarios de sistema
-- vinculo e remocao de administradores em boloes
+- vinculo e remocao de administradores em boloes usando `boloes_usuarios`
 - configuracoes gerais da plataforma
 
 Seguranca:
@@ -83,7 +83,7 @@ Seguranca:
 - todas as rotas usam `authMiddleware`
 - todas as rotas exigem `perfilGlobal = proprietario`
 - usuarios de sistema aceitam apenas `proprietario` e `administrador`
-- vinculos em boloes aceitam apenas administradores ativos
+- vinculos em boloes aceitam apenas administradores ativos e ficam em `boloes_usuarios`
 - remocao e feita por status, sem exclusao fisica
 
 Frontend:
@@ -109,7 +109,7 @@ Separacao:
 Permissoes:
 
 - proprietario altera qualquer bolao
-- administrador altera apenas boloes vinculados em `participantes`
+- administrador altera apenas boloes vinculados em `boloes_usuarios`
 - apostador visualiza apenas dados ativos do bolao selecionado no token
 
 Politica de pontuacao:
