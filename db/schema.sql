@@ -8,3 +8,4 @@
 \i db/migrations/006_administrador_operacional.sql
 \i db/migrations/007_apostador_module.sql
 \i db/migrations/008_motor_pontuacao.sql
+\i db/migrations/009_ranking_premiacao.sql

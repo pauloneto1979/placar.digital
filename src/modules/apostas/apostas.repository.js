@@ -61,7 +61,7 @@ async function getTop3Ranking(bolaoId) {
       where p.bolao_id = $1
         and p.papel = 'apostador'
         and p.status <> 'removido'
-      order by coalesce(r.pontos_total, 0) desc, p.nome asc
+      order by coalesce(r.posicao, 999999) asc, coalesce(r.pontos_total, 0) desc, p.nome asc
       limit 3
     `,
     [bolaoId]

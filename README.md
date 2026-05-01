@@ -108,6 +108,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/006_administrador_operacional.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/007_apostador_module.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/008_motor_pontuacao.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/009_ranking_premiacao.sql
 ```
 
 ## Autenticacao
@@ -230,7 +231,11 @@ Rotas protegidas por Bearer token:
 - `PUT /api/v1/apostas/boloes/:bolaoId`
 - `GET /api/v1/apostas/boloes/:bolaoId/minhas`
 - `GET /api/v1/apostas/boloes/:bolaoId/regras`
+- `GET /api/v1/ranking/boloes/:bolaoId/atual`
 - `GET /api/v1/ranking/boloes/:bolaoId/provisorio`
+- `GET /api/v1/ranking/boloes/:bolaoId/meu`
+- `GET /api/v1/ranking/boloes/:bolaoId/premiacao`
+- `GET /api/v1/ranking/boloes/:bolaoId/regras`
 - `POST /api/v1/ranking/boloes/:bolaoId/recalcular`
 - `POST /api/v1/ranking/boloes/:bolaoId/partidas/:partidaId/recalcular`
 
@@ -257,6 +262,34 @@ Regras iniciais:
 - `PLACAR_INVERTIDO`
 
 O recálculo acontece automaticamente quando o administrador informa resultado de uma partida e também pode ser disparado manualmente pelas rotas de ranking.
+
+## Ranking, Desempate E Premiacao
+
+O ranking atual usa as pontuacoes persistidas em `pontuacoes_apostas` e reconstrui `ranking` com:
+
+- total de pontos
+- total de apostas validas calculadas
+- placares exatos
+- resultados corretos
+- placares invertidos
+- diferenca total de gols
+- ordem de pagamento
+- posicao
+- premio previsto
+
+Desempate:
+
+- pontos sempre ordenam primeiro
+- criterios ativos de `criterios_desempate` sao aplicados por `ordem`
+- codigos contendo `EXATO`, `RESULTADO`, `INVERTIDO`, `DIFERENCA`, `PAGAMENTO` ou `ALFABET` sao reconhecidos
+- se ainda houver empate, o nome do participante decide
+
+Premiacao:
+
+- considera apenas pagamentos com `status = 'pago'`
+- usa distribuicoes ativas em `distribuicao_premios`
+- valida que a soma dos percentuais ativos nao ultrapasse 100%
+- posicoes sem distribuicao recebem premio previsto zero
 
 ## Organizacao
 

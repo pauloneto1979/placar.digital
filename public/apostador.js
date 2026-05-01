@@ -36,7 +36,7 @@ async function refresh() {
     api(`/apostas/boloes/${state.bolaoId}/dashboard`),
     api(`/apostas/boloes/${state.bolaoId}/jogos`),
     api(`/apostas/boloes/${state.bolaoId}/minhas`),
-    api(`/ranking/boloes/${state.bolaoId}/provisorio`),
+    api(`/ranking/boloes/${state.bolaoId}/atual`),
     api(`/apostas/boloes/${state.bolaoId}/regras`)
   ]);
 
@@ -68,7 +68,12 @@ async function refresh() {
   renderCards('#rankingList', ranking, (item) => `
     <article class="item">
       <strong>${item.posicao} - ${escapeHtml(item.participante)}</strong>
-      <div>${item.pontosAtuais} pontos</div>
+      <div>
+        ${item.pontosAtuais} pontos
+        <div class="meta">
+          Exatos: ${item.acertosExatos} - Resultados: ${item.acertosResultado} - Invertidos: ${item.acertosInvertidos} - Premio: R$ ${Number(item.valorPremioPrevisto || 0).toFixed(2)}
+        </div>
+      </div>
     </article>
   `);
 

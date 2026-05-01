@@ -9,7 +9,11 @@ const controller = createRankingController(createRankingService(rankingRepositor
 
 rankingRoutes.use(authMiddleware);
 rankingRoutes.get('/', controller.status);
+rankingRoutes.get('/boloes/:bolaoId/atual', controller.atual);
 rankingRoutes.get('/boloes/:bolaoId/provisorio', controller.provisorio);
+rankingRoutes.get('/boloes/:bolaoId/meu', controller.meu);
+rankingRoutes.get('/boloes/:bolaoId/premiacao', controller.premiacao);
+rankingRoutes.get('/boloes/:bolaoId/regras', controller.regras);
 rankingRoutes.post('/boloes/:bolaoId/recalcular', controller.recalcularBolao);
 rankingRoutes.post('/boloes/:bolaoId/partidas/:partidaId/recalcular', controller.recalcularPartida);
 

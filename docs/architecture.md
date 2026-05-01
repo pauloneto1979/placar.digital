@@ -169,3 +169,29 @@ Regras:
 - partidas precisam estar finalizadas e com placar
 - apostas canceladas nao pontuam
 - recálculo de resultado atualiza `pontuacoes_apostas`, `apostas.pontos_calculados` e `ranking`
+
+## Ranking, Desempate E Premiacao
+
+O ranking final/atual tambem fica no modulo `ranking`.
+
+Responsabilidades:
+
+- montar a base de pontos a partir de `pontuacoes_apostas`
+- aplicar criterios ativos de `criterios_desempate` por ordem configurada
+- persistir metricas consolidadas em `ranking`
+- calcular premio previsto a partir de pagamentos pagos e `distribuicao_premios`
+
+Desempates suportados:
+
+- maior numero de placares exatos
+- maior numero de resultados corretos
+- maior numero de placares invertidos
+- menor diferenca total de gols
+- ordem de pagamento
+- ordem alfabetica
+
+Permissoes:
+
+- apostador visualiza apenas o bolao selecionado no token
+- administrador visualiza e recalcula apenas boloes vinculados em `boloes_usuarios`
+- proprietario visualiza e recalcula qualquer bolao
