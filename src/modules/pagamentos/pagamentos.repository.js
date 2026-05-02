@@ -10,6 +10,11 @@ function map(row) {
     formaPagamento: row.metodo,
     dataPagamento: row.pago_at,
     observacao: row.observacao,
+    gateway: row.gateway,
+    orderNsu: row.order_nsu,
+    checkoutUrl: row.checkout_url,
+    statusGateway: row.status_gateway,
+    webhookPayload: row.webhook_payload,
     criadoAt: row.criado_at,
     atualizadoAt: row.atualizado_at
   };
@@ -31,6 +36,31 @@ async function listByBolao(bolaoId) {
 async function findById(id) {
   const result = await query('select * from pagamentos where id = $1 limit 1', [id]);
   return result.rows[0] ? map(result.rows[0]) : null;
+}
+
+async function findByOrderNsu(orderNsu) {
+  const result = await query('select * from pagamentos where order_nsu = $1 limit 1', [orderNsu]);
+  return result.rows[0] ? map(result.rows[0]) : null;
+}
+
+async function getCheckoutContext(id) {
+  const result = await query(
+    `
+      select
+        pg.*,
+        b.nome as bolao_nome,
+        p.nome as participante_nome,
+        p.email as participante_email,
+        p.telefone as participante_telefone
+      from pagamentos pg
+      join boloes b on b.id = pg.bolao_id
+      join participantes p on p.id = pg.participante_id
+      where pg.id = $1
+      limit 1
+    `,
+    [id]
+  );
+  return result.rows[0] || null;
 }
 
 async function create(data) {
@@ -67,4 +97,65 @@ async function updateStatus(id, status) {
   return result.rows[0] ? map(result.rows[0]) : null;
 }
 
-module.exports = { participanteExists, listByBolao, findById, create, update, updateStatus };
+async function saveGatewayCheckout(id, data) {
+  const result = await query(
+    `
+      update pagamentos
+      set
+        gateway = 'infinitepay',
+        order_nsu = $2,
+        checkout_url = $3,
+        status_gateway = $4,
+        webhook_payload = coalesce(webhook_payload, '{}'::jsonb)
+      where id = $1
+      returning *
+    `,
+    [id, data.orderNsu, data.checkoutUrl, data.statusGateway]
+  );
+  return result.rows[0] ? map(result.rows[0]) : null;
+}
+
+async function confirmInfinitePayPayment(id, webhookPayload) {
+  const result = await query(
+    `
+      update pagamentos
+      set
+        status = 'pago',
+        pago_at = now(),
+        gateway = 'infinitepay',
+        status_gateway = 'approved',
+        webhook_payload = $2
+      where id = $1
+      returning *
+    `,
+    [id, JSON.stringify(webhookPayload)]
+  );
+  return result.rows[0] ? map(result.rows[0]) : null;
+}
+
+async function saveGatewayWebhook(id, statusGateway, webhookPayload) {
+  const result = await query(
+    `
+      update pagamentos
+      set status_gateway = $2, webhook_payload = $3
+      where id = $1
+      returning *
+    `,
+    [id, statusGateway, JSON.stringify(webhookPayload)]
+  );
+  return result.rows[0] ? map(result.rows[0]) : null;
+}
+
+module.exports = {
+  participanteExists,
+  listByBolao,
+  findById,
+  findByOrderNsu,
+  getCheckoutContext,
+  create,
+  update,
+  updateStatus,
+  saveGatewayCheckout,
+  confirmInfinitePayPayment,
+  saveGatewayWebhook
+};

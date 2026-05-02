@@ -116,6 +116,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/009_ranking_premiacao.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/010_notificacoes.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/011_revisao_consistencia.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/012_infinitepay_checkout.sql
 ```
 
 ## Autenticacao
@@ -245,9 +246,11 @@ Rotas operacionais protegidas por Bearer token:
 - `PATCH /api/v1/participantes/boloes/:bolaoId/:id/status`
 - `GET|POST /api/v1/pagamentos/boloes/:bolaoId`
 - `PUT /api/v1/pagamentos/boloes/:bolaoId/:id`
+- `POST /api/v1/pagamentos/boloes/:bolaoId/:id/infinitepay/link`
 - `POST /api/v1/pagamentos/boloes/:bolaoId/:id/marcar-pago`
 - `POST /api/v1/pagamentos/boloes/:bolaoId/:id/voltar-pendente`
 - `POST /api/v1/pagamentos/boloes/:bolaoId/:id/cancelar`
+- `POST /api/v1/pagamentos/webhooks/infinitepay`
 - `GET|POST /api/v1/fases/boloes/:bolaoId`
 - `PUT /api/v1/fases/boloes/:bolaoId/:id`
 - `PATCH /api/v1/fases/boloes/:bolaoId/:id/status`
@@ -269,6 +272,37 @@ Tela estatica de apoio:
 ```text
 /app/administrador.html
 ```
+
+## InfinitePay Checkout
+
+Configure no `.env`:
+
+```env
+INFINITEPAY_API_URL=https://api.checkout.infinitepay.io
+INFINITEPAY_HANDLE=sua_infinite_tag_sem_cifrao
+```
+
+A `INFINITEPAY_HANDLE` e a InfiniteTag da conta InfinitePay, sem o simbolo `$`.
+
+Fluxo:
+
+- crie um pagamento pendente em `POST /api/v1/pagamentos/boloes/:bolaoId`
+- gere o checkout em `POST /api/v1/pagamentos/boloes/:bolaoId/:pagamentoId/infinitepay/link`
+- o sistema envia para a InfinitePay `handle`, `order_nsu` com o ID interno do pagamento e `items`
+- o item enviado usa `description = Participacao no bolao {nome}`, `quantity = 1` e `price` em centavos
+- o retorno salva `gateway = infinitepay`, `order_nsu`, `checkout_url` e `status_gateway`
+- a InfinitePay deve chamar `POST /api/v1/pagamentos/webhooks/infinitepay`
+
+Exemplo para gerar link:
+
+```json
+{
+  "redirectUrl": "https://seusite.com/pagamento-concluido",
+  "webhookUrl": "https://seusite.com/api/v1/pagamentos/webhooks/infinitepay"
+}
+```
+
+Quando o webhook aprovado chegar com `order_nsu`, o pagamento e marcado como `pago`, `pago_at` e preenchido, `webhook_payload` e salvo e a notificacao `PAGAMENTO_CONFIRMADO` e gerada.
 
 ## Modulo Apostador
 

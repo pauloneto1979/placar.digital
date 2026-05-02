@@ -6,7 +6,21 @@ function createPagamentosController(service) {
     async update(req, res, next) { try { res.json(await service.update(req.params.bolaoId, req.params.id, req.body, req.auth)); } catch (e) { next(e); } },
     async marcarPago(req, res, next) { try { res.json(await service.updateStatus(req.params.bolaoId, req.params.id, 'pago', req.auth)); } catch (e) { next(e); } },
     async voltarPendente(req, res, next) { try { res.json(await service.updateStatus(req.params.bolaoId, req.params.id, 'pendente', req.auth)); } catch (e) { next(e); } },
-    async cancelar(req, res, next) { try { res.json(await service.updateStatus(req.params.bolaoId, req.params.id, 'cancelado', req.auth)); } catch (e) { next(e); } }
+    async cancelar(req, res, next) { try { res.json(await service.updateStatus(req.params.bolaoId, req.params.id, 'cancelado', req.auth)); } catch (e) { next(e); } },
+    async gerarLinkInfinitePay(req, res, next) {
+      try {
+        res.json(await service.gerarLinkInfinitePay(req.params.bolaoId, req.params.id, req.body, req.auth));
+      } catch (e) {
+        next(e);
+      }
+    },
+    async webhookInfinitePay(req, res, next) {
+      try {
+        res.json(await service.webhookInfinitePay(req.body));
+      } catch (e) {
+        next(e);
+      }
+    }
   };
 }
 

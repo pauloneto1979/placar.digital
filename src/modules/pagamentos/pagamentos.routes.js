@@ -7,11 +7,13 @@ const { createPagamentosService } = require('./pagamentos.service');
 const pagamentosRoutes = Router();
 const controller = createPagamentosController(createPagamentosService(pagamentosRepository));
 
+pagamentosRoutes.post('/webhooks/infinitepay', controller.webhookInfinitePay);
 pagamentosRoutes.use(authMiddleware);
 pagamentosRoutes.get('/', controller.status);
 pagamentosRoutes.get('/boloes/:bolaoId', controller.list);
 pagamentosRoutes.post('/boloes/:bolaoId', controller.create);
 pagamentosRoutes.put('/boloes/:bolaoId/:id', controller.update);
+pagamentosRoutes.post('/boloes/:bolaoId/:id/infinitepay/link', controller.gerarLinkInfinitePay);
 pagamentosRoutes.post('/boloes/:bolaoId/:id/marcar-pago', controller.marcarPago);
 pagamentosRoutes.post('/boloes/:bolaoId/:id/voltar-pendente', controller.voltarPendente);
 pagamentosRoutes.post('/boloes/:bolaoId/:id/cancelar', controller.cancelar);
