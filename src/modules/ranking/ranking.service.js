@@ -50,7 +50,7 @@ function escolherPontuacao(aposta, partida, regras, minutosAntecedencia) {
 
   const aplicaveis = regras
     .filter((regra) => regraAplica(regra.codigo, aposta, partida))
-    .sort((a, b) => b.prioridade - a.prioridade || b.pontos - a.pontos);
+    .sort((a, b) => a.prioridade - b.prioridade || b.pontos - a.pontos);
   const vencedora = aplicaveis[0];
 
   return {

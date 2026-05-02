@@ -18,6 +18,7 @@ const roleLabel = document.querySelector('#roleLabel');
 const shell = document.querySelector('#shell');
 const bolaoSwitcher = document.querySelector('#bolaoSwitcher');
 const bolaoSelect = document.querySelector('#bolaoSelect');
+const profileButton = document.querySelector('#profileButton');
 
 const SCORE_RULE_OPTIONS = [
   { value: 'PLACAR_EXATO', label: 'Placar exato' },
@@ -26,12 +27,12 @@ const SCORE_RULE_OPTIONS = [
 ];
 
 const TIEBREAKER_OPTIONS = [
-  { value: 'PLACARES_EXATOS', label: 'Maior numero de placares exatos' },
-  { value: 'RESULTADOS_CORRETOS', label: 'Maior numero de resultados corretos' },
-  { value: 'PLACARES_INVERTIDOS', label: 'Maior numero de placares invertidos' },
-  { value: 'MENOR_DIFERENCA_GOLS', label: 'Menor diferenca total de gols' },
+  { value: 'PLACARES_EXATOS', label: 'Maior número de placares exatos' },
+  { value: 'RESULTADOS_CORRETOS', label: 'Maior número de resultados corretos' },
+  { value: 'PLACARES_INVERTIDOS', label: 'Maior número de placares invertidos' },
+  { value: 'MENOR_DIFERENCA_GOLS', label: 'Menor diferença total de gols' },
   { value: 'ORDEM_PAGAMENTO', label: 'Ordem de pagamento' },
-  { value: 'ORDEM_ALFABETICA', label: 'Ordem alfabetica' }
+  { value: 'ORDEM_ALFABETICA', label: 'Ordem alfabética' }
 ];
 
 const PRIZE_DISTRIBUTION_OPTIONS = [
@@ -41,22 +42,24 @@ const PRIZE_DISTRIBUTION_OPTIONS = [
 ];
 
 const RULE_FORM_KINDS = new Set(['bolaoConfig', 'regrasPontuacao', 'criteriosDesempate', 'distribuicaoPremios']);
+const PROFILE_FORM_KINDS = new Set(['meuPerfil', 'minhaSenha']);
 
 const routes = [
-  { id: 'home', label: 'Home', subtitle: 'Resumo, ranking e proximos jogos.' },
+  { id: 'home', label: 'Placar', subtitle: 'Resumo, ranking e próximos jogos.' },
   { id: 'apostas', label: 'Apostas', subtitle: 'Registre seus palpites jogo a jogo.', roles: ['apostador'] },
-  { id: 'ranking', label: 'Ranking', subtitle: 'Pontuacao, desempates e premiacao.' },
-  { id: 'jogos', label: 'Jogos', subtitle: 'Calendario e resultados do bolao.' },
-  { id: 'regras', label: 'Regras', subtitle: 'Pontuacao, desempate e premios.' },
-  { id: 'notificacoes', label: 'Notificacoes', subtitle: 'Avisos do bolao.' },
-  { id: 'participantes', label: 'Participantes', subtitle: 'Gestao operacional do bolao.', admin: true },
-  { id: 'pagamentos', label: 'Pagamentos', subtitle: 'Controle financeiro das participacoes.', admin: true },
-  { id: 'fases', label: 'Fases', subtitle: 'Etapas e grupos do bolao.', admin: true },
-  { id: 'times', label: 'Times', subtitle: 'Selecoes e clubes disponiveis.', admin: true },
+  { id: 'ranking', label: 'Ranking', subtitle: 'Pontuação, desempates e premiação.' },
+  { id: 'jogos', label: 'Jogos', subtitle: 'Calendário e resultados do bolão.' },
+  { id: 'regras', label: 'Regras', subtitle: 'Pontuação, desempate e prêmios.' },
+  { id: 'notificacoes', label: 'Notificações', subtitle: 'Avisos do bolão.' },
+  { id: 'participantes', label: 'Participantes', subtitle: 'Gestão operacional do bolão.', admin: true },
+  { id: 'pagamentos', label: 'Pagamentos', subtitle: 'Controle financeiro das participações.', admin: true },
+  { id: 'fases', label: 'Fases', subtitle: 'Etapas e grupos do bolão.', admin: true },
+  { id: 'times', label: 'Times', subtitle: 'Seleções e clubes disponíveis.', admin: true },
   { id: 'partidas', label: 'Partidas', subtitle: 'Resultados e jogos cadastrados.', admin: true },
-  { id: 'boloes', label: 'Boloes', subtitle: 'Gestao geral de boloes.', owner: true },
-  { id: 'usuarios', label: 'Usuarios', subtitle: 'Proprietarios e administradores.', owner: true },
-  { id: 'configuracoes', label: 'Configuracoes', subtitle: 'Preferencias gerais da plataforma.', owner: true }
+  { id: 'boloes', label: 'Bolões', subtitle: 'Gestão geral de bolões.', owner: true },
+  { id: 'usuarios', label: 'Usuários', subtitle: 'Proprietários e administradores.', owner: true },
+  { id: 'configuracoes', label: 'Configurações', subtitle: 'Preferências gerais da plataforma.', owner: true },
+  { id: 'perfil', label: 'Meu perfil', subtitle: 'Atualize seus dados de acesso.', hidden: true }
 ];
 
 function escapeHtml(value) {
@@ -72,6 +75,14 @@ function showMessage(text, tone = 'warning') {
   message.textContent = text;
   message.dataset.tone = tone;
   window.setTimeout(() => { message.textContent = ''; }, 3600);
+}
+
+function roleLabelText() {
+  return ({
+    proprietario: 'Proprietário',
+    administrador: 'Administrador',
+    apostador: 'Apostador'
+  }[state.user.perfilGlobal] || 'Sessão');
 }
 
 function money(value) {
@@ -140,7 +151,7 @@ function currentRoute() {
 }
 
 function renderMenu() {
-  menu.innerHTML = routes.filter(routeAllowed).map((item) => `
+  menu.innerHTML = routes.filter((item) => !item.hidden && routeAllowed(item)).map((item) => `
     <button class="nav-item ${item.id === state.route ? 'active' : ''}" type="button" data-route="${item.id}">
       ${escapeHtml(item.label)}
     </button>
@@ -151,7 +162,9 @@ function renderChrome() {
   const route = currentRoute();
   pageTitle.textContent = route.label;
   pageSubtitle.textContent = state.activeBolaoNome || route.subtitle;
-  roleLabel.textContent = state.user.perfilGlobal || 'sessao';
+  roleLabel.textContent = roleLabelText();
+  shell.dataset.role = state.user.perfilGlobal || 'sessao';
+  profileButton.classList.toggle('active', state.route === 'perfil');
   renderMenu();
 
   if (state.boloes.length > 1) {
@@ -261,7 +274,7 @@ function getRankMedal(position) {
 
 async function loadBaseData() {
   if (!state.activeBolaoId && !isOwner()) {
-    content.innerHTML = empty('Nenhum bolao ativo encontrado para esta sessao.');
+    content.innerHTML = empty('Nenhum bolão ativo encontrado para esta sessão.');
     return false;
   }
 
@@ -303,7 +316,7 @@ async function renderHome() {
   content.innerHTML = `
     <section class="grid three">
       <article class="card">
-        <div class="card-title"><h2>Seu desempenho</h2><span class="pill">${escapeHtml(state.activeBolaoNome || 'Bolao')}</span></div>
+        <div class="card-title"><h2>Seu desempenho</h2><span class="pill">${escapeHtml(state.activeBolaoNome || 'Bolão')}</span></div>
         <div class="kpi">${escapeHtml(meuRanking.posicao || '-')}</div>
         <p class="muted">${escapeHtml(meuRanking.pontosAtuais ?? 0)} pontos no ranking</p>
       </article>
@@ -313,7 +326,7 @@ async function renderHome() {
         <p class="muted">${escapeHtml(dashboard?.participantesTotal || 0)} participantes</p>
       </article>
       <article class="card">
-        <div class="card-title"><h2>Ultimo resultado</h2></div>
+        <div class="card-title"><h2>Último resultado</h2></div>
         ${ultimoResultado ? `
           <strong>${escapeHtml(ultimoResultado.mandante)} ${ultimoResultado.placarOficial.mandante} x ${ultimoResultado.placarOficial.visitante} ${escapeHtml(ultimoResultado.visitante)}</strong>
           <p class="muted">Seu palpite: ${ultimoResultado.meuPalpite ? `${ultimoResultado.meuPalpite.mandante} x ${ultimoResultado.meuPalpite.visitante}` : 'sem aposta'}</p>
@@ -326,7 +339,7 @@ async function renderHome() {
         <div class="list">${ranking.slice(0, 3).map(renderRankingRow).join('') || empty('Ranking ainda vazio.')}</div>
       </article>
       <article class="card">
-        <div class="card-title"><h2>Proximos jogos</h2><button class="secondary" data-route="${isApostador() ? 'apostas' : 'jogos'}" type="button">${isApostador() ? 'Apostar' : 'Ver jogos'}</button></div>
+        <div class="card-title"><h2>Próximos jogos</h2><button class="secondary" data-route="${isApostador() ? 'apostas' : 'jogos'}" type="button">${isApostador() ? 'Apostar' : 'Ver jogos'}</button></div>
         <div class="list">${jogos.slice(0, 4).map(renderGameCard).join('') || empty('Nenhum jogo cadastrado.')}</div>
       </article>
     </section>
@@ -381,14 +394,14 @@ function renderRankingRow(item) {
 
 async function renderApostas() {
   if (!isApostador()) {
-    content.innerHTML = empty('Apostas ficam disponiveis apenas para apostadores.');
+    content.innerHTML = empty('Apostas ficam disponíveis apenas para apostadores.');
     return;
   }
   const apostas = await api(`/apostas/boloes/${state.activeBolaoId}/minhas`);
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Meus palpites</h2><span class="pill">salvamento automatico</span></div>
-      <div class="list">${apostas.map(renderBetCard).join('') || empty('Nenhum jogo disponivel para aposta.')}</div>
+      <div class="card-title"><h2>Meus palpites</h2><span class="pill">salvamento automático</span></div>
+      <div class="list">${apostas.map(renderBetCard).join('') || empty('Nenhum jogo disponível para aposta.')}</div>
     </section>
   `;
 }
@@ -397,7 +410,7 @@ function renderBetCard(aposta) {
   const canEdit = Boolean(aposta.podeAlterar);
   const left = aposta.meuPalpite?.mandante ?? '';
   const right = aposta.meuPalpite?.visitante ?? '';
-  const status = canEdit ? 'Salvo automaticamente' : (aposta.statusAposta === 'sem_aposta' ? 'Ainda nao disponivel' : 'Aposta encerrada');
+  const status = canEdit ? 'Salvo automaticamente' : (aposta.statusAposta === 'sem_aposta' ? 'Ainda não disponível' : 'Aposta encerrada');
   return `
     <article class="match-card" data-partida-id="${escapeHtml(aposta.partidaId)}">
       <div>
@@ -429,7 +442,7 @@ async function renderJogos() {
 
 async function renderRegras() {
   if (!state.activeBolaoId) {
-    content.innerHTML = `<section class="card">${empty('Selecione um bolao para visualizar regras.')}</section>`;
+    content.innerHTML = `<section class="card">${empty('Selecione um bolão para visualizar as regras.')}</section>`;
     return;
   }
 
@@ -441,9 +454,9 @@ async function renderRegras() {
   const regras = await api(`/ranking/boloes/${state.activeBolaoId}/regras`);
   const configuracao = regras.configuracaoBolao;
   const configRows = configuracao ? [
-    `Minutos de antecedencia: ${configuracao.minutosAntecedenciaAposta ?? 0}`,
-    `Tipo de distribuicao do premio: ${optionLabel(PRIZE_DISTRIBUTION_OPTIONS, configuracao.tipoDistribuicaoPremio, configuracao.tipoDistribuicaoPremio)}`,
-    configuracao.observacoesRegras ? `Observacoes: ${configuracao.observacoesRegras}` : null
+    `Minutos de antecedência: ${configuracao.minutosAntecedenciaAposta ?? 0}`,
+    `Tipo de distribuição do prêmio: ${optionLabel(PRIZE_DISTRIBUTION_OPTIONS, configuracao.tipoDistribuicaoPremio, configuracao.tipoDistribuicaoPremio)}`,
+    configuracao.observacoesRegras ? `Observações: ${configuracao.observacoesRegras}` : null
   ].filter(Boolean) : [];
 
   const regrasRows = (regras.regrasPontuacao || []).map((item) => ({
@@ -455,30 +468,30 @@ async function renderRegras() {
     subtitle: `${item.descricao} - ordem ${item.ordem}`
   }));
   const premiosRows = (regras.distribuicaoPremios || []).map((item) => ({
-    title: `${item.posicao} lugar`,
-    subtitle: `${item.percentual}% - ${item.descricao || 'sem descricao'}`
+    title: `${item.posicao}º lugar`,
+    subtitle: `${item.percentual}% - ${item.descricao || 'sem descrição'}`
   }));
 
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Configuracao do bolao</h2><span class="pill">somente leitura</span></div>
+      <div class="card-title"><h2>Configuração do bolão</h2><span class="pill">somente leitura</span></div>
       <div class="list">
-        ${configRows.map((text) => `<article class="row-card"><div><strong>${escapeHtml(text)}</strong></div></article>`).join('') || empty('Nenhuma configuracao principal ativa para este bolao.')}
+        ${configRows.map((text) => `<article class="row-card"><div><strong>${escapeHtml(text)}</strong></div></article>`).join('') || empty('Nenhuma configuração principal ativa para este bolão.')}
       </div>
     </section>
 
     <section class="grid three">
       <article class="card">
-        <div class="card-title"><h2>Regras de pontuacao</h2></div>
-        <div class="list">${regrasRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhuma regra de pontuacao ativa.')}</div>
+        <div class="card-title"><h2>Regras de pontuação</h2></div>
+        <div class="list">${regrasRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhuma regra de pontuação ativa.')}</div>
       </article>
       <article class="card">
         <div class="card-title"><h2>Critérios de desempate</h2></div>
-        <div class="list">${criteriosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhum criterio de desempate ativo.')}</div>
+        <div class="list">${criteriosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhum critério de desempate ativo.')}</div>
       </article>
       <article class="card">
-        <div class="card-title"><h2>Distribuicao de premios</h2></div>
-        <div class="list">${premiosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhuma distribuicao de premios ativa.')}</div>
+        <div class="card-title"><h2>Distribuição de prêmios</h2></div>
+        <div class="list">${premiosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhuma distribuição de prêmios ativa.')}</div>
       </article>
     </section>
   `;
@@ -486,16 +499,16 @@ async function renderRegras() {
 
 async function renderNotificacoes() {
   if (!state.activeBolaoId) {
-    content.innerHTML = `<section class="card">${empty('Selecione um bolao para visualizar notificacoes.')}</section>`;
+    content.innerHTML = `<section class="card">${empty('Selecione um bolão para visualizar as notificações.')}</section>`;
     return;
   }
 
   const path = isApostador() ? `/notificacoes/boloes/${state.activeBolaoId}/minhas` : `/notificacoes/boloes/${state.activeBolaoId}`;
   const rows = await api(path);
   const emptyMessage = isApostador()
-    ? 'Voce ainda nao possui notificacoes neste bolao.'
-    : 'Nao ha notificacoes registradas para o bolao selecionado.';
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>Notificacoes</h2><span class="pill">${escapeHtml(state.activeBolaoNome || 'bolao')}</span></div><div class="list">${rows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.titulo)}</strong><p class="muted">${escapeHtml(item.mensagem || item.tipo || '')}</p></div><span class="pill">${escapeHtml(item.status || '')}</span></article>`).join('') || empty(emptyMessage)}</div></section>`;
+    ? 'Você ainda não possui notificações neste bolão.'
+    : 'Não há notificações registradas para o bolão selecionado.';
+  content.innerHTML = `<section class="card"><div class="card-title"><h2>Notificações</h2><span class="pill">${escapeHtml(state.activeBolaoNome || 'bolão')}</span></div><div class="list">${rows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.titulo)}</strong><p class="muted">${escapeHtml(item.mensagem || item.tipo || '')}</p></div><span class="pill">${escapeHtml(item.status || '')}</span></article>`).join('') || empty(emptyMessage)}</div></section>`;
 }
 
 function editableRow(kind, row, title, subtitle, badge = '') {
@@ -510,6 +523,61 @@ function editableRow(kind, row, title, subtitle, badge = '') {
         <button class="secondary" type="button" data-edit-kind="${kind}" data-id="${escapeHtml(row.id)}">Editar</button>
       </div>
     </article>
+  `;
+}
+
+function regraActions(row, index, rows) {
+  const buttons = [];
+  if (index > 0) {
+    buttons.push(`<button class="ghost" type="button" data-move-rule="up" data-id="${escapeHtml(row.id)}">Subir</button>`);
+  }
+  if (index < rows.length - 1) {
+    buttons.push(`<button class="ghost" type="button" data-move-rule="down" data-id="${escapeHtml(row.id)}">Descer</button>`);
+  }
+  buttons.push(`<button class="secondary" type="button" data-edit-kind="regrasPontuacao" data-id="${escapeHtml(row.id)}">Editar</button>`);
+  return buttons.join('');
+}
+
+function regraRow(row, index, rows) {
+  return `
+    <article class="row-card">
+      <div>
+        <strong>${escapeHtml(optionLabel(SCORE_RULE_OPTIONS, row.codigo, row.codigo))}</strong>
+        <p class="muted">${escapeHtml(`${row.descricao} - ${row.pontos} pts - prioridade ${row.prioridade}`)}</p>
+      </div>
+      <div class="actions">
+        <span class="pill">${escapeHtml(row.ativo ? 'ativo' : 'inativo')}</span>
+        ${regraActions(row, index, rows)}
+      </div>
+    </article>
+  `;
+}
+
+async function renderMeuPerfil() {
+  const perfil = await api('/auth/meu-perfil');
+  state.data.meuPerfil = perfil;
+  content.innerHTML = `
+    <section class="grid two">
+      <article class="card">
+        <div class="card-title"><h2>Meus dados</h2><span class="pill">${escapeHtml(roleLabelText())}</span></div>
+        <form class="form-grid" data-crud-form="meuPerfil">
+          <label>Nome <input name="nome" value="${escapeHtml(perfil.nome || '')}" required></label>
+          <label>Email <input name="email" type="email" value="${escapeHtml(perfil.email || '')}" readonly></label>
+          <div class="form-actions"><button type="submit">Salvar dados</button></div>
+          ${scopedMessage('meuPerfil')}
+        </form>
+      </article>
+      <article class="card">
+        <div class="card-title"><h2>Trocar senha</h2></div>
+        <form class="form-grid" data-crud-form="minhaSenha">
+          <label>Senha atual <input name="senhaAtual" type="password" required></label>
+          <label>Nova senha <input name="novaSenha" type="password" required></label>
+          <label>Confirmar nova senha <input name="confirmarNovaSenha" type="password" required></label>
+          <div class="form-actions"><button type="submit">Atualizar senha</button></div>
+          ${scopedMessage('minhaSenha')}
+        </form>
+      </article>
+    </section>
   `;
 }
 
@@ -556,7 +624,7 @@ async function renderUsuariosOwner() {
         <label>Perfil
           <select name="perfil">
             <option value="administrador">administrador</option>
-            <option value="proprietario">proprietario</option>
+            <option value="proprietario">proprietário</option>
           </select>
         </label>
         <label>Status
@@ -759,7 +827,7 @@ async function renderPartidasAdmin() {
   };
   const partidaSubtitle = (row) => {
     const fase = findById(fases, row.faseId)?.nome || 'sem fase';
-    return `${fase} - ${dateTime(row.dataHora)} - ${row.estadio || 'sem estadio'}`;
+    return `${fase} - ${dateTime(row.dataHora)} - ${row.estadio || 'sem estádio'}`;
   };
   content.innerHTML = `
     <section class="card">
@@ -807,83 +875,84 @@ async function renderRegrasAdmin() {
 
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Configuracao do bolao</h2><span class="pill">administração</span></div>
+      <div class="card-title"><h2>Configuração do bolão</h2><span class="pill">administração</span></div>
       <form class="form-card" data-crud-form="bolaoConfig">
         <input name="id" type="hidden" value="${escapeHtml(configuracao.id || '')}">
-        <label>Minutos antecedencia <input name="minutosAntecedenciaAposta" type="number" min="0" value="${escapeHtml(configuracao.minutosAntecedenciaAposta ?? 0)}"></label>
+        <label>Minutos de antecedência da aposta <input name="minutosAntecedenciaAposta" type="number" min="0" value="${escapeHtml(configuracao.minutosAntecedenciaAposta ?? 0)}"></label>
         <label>Tipo de distribuição do prêmio
           <select name="tipoDistribuicaoPremio">
             ${staticOptionList(PRIZE_DISTRIBUTION_OPTIONS, configuracao.tipoDistribuicaoPremio || 'percentual')}
           </select>
         </label>
-        <label>Observacoes <textarea name="observacoesRegras">${escapeHtml(configuracao.observacoesRegras || '')}</textarea></label>
+        <label>Observações <textarea name="observacoesRegras">${escapeHtml(configuracao.observacoesRegras || '')}</textarea></label>
         <label>Ativo
           <select name="ativo">
             <option value="true" ${configuracao.ativo !== false ? 'selected' : ''}>sim</option>
-            <option value="false" ${configuracao.ativo === false ? 'selected' : ''}>nao</option>
+            <option value="false" ${configuracao.ativo === false ? 'selected' : ''}>não</option>
           </select>
         </label>
-        <div class="form-actions"><button type="submit">Salvar configuracao</button></div>
+        <div class="form-actions"><button type="submit">Salvar configuração</button></div>
         ${scopedMessage('bolaoConfig')}
       </form>
     </section>
 
     <section class="grid three">
       <article class="card">
-        <div class="card-title"><h2>Regras de pontuacao</h2></div>
+        <div class="card-title"><h2>Regras de pontuação</h2></div>
         <form class="form-grid" data-crud-form="regrasPontuacao">
           <input name="id" type="hidden">
-          <label>Codigo
+          <label>Código
             <select name="codigo" required>
               <option value="">Selecione</option>
               ${staticOptionList(SCORE_RULE_OPTIONS)}
             </select>
           </label>
-          <label>Descricao <input name="descricao" required></label>
+          <label>Descrição <input name="descricao" required></label>
           <label>Pontos <input name="pontos" type="number" min="0" required></label>
-          <label>Prioridade <input name="prioridade" type="number" min="0" value="0"></label>
-          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
+          <label>Prioridade (1 = mais importante) <input name="prioridade" type="number" min="1" value="1" required></label>
+          <p class="help-text">A pontuação não é cumulativa. Quando mais de uma regra se aplicar, vale a regra com maior prioridade.</p>
+          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">não</option></select></label>
           <div class="form-actions"><button type="submit">Salvar regra</button><button class="ghost" type="button" data-reset-form="regrasPontuacao">Nova</button></div>
           ${scopedMessage('regrasPontuacao')}
         </form>
       </article>
 
       <article class="card">
-        <div class="card-title"><h2>Desempate</h2></div>
+        <div class="card-title"><h2>Critérios de desempate</h2></div>
         <form class="form-grid" data-crud-form="criteriosDesempate">
           <input name="id" type="hidden">
-          <label>Codigo
+          <label>Código
             <select name="codigo" required>
               <option value="">Selecione</option>
               ${staticOptionList(TIEBREAKER_OPTIONS)}
             </select>
           </label>
-          <label>Descricao <input name="descricao" required></label>
+          <label>Descrição <input name="descricao" required></label>
           <label>Ordem <input name="ordem" type="number" min="1" value="1" required></label>
-          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
-          <div class="form-actions"><button type="submit">Salvar criterio</button><button class="ghost" type="button" data-reset-form="criteriosDesempate">Novo</button></div>
+          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">não</option></select></label>
+          <div class="form-actions"><button type="submit">Salvar critério</button><button class="ghost" type="button" data-reset-form="criteriosDesempate">Novo</button></div>
           ${scopedMessage('criteriosDesempate')}
         </form>
       </article>
 
       <article class="card">
-        <div class="card-title"><h2>Premiacao</h2></div>
+        <div class="card-title"><h2>Distribuição de prêmios</h2></div>
         <form class="form-grid" data-crud-form="distribuicaoPremios">
           <input name="id" type="hidden">
-          <label>Posicao <input name="posicao" type="number" min="1" required></label>
+          <label>Posição <input name="posicao" type="number" min="1" required></label>
           <label>Percentual <input name="percentual" type="number" min="0" max="100" step="0.01" required></label>
-          <label>Descricao <input name="descricao"></label>
-          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
-          <div class="form-actions"><button type="submit">Salvar premio</button><button class="ghost" type="button" data-reset-form="distribuicaoPremios">Novo</button></div>
+          <label>Descrição <input name="descricao"></label>
+          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">não</option></select></label>
+          <div class="form-actions"><button type="submit">Salvar prêmio</button><button class="ghost" type="button" data-reset-form="distribuicaoPremios">Novo</button></div>
           ${scopedMessage('distribuicaoPremios')}
         </form>
       </article>
     </section>
 
     <section class="grid three">
-      <article class="card"><div class="card-title"><h3>Regras cadastradas</h3></div><div class="list">${regras.map((row) => editableRow('regrasPontuacao', row, row.codigo, `${row.descricao} - ${row.pontos} pts - prioridade ${row.prioridade}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhuma regra configurada. Use o formulario acima para cadastrar.')}</div></article>
-      <article class="card"><div class="card-title"><h3>Critérios cadastrados</h3></div><div class="list">${criterios.map((row) => editableRow('criteriosDesempate', row, row.codigo, `${row.descricao} - ordem ${row.ordem}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhum criterio configurado. Use o formulario acima para cadastrar.')}</div></article>
-      <article class="card"><div class="card-title"><h3>Prêmios cadastrados</h3></div><div class="list">${premios.map((row) => editableRow('distribuicaoPremios', row, `${row.posicao} lugar`, `${row.percentual}% - ${row.descricao || ''}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhuma premiacao configurada. Use o formulario acima para cadastrar.')}</div></article>
+      <article class="card"><div class="card-title"><h3>Regras cadastradas</h3></div><div class="list">${regras.map((row, index) => regraRow(row, index, regras)).join('') || empty('Nenhuma regra configurada. Use o formulário acima para cadastrar.')}</div></article>
+      <article class="card"><div class="card-title"><h3>Critérios cadastrados</h3></div><div class="list">${criterios.map((row) => editableRow('criteriosDesempate', row, optionLabel(TIEBREAKER_OPTIONS, row.codigo, row.codigo), `${row.descricao} - ordem ${row.ordem}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhum critério configurado. Use o formulário acima para cadastrar.')}</div></article>
+      <article class="card"><div class="card-title"><h3>Prêmios cadastrados</h3></div><div class="list">${premios.map((row) => editableRow('distribuicaoPremios', row, `${row.posicao}º lugar`, `${row.percentual}% - ${row.descricao || ''}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhuma premiação configurada. Use o formulário acima para cadastrar.')}</div></article>
     </section>
   `;
 }
@@ -892,21 +961,43 @@ async function renderConfiguracoesOwner() {
   const config = await api('/proprietario/configuracoes-gerais').catch(() => ({}));
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Configuracoes gerais</h2><span class="pill">plataforma</span></div>
+      <div class="card-title"><h2>Configurações gerais</h2><span class="pill">plataforma</span></div>
       <form class="form-card" data-crud-form="configuracoesGerais">
-        <label>Tempo de sessao (segundos) <input name="tempoSessao" type="number" min="1" value="${escapeHtml(config.tempoSessao || '')}"></label>
+        <label>Tempo de sessão (segundos) <input name="tempoSessao" type="number" min="1" value="${escapeHtml(config.tempoSessao || '')}"></label>
         <label>Email remetente <input name="emailRemetente" type="email" value="${escapeHtml(config.emailRemetente || '')}"></label>
-        <label>Notificacoes ativas
+        <label>Notificações ativas
           <select name="notificacoesAtivas">
             <option value="true" ${config.notificacoesAtivas !== false ? 'selected' : ''}>sim</option>
-            <option value="false" ${config.notificacoesAtivas === false ? 'selected' : ''}>nao</option>
+            <option value="false" ${config.notificacoesAtivas === false ? 'selected' : ''}>não</option>
           </select>
         </label>
-        <label>Gateway pagamento <input name="gatewayPagamento" value="${escapeHtml(config.gatewayPagamento || '')}"></label>
-        <div class="form-actions"><button type="submit">Salvar configuracoes</button></div>
+        <label>Gateway de pagamento <input name="gatewayPagamento" value="${escapeHtml(config.gatewayPagamento || '')}"></label>
+        <div class="form-actions"><button type="submit">Salvar configurações</button></div>
       </form>
     </section>
   `;
+}
+
+async function moveRulePriority(regraId, direction) {
+  const regras = [...(state.data.regrasPontuacao || [])];
+  const index = regras.findIndex((row) => row.id === regraId);
+  if (index === -1) return;
+
+  const neighborIndex = direction === 'up' ? index - 1 : index + 1;
+  if (!regras[neighborIndex]) return;
+
+  const [current] = regras.splice(index, 1);
+  regras.splice(neighborIndex, 0, current);
+
+  for (const [position, regra] of regras.entries()) {
+    await api(`/configuracoes-bolao/${state.activeBolaoId}/regras-pontuacao/${regra.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...regra, prioridade: position + 1 })
+    });
+  }
+
+  state.formMessages.regrasPontuacao = { text: 'Prioridade atualizada com sucesso.', tone: 'success' };
+  await navigate('regras');
 }
 
 const renderers = {
@@ -923,7 +1014,8 @@ const renderers = {
   partidas: renderPartidasAdmin,
   boloes: renderBoloesOwner,
   usuarios: renderUsuariosOwner,
-  configuracoes: renderConfiguracoesOwner
+  configuracoes: renderConfiguracoesOwner,
+  perfil: renderMeuPerfil
 };
 
 async function navigate(routeId) {
@@ -959,6 +1051,10 @@ async function submitCrud(kind, form) {
     clearFormMessage(kind);
   }
 
+  if (PROFILE_FORM_KINDS.has(kind)) {
+    clearFormMessage(kind);
+  }
+
   if (kind === 'configuracoesGerais') {
     if (data.notificacoesAtivas !== undefined) {
       data.notificacoesAtivas = data.notificacoesAtivas === 'true';
@@ -967,8 +1063,33 @@ async function submitCrud(kind, form) {
       method: 'PUT',
       body: JSON.stringify(data)
     });
-    showMessage('Configuracoes salvas.');
+    showMessage('Configurações salvas.');
     await navigate(state.route);
+    return;
+  }
+
+  if (kind === 'meuPerfil') {
+    const updated = await api('/auth/meu-perfil', {
+      method: 'PUT',
+      body: JSON.stringify({ nome: data.nome })
+    });
+    state.user = { ...state.user, nome: updated.nome, email: updated.email };
+    localStorage.setItem('placar.user', JSON.stringify(state.user));
+    state.formMessages.meuPerfil = { text: 'Dados atualizados com sucesso.', tone: 'success' };
+    await navigate('perfil');
+    return;
+  }
+
+  if (kind === 'minhaSenha') {
+    if ((data.novaSenha || '') !== (data.confirmarNovaSenha || '')) {
+      throw new Error('A confirmação da nova senha não confere.');
+    }
+    await api('/auth/minha-senha', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    state.formMessages.minhaSenha = { text: 'Senha atualizada com sucesso.', tone: 'success' };
+    await navigate('perfil');
     return;
   }
 
@@ -1082,6 +1203,14 @@ content.addEventListener('click', (event) => {
     return;
   }
 
+  const moveRuleButton = event.target.closest('[data-move-rule]');
+  if (moveRuleButton) {
+    moveRulePriority(moveRuleButton.dataset.id, moveRuleButton.dataset.moveRule).catch((error) => {
+      setFormMessage('regrasPontuacao', error.message, 'error');
+    });
+    return;
+  }
+
   const resetButton = event.target.closest('[data-reset-form]');
   if (resetButton) {
     clearForm(resetButton.dataset.resetForm);
@@ -1094,7 +1223,7 @@ content.addEventListener('submit', (event) => {
   if (!form) return;
   event.preventDefault();
   submitCrud(form.dataset.crudForm, form).catch((error) => {
-    if (RULE_FORM_KINDS.has(form.dataset.crudForm)) {
+    if (RULE_FORM_KINDS.has(form.dataset.crudForm) || PROFILE_FORM_KINDS.has(form.dataset.crudForm)) {
       setFormMessage(form.dataset.crudForm, error.message, 'error');
       return;
     }
@@ -1115,6 +1244,10 @@ document.querySelector('#logoutButton').addEventListener('click', () => {
   redirectLogin();
 });
 
+profileButton.addEventListener('click', () => {
+  navigate('perfil');
+});
+
 bolaoSelect.addEventListener('change', () => {
   switchBolao(bolaoSelect.value).catch((error) => showMessage(error.message));
 });
@@ -1127,7 +1260,7 @@ content.addEventListener('input', (event) => {
   const partidaId = card?.dataset.partidaId;
   const status = card.querySelector('[data-save-status]');
   if (!partidaId) {
-    status.textContent = 'Nao foi possivel identificar a partida.';
+    status.textContent = 'Não foi possível identificar a partida.';
     return;
   }
   status.textContent = 'Salvando...';

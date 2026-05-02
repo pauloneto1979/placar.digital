@@ -20,6 +20,26 @@ async function findUserByEmail(email) {
   return result.rows[0] || null;
 }
 
+async function findUserById(usuarioId) {
+  const result = await query(
+    `
+      select
+        id,
+        nome,
+        email,
+        senha_hash,
+        perfil_global,
+        ativo
+      from usuarios
+      where id = $1
+      limit 1
+    `,
+    [usuarioId]
+  );
+
+  return result.rows[0] || null;
+}
+
 async function listUserBoloes(usuarioId) {
   const result = await query(
     `
@@ -141,6 +161,34 @@ async function updateLastLogin(usuarioId) {
   await query('update usuarios set ultimo_login_at = now() where id = $1', [usuarioId]);
 }
 
+async function updateProfile(usuarioId, nome) {
+  const result = await query(
+    `
+      update usuarios
+      set nome = $2
+      where id = $1
+      returning id, nome, email, senha_hash, perfil_global, ativo
+    `,
+    [usuarioId, nome]
+  );
+
+  return result.rows[0] || null;
+}
+
+async function updatePasswordHash(usuarioId, senhaHash) {
+  const result = await query(
+    `
+      update usuarios
+      set senha_hash = $2
+      where id = $1
+      returning id, nome, email, senha_hash, perfil_global, ativo
+    `,
+    [usuarioId, senhaHash]
+  );
+
+  return result.rows[0] || null;
+}
+
 async function createAuditLog(data) {
   await query(
     `
@@ -179,10 +227,13 @@ const authRepository = {
     };
   },
   findUserByEmail,
+  findUserById,
   listUserBoloes,
   findUserBolao,
   findBolaoById,
   updateLastLogin,
+  updateProfile,
+  updatePasswordHash,
   createAuditLog
 };
 

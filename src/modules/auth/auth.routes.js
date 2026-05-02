@@ -13,6 +13,9 @@ authRoutes.post('/login', authController.login);
 authRoutes.post('/selecionar-bolao', authController.selectBolao);
 authRoutes.post('/trocar-bolao', authMiddleware, authController.switchBolao);
 authRoutes.get('/me', authMiddleware, authController.me);
+authRoutes.get('/meu-perfil', authMiddleware, authController.meuPerfil);
+authRoutes.put('/meu-perfil', authMiddleware, authController.updateMeuPerfil);
+authRoutes.put('/minha-senha', authMiddleware, authController.updateMinhaSenha);
 
 module.exports = {
   authRoutes

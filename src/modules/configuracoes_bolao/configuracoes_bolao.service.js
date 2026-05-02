@@ -122,8 +122,8 @@ function createConfiguracoesBolaoService(repository) {
       throw new HttpError(400, 'invalid_score_points', 'pontos deve ser inteiro maior ou igual a zero.');
     }
 
-    if (!Number.isInteger(prioridade) || prioridade < 0) {
-      throw new HttpError(400, 'invalid_score_priority', 'prioridade deve ser inteiro maior ou igual a zero.');
+    if (!Number.isInteger(prioridade) || prioridade <= 0) {
+      throw new HttpError(400, 'invalid_score_priority', 'prioridade deve ser inteiro maior que zero.');
     }
 
     return {
@@ -135,7 +135,7 @@ function createConfiguracoesBolaoService(repository) {
       tipo: RULE_CODE_TO_TYPE[codigo] || 'bonus',
       criterios: {
         naoCumulativa: true,
-        desempateEntreRegras: 'maior_prioridade_depois_maior_pontuacao'
+        desempateEntreRegras: 'menor_prioridade_depois_maior_pontuacao'
       },
       ativo: parseBoolean(payload.ativo, true)
     };

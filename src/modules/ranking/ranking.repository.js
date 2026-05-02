@@ -26,7 +26,7 @@ async function listRegrasPontuacao(bolaoId) {
       select id, codigo, pontos, prioridade
       from regras_pontuacao
       where bolao_id = $1 and ativo = true
-      order by prioridade desc, pontos desc
+      order by prioridade asc, pontos desc
     `,
     [bolaoId]
   );
@@ -367,7 +367,7 @@ async function getRankingAtual(bolaoId) {
 async function getRegrasVisiveis(bolaoId) {
   const [config, regras, criterios, premios] = await Promise.all([
     query('select minutos_antecedencia_aposta, tipo_distribuicao_premio, observacoes_regras from configuracoes_principais_bolao where bolao_id = $1 and ativo = true limit 1', [bolaoId]),
-    query('select codigo, descricao, pontos, prioridade from regras_pontuacao where bolao_id = $1 and ativo = true order by prioridade desc, pontos desc', [bolaoId]),
+    query('select codigo, descricao, pontos, prioridade from regras_pontuacao where bolao_id = $1 and ativo = true order by prioridade asc, pontos desc', [bolaoId]),
     query('select codigo, descricao, ordem from criterios_desempate where bolao_id = $1 and ativo = true order by ordem asc', [bolaoId]),
     query('select posicao, percentual, descricao from distribuicao_premios where bolao_id = $1 and ativo = true order by posicao asc', [bolaoId])
   ]);

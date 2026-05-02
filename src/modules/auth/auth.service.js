@@ -1,6 +1,6 @@
 const { env } = require('../../config/env');
 const { HttpError } = require('../../shared/errors/http-error');
-const { verifyPassword } = require('../../shared/utils/password');
+const { hashPassword, verifyPassword } = require('../../shared/utils/password');
 const { sign, verify } = require('../../shared/utils/token');
 
 function sanitizeUser(user) {
@@ -66,6 +66,7 @@ function createAuthService(repository) {
       {
         type: 'access',
         usuarioId: user.id,
+        nome: user.nome,
         email: user.email,
         perfilGlobal: user.perfil_global,
         bolaoId: selectedBolao ? selectedBolao.id : null,
@@ -268,6 +269,7 @@ function createAuthService(repository) {
         status: 'authenticated',
         user: {
           id: auth.usuarioId,
+          nome: auth.nome,
           email: auth.email,
           perfilGlobal: auth.perfilGlobal
         },
@@ -280,6 +282,81 @@ function createAuthService(repository) {
             }
           : null
       };
+    },
+
+    async getMeuPerfil(auth) {
+      const user = await repository.findUserById(auth.usuarioId);
+      if (!user || !user.ativo) {
+        throw new HttpError(401, 'invalid_session', 'Sessao invalida.');
+      }
+
+      return sanitizeUser(user);
+    },
+
+    async updateMeuPerfil(payload, auth, context = {}) {
+      const user = await repository.findUserById(auth.usuarioId);
+      if (!user || !user.ativo) {
+        throw new HttpError(401, 'invalid_session', 'Sessao invalida.');
+      }
+
+      const nome = String(payload.nome || '').trim();
+      if (!nome) {
+        throw new HttpError(400, 'invalid_profile_name', 'Nome e obrigatorio.');
+      }
+
+      const updated = await repository.updateProfile(user.id, nome);
+      await audit({
+        usuarioId: user.id,
+        entidade: 'usuarios',
+        entidadeId: user.id,
+        acao: 'auth.meu_perfil.atualizado',
+        dadosAnteriores: { nome: user.nome, email: user.email },
+        dadosNovos: { nome: updated.nome, email: updated.email },
+        ip: context.ip,
+        userAgent: context.userAgent
+      });
+
+      return sanitizeUser(updated);
+    },
+
+    async updateMinhaSenha(payload, auth, context = {}) {
+      const user = await repository.findUserById(auth.usuarioId);
+      if (!user || !user.ativo) {
+        throw new HttpError(401, 'invalid_session', 'Sessao invalida.');
+      }
+
+      const senhaAtual = payload.senhaAtual || payload.senha_atual || payload.currentPassword || '';
+      const novaSenha = payload.novaSenha || payload.nova_senha || payload.newPassword || '';
+      const confirmarNovaSenha = payload.confirmarNovaSenha || payload.confirmar_nova_senha || payload.confirmPassword || '';
+
+      if (!senhaAtual || !novaSenha || !confirmarNovaSenha) {
+        throw new HttpError(400, 'invalid_password_payload', 'Senha atual, nova senha e confirmacao sao obrigatorias.');
+      }
+
+      if (!verifyPassword(senhaAtual, user.senha_hash)) {
+        throw new HttpError(400, 'invalid_current_password', 'Senha atual invalida.');
+      }
+
+      if (novaSenha.length < 6) {
+        throw new HttpError(400, 'invalid_new_password', 'A nova senha deve ter pelo menos 6 caracteres.');
+      }
+
+      if (novaSenha !== confirmarNovaSenha) {
+        throw new HttpError(400, 'password_confirmation_mismatch', 'A confirmacao da nova senha nao confere.');
+      }
+
+      await repository.updatePasswordHash(user.id, hashPassword(novaSenha));
+      await audit({
+        usuarioId: user.id,
+        entidade: 'usuarios',
+        entidadeId: user.id,
+        acao: 'auth.minha_senha.atualizada',
+        dadosNovos: { senhaAlterada: true },
+        ip: context.ip,
+        userAgent: context.userAgent
+      });
+
+      return { success: true };
     }
   };
 }

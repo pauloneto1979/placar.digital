@@ -173,6 +173,13 @@ label {
   margin: 6px 0 0;
 }
 
+.help-text {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: -6px 0 4px;
+}
+
 .select-grid {
   display: grid;
   gap: 14px;
@@ -228,6 +235,10 @@ label {
   font-size: 15px;
 }
 
+.brand-copy {
+  min-width: 0;
+}
+
 .brand span {
   color: var(--accent);
   font-size: 11px;
@@ -256,11 +267,6 @@ label {
   color: var(--text);
 }
 
-.sidebar-footer {
-  display: grid;
-  gap: 12px;
-}
-
 .bolao-switcher {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
@@ -283,6 +289,25 @@ label {
   gap: 14px;
   grid-template-columns: auto 1fr auto;
   margin-bottom: 22px;
+}
+
+.topbar-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.topbar-actions .ghost.active {
+  background: rgba(33, 212, 253, 0.14);
+  border-color: rgba(33, 212, 253, 0.26);
+  color: var(--text);
+}
+
+.bolao-switcher-top {
+  min-width: 220px;
+  padding: 10px 12px;
 }
 
 .hamburger {
@@ -311,6 +336,16 @@ label {
 .page-title p {
   color: var(--muted);
   margin: 6px 0 0;
+}
+
+.app-shell[data-role="apostador"] .brand img {
+  box-shadow: 0 0 0 1px rgba(200, 255, 46, 0.2), 0 18px 34px rgba(0, 0, 0, 0.28);
+  height: 72px;
+  width: 104px;
+}
+
+.app-shell[data-role="apostador"] .brand-copy {
+  display: none;
 }
 
 .content {
@@ -451,6 +486,10 @@ label {
   gap: 10px;
 }
 
+.row-card .actions {
+  justify-content: flex-end;
+}
+
 .form-actions {
   align-self: end;
 }
@@ -499,8 +538,9 @@ label {
     grid-template-columns: auto 1fr;
   }
 
-  .topbar .ghost {
+  .topbar-actions {
     grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 
   .ranking-row {

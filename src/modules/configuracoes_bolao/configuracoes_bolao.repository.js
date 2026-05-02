@@ -163,7 +163,7 @@ async function listRegras(bolaoId, includeInactive = false) {
       from regras_pontuacao
       where bolao_id = $1
         and ($2 = true or ativo = true)
-      order by prioridade desc, pontos desc, codigo asc
+      order by prioridade asc, pontos desc, codigo asc
     `,
     [bolaoId, includeInactive]
   );
