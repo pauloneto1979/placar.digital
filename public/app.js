@@ -77,7 +77,9 @@ function redirectLogin() {
 function saveAuth(result) {
   state.token = result.accessToken || state.token;
   state.user = result.user || state.user;
-  state.boloes = result.boloes || state.boloes;
+  if (Array.isArray(result.boloes) && result.boloes.length > 0) {
+    state.boloes = result.boloes;
+  }
   state.activeBolaoId = result.selectedBolao?.id || state.activeBolaoId;
   state.activeBolaoNome = result.selectedBolao?.nome || state.activeBolaoNome;
   localStorage.setItem('placar.token', state.token);
@@ -151,6 +153,10 @@ function optionList(rows, valueKey = 'id', labelKey = 'nome', selected = '') {
   `).join('');
 }
 
+function findById(rows, id) {
+  return rows.find((row) => row.id === id) || null;
+}
+
 function dateTimeInput(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -210,6 +216,10 @@ async function loadBaseData() {
     if (!state.activeBolaoId && state.boloes.length) {
       state.activeBolaoId = state.boloes[0].id;
       state.activeBolaoNome = state.boloes[0].nome;
+    }
+    const active = state.boloes.find((bolao) => bolao.id === state.activeBolaoId);
+    if (active) {
+      state.activeBolaoNome = active.nome;
     }
     localStorage.setItem('placar.boloes', JSON.stringify(state.boloes));
     localStorage.setItem('placar.activeBolaoId', state.activeBolaoId || '');
@@ -277,10 +287,17 @@ function currentParticipanteId() {
 function renderGameCard(game) {
   const mandante = game.mandante?.nome || game.mandante || game.timeMandante || 'Mandante';
   const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || 'Visitante';
+  const placarMandante = game.placarMandante ?? game.placar_mandante;
+  const placarVisitante = game.placarVisitante ?? game.placar_visitante;
+  const hasScore = placarMandante !== null && placarMandante !== undefined && placarVisitante !== null && placarVisitante !== undefined;
   return `
     <article class="match-card">
       <div>
-        <div class="team-line"><strong>${escapeHtml(mandante)}</strong><span class="score">x</span><strong>${escapeHtml(visitante)}</strong></div>
+        <div class="team-line">
+          <strong>${escapeHtml(mandante)}</strong>
+          <span class="score">${hasScore ? `${escapeHtml(placarMandante)} x ${escapeHtml(placarVisitante)}` : 'x'}</span>
+          <strong>${escapeHtml(visitante)}</strong>
+        </div>
         <p class="muted">${escapeHtml(game.fase || game.faseNome || '')} ${dateTime(game.dataHora || game.inicioAt || game.inicio_at)} - ${escapeHtml(game.status || '')}</p>
       </div>
       <span class="pill">${escapeHtml(game.estadio || 'jogo')}</span>
@@ -351,19 +368,37 @@ async function renderJogos() {
 }
 
 async function renderRegras() {
+  if (!state.activeBolaoId) {
+    content.innerHTML = `<section class="card">${empty('Selecione um bolao para visualizar regras.')}</section>`;
+    return;
+  }
+
+  if (isAdmin()) {
+    await renderRegrasAdmin();
+    return;
+  }
+
   const regras = await api(`/apostas/boloes/${state.activeBolaoId}/regras`);
   const rows = [
-    ...(regras.regrasPontuacao || []).map((item) => `Pontuacao · ${item.codigo} · ${item.pontos} pts`),
-    ...(regras.criteriosDesempate || []).map((item) => `Desempate · ${item.codigo}`),
-    ...(regras.distribuicaoPremios || []).map((item) => `Premio · ${item.posicao} lugar · ${item.percentual}%`)
+    ...(regras.regrasPontuacao || []).map((item) => `Pontuacao - ${item.codigo} - ${item.pontos} pts`),
+    ...(regras.criteriosDesempate || []).map((item) => `Desempate - ${item.codigo}`),
+    ...(regras.distribuicaoPremios || []).map((item) => `Premio - ${item.posicao} lugar - ${item.percentual}%`)
   ];
   content.innerHTML = `<section class="card"><div class="card-title"><h2>Regras do bolao</h2></div><div class="list">${rows.map((text) => `<article class="row-card"><strong>${escapeHtml(text)}</strong></article>`).join('') || empty('Sem regras configuradas.')}</div></section>`;
 }
 
 async function renderNotificacoes() {
+  if (!state.activeBolaoId) {
+    content.innerHTML = `<section class="card">${empty('Selecione um bolao para visualizar notificacoes.')}</section>`;
+    return;
+  }
+
   const path = isApostador() ? `/notificacoes/boloes/${state.activeBolaoId}/minhas` : `/notificacoes/boloes/${state.activeBolaoId}`;
-  const rows = await api(path).catch(() => []);
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>Notificacoes</h2></div><div class="list">${rows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.titulo)}</strong><p class="muted">${escapeHtml(item.mensagem || item.tipo || '')}</p></div><span class="pill">${escapeHtml(item.status || '')}</span></article>`).join('') || empty('Sem notificacoes.')}</div></section>`;
+  const rows = await api(path);
+  const emptyMessage = isApostador()
+    ? 'Voce ainda nao possui notificacoes neste bolao.'
+    : 'Nao ha notificacoes registradas para o bolao selecionado.';
+  content.innerHTML = `<section class="card"><div class="card-title"><h2>Notificacoes</h2><span class="pill">${escapeHtml(state.activeBolaoNome || 'bolao')}</span></div><div class="list">${rows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.titulo)}</strong><p class="muted">${escapeHtml(item.mensagem || item.tipo || '')}</p></div><span class="pill">${escapeHtml(item.status || '')}</span></article>`).join('') || empty(emptyMessage)}</div></section>`;
 }
 
 function editableRow(kind, row, title, subtitle, badge = '') {
@@ -587,6 +622,18 @@ async function renderPartidasAdmin() {
   state.data.partidas = rows;
   state.data.fases = fases;
   state.data.times = times;
+  const partidaTitle = (row) => {
+    const mandante = findById(times, row.timeMandanteId)?.nome || row.timeMandanteId;
+    const visitante = findById(times, row.timeVisitanteId)?.nome || row.timeVisitanteId;
+    const score = row.placarMandante !== null && row.placarMandante !== undefined && row.placarVisitante !== null && row.placarVisitante !== undefined
+      ? ` ${row.placarMandante} x ${row.placarVisitante} `
+      : ' x ';
+    return `${mandante}${score}${visitante}`;
+  };
+  const partidaSubtitle = (row) => {
+    const fase = findById(fases, row.faseId)?.nome || 'sem fase';
+    return `${fase} - ${dateTime(row.dataHora)} - ${row.estadio || 'sem estadio'}`;
+  };
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>Partidas</h2><span class="pill">administração</span></div>
@@ -614,13 +661,107 @@ async function renderPartidasAdmin() {
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('partidas', row, `${row.timeMandanteId} x ${row.timeVisitanteId}`, `${dateTime(row.dataHora)} ${row.estadio || ''}`, row.status)).join('') || empty('Nenhuma partida cadastrada.')}</div></section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('partidas', row, partidaTitle(row), partidaSubtitle(row), row.status)).join('') || empty('Nenhuma partida cadastrada.')}</div></section>
+  `;
+}
+
+async function renderRegrasAdmin() {
+  const [configuracoes, regras, criterios, premios] = await Promise.all([
+    api(`/configuracoes-bolao/${state.activeBolaoId}/configuracao`),
+    api(`/configuracoes-bolao/${state.activeBolaoId}/regras-pontuacao?includeInactive=true`),
+    api(`/configuracoes-bolao/${state.activeBolaoId}/criterios-desempate?includeInactive=true`),
+    api(`/configuracoes-bolao/${state.activeBolaoId}/distribuicao-premios?includeInactive=true`)
+  ]);
+  const configuracao = configuracoes.find((item) => item.ativo) || configuracoes[0] || {};
+  state.data.bolaoConfig = configuracoes;
+  state.data.regrasPontuacao = regras;
+  state.data.criteriosDesempate = criterios;
+  state.data.distribuicaoPremios = premios;
+
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Configuracao do bolao</h2><span class="pill">administração</span></div>
+      <form class="form-card" data-crud-form="bolaoConfig">
+        <input name="id" type="hidden" value="${escapeHtml(configuracao.id || '')}">
+        <label>Minutos antecedencia <input name="minutosAntecedenciaAposta" type="number" min="0" value="${escapeHtml(configuracao.minutosAntecedenciaAposta ?? 0)}"></label>
+        <label>Distribuicao premio <input name="tipoDistribuicaoPremio" value="${escapeHtml(configuracao.tipoDistribuicaoPremio || 'percentual')}"></label>
+        <label>Observacoes <textarea name="observacoesRegras">${escapeHtml(configuracao.observacoesRegras || '')}</textarea></label>
+        <label>Ativo
+          <select name="ativo">
+            <option value="true" ${configuracao.ativo !== false ? 'selected' : ''}>sim</option>
+            <option value="false" ${configuracao.ativo === false ? 'selected' : ''}>nao</option>
+          </select>
+        </label>
+        <div class="form-actions"><button type="submit">Salvar configuracao</button></div>
+      </form>
+    </section>
+
+    <section class="grid three">
+      <article class="card">
+        <div class="card-title"><h2>Regras de pontuacao</h2></div>
+        <form class="form-grid" data-crud-form="regrasPontuacao">
+          <input name="id" type="hidden">
+          <label>Codigo <input name="codigo" placeholder="PLACAR_EXATO" required></label>
+          <label>Descricao <input name="descricao" required></label>
+          <label>Pontos <input name="pontos" type="number" min="0" required></label>
+          <label>Prioridade <input name="prioridade" type="number" min="0" value="0"></label>
+          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
+          <div class="form-actions"><button type="submit">Salvar regra</button><button class="ghost" type="button" data-reset-form="regrasPontuacao">Nova</button></div>
+        </form>
+      </article>
+
+      <article class="card">
+        <div class="card-title"><h2>Desempate</h2></div>
+        <form class="form-grid" data-crud-form="criteriosDesempate">
+          <input name="id" type="hidden">
+          <label>Codigo <input name="codigo" placeholder="PLACARES_EXATOS" required></label>
+          <label>Descricao <input name="descricao" required></label>
+          <label>Ordem <input name="ordem" type="number" min="1" value="1" required></label>
+          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
+          <div class="form-actions"><button type="submit">Salvar criterio</button><button class="ghost" type="button" data-reset-form="criteriosDesempate">Novo</button></div>
+        </form>
+      </article>
+
+      <article class="card">
+        <div class="card-title"><h2>Premiacao</h2></div>
+        <form class="form-grid" data-crud-form="distribuicaoPremios">
+          <input name="id" type="hidden">
+          <label>Posicao <input name="posicao" type="number" min="1" required></label>
+          <label>Percentual <input name="percentual" type="number" min="0" max="100" step="0.01" required></label>
+          <label>Descricao <input name="descricao"></label>
+          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
+          <div class="form-actions"><button type="submit">Salvar premio</button><button class="ghost" type="button" data-reset-form="distribuicaoPremios">Novo</button></div>
+        </form>
+      </article>
+    </section>
+
+    <section class="grid three">
+      <article class="card"><div class="card-title"><h3>Regras cadastradas</h3></div><div class="list">${regras.map((row) => editableRow('regrasPontuacao', row, row.codigo, `${row.descricao} - ${row.pontos} pts - prioridade ${row.prioridade}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhuma regra configurada. Use o formulario acima para cadastrar.')}</div></article>
+      <article class="card"><div class="card-title"><h3>Critérios cadastrados</h3></div><div class="list">${criterios.map((row) => editableRow('criteriosDesempate', row, row.codigo, `${row.descricao} - ordem ${row.ordem}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhum criterio configurado. Use o formulario acima para cadastrar.')}</div></article>
+      <article class="card"><div class="card-title"><h3>Prêmios cadastrados</h3></div><div class="list">${premios.map((row) => editableRow('distribuicaoPremios', row, `${row.posicao} lugar`, `${row.percentual}% - ${row.descricao || ''}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhuma premiacao configurada. Use o formulario acima para cadastrar.')}</div></article>
+    </section>
   `;
 }
 
 async function renderConfiguracoesOwner() {
   const config = await api('/proprietario/configuracoes-gerais').catch(() => ({}));
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>Configuracoes gerais</h2></div><div class="list">${Object.entries(config).map(([key, value]) => `<article class="row-card"><strong>${escapeHtml(key)}</strong><span class="muted">${escapeHtml(value)}</span></article>`).join('') || empty('Sem configuracoes.')}</div></section>`;
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Configuracoes gerais</h2><span class="pill">plataforma</span></div>
+      <form class="form-card" data-crud-form="configuracoesGerais">
+        <label>Tempo de sessao (segundos) <input name="tempoSessao" type="number" min="1" value="${escapeHtml(config.tempoSessao || '')}"></label>
+        <label>Email remetente <input name="emailRemetente" type="email" value="${escapeHtml(config.emailRemetente || '')}"></label>
+        <label>Notificacoes ativas
+          <select name="notificacoesAtivas">
+            <option value="true" ${config.notificacoesAtivas !== false ? 'selected' : ''}>sim</option>
+            <option value="false" ${config.notificacoesAtivas === false ? 'selected' : ''}>nao</option>
+          </select>
+        </label>
+        <label>Gateway pagamento <input name="gatewayPagamento" value="${escapeHtml(config.gatewayPagamento || '')}"></label>
+        <div class="form-actions"><button type="submit">Salvar configuracoes</button></div>
+      </form>
+    </section>
+  `;
 }
 
 const renderers = {
@@ -669,6 +810,19 @@ async function submitCrud(kind, form) {
   const id = data.id;
   delete data.id;
 
+  if (kind === 'configuracoesGerais') {
+    if (data.notificacoesAtivas !== undefined) {
+      data.notificacoesAtivas = data.notificacoesAtivas === 'true';
+    }
+    await api('/proprietario/configuracoes-gerais', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    showMessage('Configuracoes salvas.');
+    await navigate(state.route);
+    return;
+  }
+
   const config = {
     boloes: {
       create: '/proprietario/boloes',
@@ -697,6 +851,22 @@ async function submitCrud(kind, form) {
     partidas: {
       create: `/partidas/boloes/${state.activeBolaoId}`,
       update: (itemId) => `/partidas/boloes/${state.activeBolaoId}/${itemId}`
+    },
+    bolaoConfig: {
+      create: `/configuracoes-bolao/${state.activeBolaoId}/configuracao`,
+      update: (itemId) => `/configuracoes-bolao/${state.activeBolaoId}/configuracao/${itemId}`
+    },
+    regrasPontuacao: {
+      create: `/configuracoes-bolao/${state.activeBolaoId}/regras-pontuacao`,
+      update: (itemId) => `/configuracoes-bolao/${state.activeBolaoId}/regras-pontuacao/${itemId}`
+    },
+    criteriosDesempate: {
+      create: `/configuracoes-bolao/${state.activeBolaoId}/criterios-desempate`,
+      update: (itemId) => `/configuracoes-bolao/${state.activeBolaoId}/criterios-desempate/${itemId}`
+    },
+    distribuicaoPremios: {
+      create: `/configuracoes-bolao/${state.activeBolaoId}/distribuicao-premios`,
+      update: (itemId) => `/configuracoes-bolao/${state.activeBolaoId}/distribuicao-premios/${itemId}`
     }
   }[kind];
 
