@@ -10,3 +10,4 @@
 \i db/migrations/008_motor_pontuacao.sql
 \i db/migrations/009_ranking_premiacao.sql
 \i db/migrations/010_notificacoes.sql
+\i db/migrations/011_revisao_consistencia.sql
