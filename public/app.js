@@ -17,6 +17,24 @@ const roleLabel = document.querySelector('#roleLabel');
 const shell = document.querySelector('#shell');
 const bolaoSwitcher = document.querySelector('#bolaoSwitcher');
 const bolaoSelect = document.querySelector('#bolaoSelect');
+const refreshButton = document.querySelector('#refreshButton');
+
+const SCORE_RULE_OPTIONS = [
+  { value: 'PLACAR_EXATO', label: 'Placar exato' },
+  { value: 'RESULTADO_CORRETO', label: 'Resultado correto' },
+  { value: 'PLACAR_INVERTIDO', label: 'Placar invertido' }
+];
+
+const TIEBREAKER_OPTIONS = [
+  { value: 'PLACARES_EXATOS', label: 'Maior numero de placares exatos' },
+  { value: 'RESULTADOS_CORRETOS', label: 'Maior numero de resultados corretos' },
+  { value: 'PLACARES_INVERTIDOS', label: 'Maior numero de placares invertidos' },
+  { value: 'MENOR_DIFERENCA_GOLS', label: 'Menor diferenca total de gols' },
+  { value: 'ORDEM_PAGAMENTO', label: 'Ordem de pagamento' },
+  { value: 'ORDEM_ALFABETICA', label: 'Ordem alfabetica' }
+];
+
+const ROUTES_WITH_REFRESH = new Set(['home', 'ranking', 'jogos', 'regras', 'notificacoes']);
 
 const routes = [
   { id: 'home', label: 'Home', subtitle: 'Resumo, ranking e proximos jogos.' },
@@ -127,6 +145,8 @@ function renderChrome() {
   pageTitle.textContent = route.label;
   pageSubtitle.textContent = state.activeBolaoNome || route.subtitle;
   roleLabel.textContent = state.user.perfilGlobal || 'sessao';
+  refreshButton.textContent = 'Recarregar dados';
+  refreshButton.hidden = !ROUTES_WITH_REFRESH.has(route.id);
   renderMenu();
 
   if (state.boloes.length > 1) {
@@ -149,6 +169,14 @@ function optionList(rows, valueKey = 'id', labelKey = 'nome', selected = '') {
   return rows.map((row) => `
     <option value="${escapeHtml(row[valueKey])}" ${row[valueKey] === selected ? 'selected' : ''}>
       ${escapeHtml(row[labelKey] || row.email || row.id)}
+    </option>
+  `).join('');
+}
+
+function staticOptionList(options, selected = '') {
+  return options.map((option) => `
+    <option value="${escapeHtml(option.value)}" ${option.value === selected ? 'selected' : ''}>
+      ${escapeHtml(option.label)}
     </option>
   `).join('');
 }
@@ -515,6 +543,36 @@ async function renderPagamentosAdmin() {
   ]);
   state.data.pagamentos = rows;
   state.data.participantes = participantes;
+  const paymentRow = (row) => {
+    const participante = findById(participantes, row.participanteId);
+    const gatewayInfo = [];
+    if (row.gateway) gatewayInfo.push(row.gateway);
+    if (row.statusGateway) gatewayInfo.push(`gateway ${row.statusGateway}`);
+    if (row.orderNsu) gatewayInfo.push(`pedido ${row.orderNsu}`);
+    const checkoutParts = [];
+    if (gatewayInfo.length) checkoutParts.push(escapeHtml(gatewayInfo.join(' · ')));
+    if (row.checkoutUrl) checkoutParts.push(`<a href="${escapeHtml(row.checkoutUrl)}" target="_blank" rel="noreferrer">Abrir checkout</a>`);
+    return `
+      <article class="row-card">
+        <div>
+          <strong>${escapeHtml(participante?.nome || row.participanteId)}</strong>
+          <p class="muted">
+            ${escapeHtml([
+              money(row.valor),
+              row.formaPagamento || 'manual',
+              row.dataPagamento ? `pago em ${dateTime(row.dataPagamento)}` : 'sem data de pagamento',
+              row.observacao || ''
+            ].filter(Boolean).join(' · '))}
+          </p>
+          ${checkoutParts.length ? `<p class="muted">${checkoutParts.join(' · ')}</p>` : ''}
+        </div>
+        <div class="actions">
+          <span class="pill">${escapeHtml(row.status || 'pendente')}</span>
+          <button class="secondary" type="button" data-edit-kind="pagamentos" data-id="${escapeHtml(row.id)}">Editar</button>
+        </div>
+      </article>
+    `;
+  };
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>Pagamentos</h2><span class="pill">administração</span></div>
@@ -545,7 +603,7 @@ async function renderPagamentosAdmin() {
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('pagamentos', row, row.participanteId, `${row.formaPagamento || ''} ${row.observacao || ''}`, `${row.status} ${money(row.valor)}`)).join('') || empty('Nenhum pagamento cadastrado.')}</div></section>
+    <section class="card"><div class="list">${rows.map(paymentRow).join('') || empty('Nenhum pagamento cadastrado.')}</div></section>
   `;
 }
 
@@ -701,7 +759,12 @@ async function renderRegrasAdmin() {
         <div class="card-title"><h2>Regras de pontuacao</h2></div>
         <form class="form-grid" data-crud-form="regrasPontuacao">
           <input name="id" type="hidden">
-          <label>Codigo <input name="codigo" placeholder="PLACAR_EXATO" required></label>
+          <label>Codigo
+            <select name="codigo" required>
+              <option value="">Selecione</option>
+              ${staticOptionList(SCORE_RULE_OPTIONS)}
+            </select>
+          </label>
           <label>Descricao <input name="descricao" required></label>
           <label>Pontos <input name="pontos" type="number" min="0" required></label>
           <label>Prioridade <input name="prioridade" type="number" min="0" value="0"></label>
@@ -714,7 +777,12 @@ async function renderRegrasAdmin() {
         <div class="card-title"><h2>Desempate</h2></div>
         <form class="form-grid" data-crud-form="criteriosDesempate">
           <input name="id" type="hidden">
-          <label>Codigo <input name="codigo" placeholder="PLACARES_EXATOS" required></label>
+          <label>Codigo
+            <select name="codigo" required>
+              <option value="">Selecione</option>
+              ${staticOptionList(TIEBREAKER_OPTIONS)}
+            </select>
+          </label>
           <label>Descricao <input name="descricao" required></label>
           <label>Ordem <input name="ordem" type="number" min="1" value="1" required></label>
           <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
