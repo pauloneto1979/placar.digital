@@ -26,7 +26,7 @@ async function postJson(path, payload) {
     body: JSON.stringify(payload)
   });
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.message || 'Nao foi possivel entrar.');
+  if (!response.ok) throw new Error(body?.message || 'Não foi possível entrar.');
   return body;
 }
 

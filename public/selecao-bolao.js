@@ -22,14 +22,14 @@ function saveSession(result) {
 }
 
 async function selectBolao(bolaoId) {
-  showMessage('Abrindo bolao...');
+  showMessage('Abrindo bolão...');
   const response = await fetch('/api/v1/auth/selecionar-bolao', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ selectionToken, bolaoId })
   });
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.message || 'Nao foi possivel selecionar o bolao.');
+  if (!response.ok) throw new Error(body?.message || 'Não foi possível selecionar o bolão.');
   saveSession(body);
   window.location.href = '/app/app.html';
 }
@@ -40,7 +40,7 @@ if (!selectionToken || !boloes.length) {
   list.innerHTML = boloes.map((bolao) => `
     <button class="select-card" type="button" data-bolao-id="${escapeHtml(bolao.id)}">
       <strong>${escapeHtml(bolao.nome)}</strong>
-      <span class="muted">${escapeHtml(bolao.papel || bolao.status || 'bolao')}</span>
+      <span class="muted">${escapeHtml(bolao.papel || bolao.status || 'bolão')}</span>
     </button>
   `).join('');
 }
