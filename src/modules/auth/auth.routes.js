@@ -11,6 +11,7 @@ const authRoutes = Router();
 authRoutes.get('/', authController.status);
 authRoutes.post('/login', authController.login);
 authRoutes.post('/selecionar-bolao', authController.selectBolao);
+authRoutes.post('/trocar-bolao', authMiddleware, authController.switchBolao);
 authRoutes.get('/me', authMiddleware, authController.me);
 
 module.exports = {

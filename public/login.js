@@ -1,46 +1,22 @@
-const state = {
-  selectionToken: '',
-  boloes: []
-};
-
-const loginForm = document.querySelector('#loginForm');
-const bolaoSelectionForm = document.querySelector('#bolaoSelectionForm');
+const form = document.querySelector('#loginForm');
 const message = document.querySelector('#message');
 
 function showMessage(text) {
   message.textContent = text;
 }
 
-function redirectForSession(result) {
-  localStorage.setItem('placar.token', result.accessToken);
+function saveSession(result) {
+  localStorage.setItem('placar.token', result.accessToken || '');
+  localStorage.setItem('placar.user', JSON.stringify(result.user || {}));
+  localStorage.setItem('placar.boloes', JSON.stringify(result.boloes || []));
 
   if (result.selectedBolao?.id) {
-    localStorage.setItem('placar.admin.bolaoId', result.selectedBolao.id);
-    localStorage.setItem('placar.selectedBolaoNome', result.selectedBolao.nome || '');
+    localStorage.setItem('placar.activeBolaoId', result.selectedBolao.id);
+    localStorage.setItem('placar.activeBolaoNome', result.selectedBolao.nome || '');
   } else {
-    localStorage.removeItem('placar.admin.bolaoId');
-    localStorage.removeItem('placar.selectedBolaoNome');
+    localStorage.removeItem('placar.activeBolaoId');
+    localStorage.removeItem('placar.activeBolaoNome');
   }
-
-  const perfil = result.user?.perfilGlobal;
-  const papel = result.selectedBolao?.papel || perfil;
-
-  if (perfil === 'proprietario') {
-    window.location.href = '/app/proprietario.html';
-    return;
-  }
-
-  if (papel === 'administrador') {
-    window.location.href = '/app/administrador.html';
-    return;
-  }
-
-  if (papel === 'apostador') {
-    window.location.href = '/app/apostador.html';
-    return;
-  }
-
-  showMessage('Perfil sem tela configurada.');
 }
 
 async function postJson(path, payload) {
@@ -50,55 +26,27 @@ async function postJson(path, payload) {
     body: JSON.stringify(payload)
   });
   const body = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(body?.message || 'Nao foi possivel autenticar.');
-  }
-
+  if (!response.ok) throw new Error(body?.message || 'Nao foi possivel entrar.');
   return body;
 }
 
-function renderBolaoSelection(result) {
-  state.selectionToken = result.selectionToken;
-  state.boloes = result.boloes || [];
-  const select = bolaoSelectionForm.elements.bolaoId;
-  select.innerHTML = state.boloes
-    .map((bolao) => `<option value="${bolao.id}">${bolao.nome}</option>`)
-    .join('');
-  loginForm.hidden = true;
-  bolaoSelectionForm.hidden = false;
-  showMessage('Selecione o bolao para continuar.');
-}
-
-loginForm.addEventListener('submit', async (event) => {
+form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const data = Object.fromEntries(new FormData(loginForm));
-  showMessage('Entrando...');
+  showMessage('Validando acesso...');
 
   try {
-    const result = await postJson('/auth/login', data);
+    const result = await postJson('/auth/login', Object.fromEntries(new FormData(form)));
 
     if (result.status === 'bolao_selection_required') {
-      renderBolaoSelection(result);
+      localStorage.setItem('placar.selectionToken', result.selectionToken);
+      localStorage.setItem('placar.pendingUser', JSON.stringify(result.user || {}));
+      localStorage.setItem('placar.boloes', JSON.stringify(result.boloes || []));
+      window.location.href = '/app/selecao-bolao.html';
       return;
     }
 
-    redirectForSession(result);
-  } catch (error) {
-    showMessage(error.message);
-  }
-});
-
-bolaoSelectionForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  showMessage('Carregando bolao...');
-
-  try {
-    const result = await postJson('/auth/selecionar-bolao', {
-      selectionToken: state.selectionToken,
-      bolaoId: bolaoSelectionForm.elements.bolaoId.value
-    });
-    redirectForSession(result);
+    saveSession(result);
+    window.location.href = '/app/app.html';
   } catch (error) {
     showMessage(error.message);
   }

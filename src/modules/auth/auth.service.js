@@ -136,6 +136,7 @@ function createAuthService(repository) {
       return {
         status: 'authenticated',
         user: sanitizeUser(user),
+        boloes,
         selectedBolao: flow.selectedBolao,
         accessToken: createAccessToken(user, flow.selectedBolao)
       };
@@ -174,6 +175,7 @@ function createAuthService(repository) {
       }
 
       const formattedBolao = formatBolao(selectedBolao);
+      const boloes = (await repository.listUserBoloes(user.id)).map(formatBolao);
 
       await audit({
         usuarioId: user.id,
@@ -193,8 +195,71 @@ function createAuthService(repository) {
       return {
         status: 'authenticated',
         user: sanitizeUser(user),
+        boloes,
         selectedBolao: formattedBolao,
         accessToken: createAccessToken(user, formattedBolao)
+      };
+    },
+
+    async switchBolao(payload, auth, context = {}) {
+      const bolaoId = payload.bolaoId || payload.bolao_id;
+
+      if (!bolaoId) {
+        throw new HttpError(400, 'invalid_switch_payload', 'bolaoId e obrigatorio.');
+      }
+
+      const user = await repository.findUserByEmail(auth.email);
+
+      if (!user || !user.ativo || user.id !== auth.usuarioId) {
+        throw new HttpError(401, 'invalid_session', 'Sessao invalida.');
+      }
+
+      let selectedBolao = null;
+      const boloes = (await repository.listUserBoloes(user.id)).map(formatBolao);
+
+      if (user.perfil_global === 'proprietario') {
+        const bolao = await repository.findBolaoById(bolaoId);
+        if (!bolao) {
+          throw new HttpError(404, 'bolao_not_found', 'Bolao nao encontrado.');
+        }
+        selectedBolao = {
+          id: bolao.bolao_id,
+          nome: bolao.bolao_nome,
+          slug: bolao.bolao_slug,
+          status: bolao.bolao_status,
+          participanteId: null,
+          vinculoAdministrativoId: null,
+          papel: 'proprietario'
+        };
+      } else {
+        const row = await repository.findUserBolao(user.id, bolaoId);
+        if (!row) {
+          throw new HttpError(403, 'bolao_not_allowed', 'Usuario nao possui acesso ao bolao informado.');
+        }
+        selectedBolao = formatBolao(row);
+      }
+
+      await audit({
+        usuarioId: user.id,
+        bolaoId,
+        entidade: 'boloes',
+        entidadeId: bolaoId,
+        acao: 'auth.bolao_trocado',
+        dadosNovos: {
+          participanteId: selectedBolao.participanteId,
+          vinculoAdministrativoId: selectedBolao.vinculoAdministrativoId,
+          papel: selectedBolao.papel
+        },
+        ip: context.ip,
+        userAgent: context.userAgent
+      });
+
+      return {
+        status: 'authenticated',
+        user: sanitizeUser(user),
+        boloes,
+        selectedBolao,
+        accessToken: createAccessToken(user, selectedBolao)
       };
     },
 

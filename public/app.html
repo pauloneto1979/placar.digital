@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Placar.digital</title>
+    <link rel="stylesheet" href="/app/theme.css">
+  </head>
+  <body>
+    <div id="shell" class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <div class="brand">
+            <img src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
+            <div>
+              <strong>Placar.digital</strong>
+              <span id="roleLabel">Carregando</span>
+            </div>
+          </div>
+          <nav id="menu" class="menu"></nav>
+        </div>
+
+        <div></div>
+
+        <div class="sidebar-footer">
+          <div id="bolaoSwitcher" class="bolao-switcher" hidden>
+            <label>Bolao ativo <select id="bolaoSelect"></select></label>
+          </div>
+          <button id="logoutButton" class="ghost" type="button">Sair</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <button id="menuButton" class="hamburger" type="button" aria-label="Abrir menu">
+            <span></span><span></span><span></span>
+          </button>
+          <div class="page-title">
+            <h1 id="pageTitle">Home</h1>
+            <p id="pageSubtitle">Visao geral do seu bolao.</p>
+          </div>
+          <button id="refreshButton" class="ghost" type="button">Atualizar</button>
+        </header>
+        <section id="content" class="content"></section>
+        <p id="message" class="message"></p>
+      </main>
+    </div>
+    <script src="/app/app.js"></script>
+  </body>
+</html>

@@ -22,6 +22,15 @@ function createAuthController(service) {
       }
     },
 
+    async switchBolao(req, res, next) {
+      try {
+        const result = await service.switchBolao(req.body, req.auth, req.context);
+        res.json(result);
+      } catch (error) {
+        next(error);
+      }
+    },
+
     me(req, res) {
       res.json(service.getSession(req.auth));
     }

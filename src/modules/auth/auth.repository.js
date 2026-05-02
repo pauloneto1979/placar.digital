@@ -118,6 +118,25 @@ async function findUserBolao(usuarioId, bolaoId) {
   return result.rows[0] || null;
 }
 
+async function findBolaoById(bolaoId) {
+  const result = await query(
+    `
+      select
+        id as bolao_id,
+        nome as bolao_nome,
+        slug as bolao_slug,
+        status as bolao_status
+      from boloes
+      where id = $1
+        and ativo = true
+      limit 1
+    `,
+    [bolaoId]
+  );
+
+  return result.rows[0] || null;
+}
+
 async function updateLastLogin(usuarioId) {
   await query('update usuarios set ultimo_login_at = now() where id = $1', [usuarioId]);
 }
@@ -162,6 +181,7 @@ const authRepository = {
   findUserByEmail,
   listUserBoloes,
   findUserBolao,
+  findBolaoById,
   updateLastLogin,
   createAuditLog
 };

@@ -4,26 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Placar.digital - Login</title>
-    <link rel="stylesheet" href="/app/proprietario.css">
+    <link rel="stylesheet" href="/app/theme.css">
   </head>
   <body class="login-page">
-    <main class="login-shell">
-      <section class="login-panel">
-        <img class="login-logo" src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
-
-        <form id="loginForm" class="login-form">
-          <label>Email <input name="email" type="email" autocomplete="username" required></label>
-          <label>Senha <input name="senha" type="password" autocomplete="current-password" required></label>
-          <button type="submit">Entrar</button>
-        </form>
-
-        <form id="bolaoSelectionForm" class="login-form" hidden>
-          <label>Bolao <select name="bolaoId" required></select></label>
-          <button type="submit">Acessar bolao</button>
-        </form>
-
-        <p id="message" class="login-message"></p>
-      </section>
+    <main class="auth-card">
+      <img class="auth-logo" src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
+      <h1 class="auth-title">Entrar</h1>
+      <p class="auth-subtitle">Acesse seus bolões, palpites e ranking em um só lugar.</p>
+      <form id="loginForm" class="auth-form">
+        <label>Email <input name="email" type="email" autocomplete="username" required></label>
+        <label>Senha <input name="senha" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Entrar no Placar</button>
+      </form>
+      <p id="message" class="auth-message"></p>
     </main>
     <script src="/app/login.js"></script>
   </body>
