@@ -32,11 +32,12 @@ function renderCards(selector, rows, render) {
 }
 
 async function refresh() {
-  const [dashboard, jogos, minhas, ranking, regras] = await Promise.all([
+  const [dashboard, jogos, minhas, ranking, notificacoes, regras] = await Promise.all([
     api(`/apostas/boloes/${state.bolaoId}/dashboard`),
     api(`/apostas/boloes/${state.bolaoId}/jogos`),
     api(`/apostas/boloes/${state.bolaoId}/minhas`),
     api(`/ranking/boloes/${state.bolaoId}/atual`),
+    api(`/notificacoes/boloes/${state.bolaoId}/minhas`),
     api(`/apostas/boloes/${state.bolaoId}/regras`)
   ]);
 
@@ -77,6 +78,16 @@ async function refresh() {
     </article>
   `);
 
+  renderCards('#notificacoesList', notificacoes, (item) => `
+    <article class="item">
+      <div>
+        <strong>${escapeHtml(item.titulo)}</strong>
+        <div class="meta">${escapeHtml(item.tipo)} - ${escapeHtml(item.status)} - ${escapeHtml(item.mensagem)}</div>
+      </div>
+      ${item.lidaEm ? '<span class="meta">Lida</span>' : `<button type="button" data-read-notification="${item.id}">Marcar lida</button>`}
+    </article>
+  `);
+
   renderCards('#regrasList', [
     ...(regras.regrasPontuacao || []).map((r) => `Pontuacao: ${r.codigo} - ${r.descricao} (${r.pontos})`),
     ...(regras.criteriosDesempate || []).map((r) => `Desempate: ${r.codigo} - ${r.descricao}`),
@@ -111,3 +122,14 @@ document.querySelectorAll('.tab').forEach((tab) => {
 });
 
 validateSession().catch((error) => showMessage(error.message));
+
+document.addEventListener('click', async (event) => {
+  const id = event.target.dataset?.readNotification;
+  if (!id) return;
+  try {
+    await api(`/notificacoes/boloes/${state.bolaoId}/${id}/lida`, { method: 'PATCH' });
+    await refresh();
+  } catch (error) {
+    showMessage(error.message);
+  }
+});

@@ -89,6 +89,11 @@ Esta etapa cria apenas a fundacao tecnica: estrutura modular, API base, ambiente
 - `DELETE /api/v1/configuracoes-bolao/:bolaoId/distribuicao-premios/:distribuicaoId`
 - `GET /api/v1/configuracoes-gerais`
 - `GET /api/v1/notificacoes`
+- `GET /api/v1/notificacoes/boloes/:bolaoId/minhas`
+- `PATCH /api/v1/notificacoes/boloes/:bolaoId/:id/lida`
+- `GET /api/v1/notificacoes/boloes/:bolaoId`
+- `POST /api/v1/notificacoes/boloes/:bolaoId/manual/todos`
+- `POST /api/v1/notificacoes/boloes/:bolaoId/:id/cancelar`
 - `GET /api/v1/auditoria`
 
 ## Banco de dados
@@ -109,6 +114,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/007_apostador_module.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/008_motor_pontuacao.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/009_ranking_premiacao.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/010_notificacoes.sql
 ```
 
 ## Autenticacao
@@ -236,6 +242,8 @@ Rotas protegidas por Bearer token:
 - `GET /api/v1/ranking/boloes/:bolaoId/meu`
 - `GET /api/v1/ranking/boloes/:bolaoId/premiacao`
 - `GET /api/v1/ranking/boloes/:bolaoId/regras`
+- `GET /api/v1/notificacoes/boloes/:bolaoId/minhas`
+- `PATCH /api/v1/notificacoes/boloes/:bolaoId/:id/lida`
 - `POST /api/v1/ranking/boloes/:bolaoId/recalcular`
 - `POST /api/v1/ranking/boloes/:bolaoId/partidas/:partidaId/recalcular`
 
@@ -290,6 +298,34 @@ Premiacao:
 - usa distribuicoes ativas em `distribuicao_premios`
 - valida que a soma dos percentuais ativos nao ultrapasse 100%
 - posicoes sem distribuicao recebem premio previsto zero
+
+## Notificacoes
+
+O modulo `notificacoes` registra mensagens internas para integracao futura com email, WhatsApp ou push.
+
+Tipos iniciais:
+
+- `JOGO_VAI_COMECAR`
+- `APOSTA_ENCERRANDO`
+- `RESULTADO_LANCADO`
+- `RANKING_ATUALIZADO`
+- `PAGAMENTO_CONFIRMADO`
+
+Rotas:
+
+- apostador lista suas notificacoes em `GET /api/v1/notificacoes/boloes/:bolaoId/minhas`
+- apostador marca como lida em `PATCH /api/v1/notificacoes/boloes/:bolaoId/:id/lida`
+- proprietario/administrador lista o bolao em `GET /api/v1/notificacoes/boloes/:bolaoId`
+- proprietario/administrador cria aviso manual para todos em `POST /api/v1/notificacoes/boloes/:bolaoId/manual/todos`
+- proprietario/administrador cancela pendente em `POST /api/v1/notificacoes/boloes/:bolaoId/:id/cancelar`
+
+Geracao automatica:
+
+- resultado de partida lancado
+- ranking recalculado
+- pagamento marcado como pago
+
+Se `configuracoes_gerais` tiver `notificacoes.ativas = false`, novas notificacoes automaticas nao sao geradas.
 
 ## Organizacao
 

@@ -1,8 +1,11 @@
 const { HttpError } = require('../../shared/errors/http-error');
 const { ensureCanAdminBolao } = require('../../shared/permissions/bolao-access');
+const notificacoesRepository = require('../notificacoes/notificacoes.repository');
+const { createNotificacoesService } = require('../notificacoes/notificacoes.service');
 
 const STATUS = ['pendente', 'pago', 'cancelado'];
 const FORMAS = ['pix', 'dinheiro', 'manual', 'outro'];
+const notificacoesService = createNotificacoesService(notificacoesRepository);
 
 function payload(body, bolaoId) {
   const participanteId = body.participanteId || body.participante_id;
@@ -43,20 +46,26 @@ function createPagamentosService(repository) {
       await ensureCanAdminBolao(auth, bolaoId);
       const data = payload(body, bolaoId);
       await ensureParticipant(bolaoId, data.participanteId);
-      return repository.create(data);
+      const pagamento = await repository.create(data);
+      if (pagamento.status === 'pago') await notificacoesService.gerarPagamentoConfirmado(pagamento.id);
+      return pagamento;
     },
     async update(bolaoId, id, body, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
       await ensurePayment(id, bolaoId);
       const data = payload(body, bolaoId);
       await ensureParticipant(bolaoId, data.participanteId);
-      return repository.update(id, data);
+      const pagamento = await repository.update(id, data);
+      if (pagamento.status === 'pago') await notificacoesService.gerarPagamentoConfirmado(pagamento.id);
+      return pagamento;
     },
     async updateStatus(bolaoId, id, status, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
       await ensurePayment(id, bolaoId);
       if (!STATUS.includes(status)) throw new HttpError(400, 'invalid_payment_status', 'Status de pagamento invalido.');
-      return repository.updateStatus(id, status);
+      const pagamento = await repository.updateStatus(id, status);
+      if (pagamento.status === 'pago') await notificacoesService.gerarPagamentoConfirmado(pagamento.id);
+      return pagamento;
     }
   };
 }

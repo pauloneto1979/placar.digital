@@ -195,3 +195,27 @@ Permissoes:
 - apostador visualiza apenas o bolao selecionado no token
 - administrador visualiza e recalcula apenas boloes vinculados em `boloes_usuarios`
 - proprietario visualiza e recalcula qualquer bolao
+
+## Notificacoes
+
+O modulo `notificacoes` registra notificacoes de sistema sem envio externo.
+
+Escopos:
+
+- notificacao geral do bolao: `bolao_id` preenchido, sem `participante_id` e sem `usuario_id`
+- notificacao do apostador: `bolao_id` e `participante_id`
+- notificacao de usuario de sistema: `bolao_id` e `usuario_id`
+
+Permissoes:
+
+- apostador ve apenas notificacoes do bolao selecionado vinculadas ao seu `participanteId` ou notificacoes gerais
+- administrador usa a mesma validacao administrativa por `boloes_usuarios`
+- proprietario acessa qualquer bolao
+
+Eventos automaticos preparados:
+
+- resultado de partida lancado
+- ranking recalculado
+- pagamento confirmado
+
+A chave global `notificacoes.ativas` em `configuracoes_gerais` bloqueia novas notificacoes automaticas quando estiver `false`.

@@ -1,5 +1,9 @@
 const { HttpError } = require('../../shared/errors/http-error');
 const { ensureApostadorSelecionado, ensureCanAdminBolao, ensureCanViewBolao } = require('../../shared/permissions/bolao-access');
+const notificacoesRepository = require('../notificacoes/notificacoes.repository');
+const { createNotificacoesService } = require('../notificacoes/notificacoes.service');
+
+const notificacoesService = createNotificacoesService(notificacoesRepository);
 
 function resultado(placarMandante, placarVisitante) {
   if (placarMandante > placarVisitante) return 'mandante';
@@ -206,6 +210,12 @@ function createRankingService(repository) {
     }
 
     await calcularRankingAtual(partida.bolao_id);
+    if (!context.silenciarNotificacaoRanking) {
+      await notificacoesService.gerarRankingAtualizado(partida.bolao_id, {
+        partidaId: partida.id,
+        apostasCalculadas: resultados.length
+      });
+    }
     await repository.createAuditLog({
       usuarioId: auth.usuarioId,
       bolaoId: partida.bolao_id,
@@ -304,8 +314,13 @@ function createRankingService(repository) {
 
       for (const partidaRow of partidas) {
         const partida = await ensurePartidaCalculavel(partidaRow.id, bolaoId);
-        resultados.push(await recalcularPartidaInterno(partida, auth, context));
+        resultados.push(await recalcularPartidaInterno(partida, auth, { ...context, silenciarNotificacaoRanking: true }));
       }
+
+      await notificacoesService.gerarRankingAtualizado(bolaoId, {
+        partidasCalculadas: resultados.length,
+        apostasCalculadas: resultados.reduce((total, item) => total + item.apostasCalculadas, 0)
+      });
 
       return {
         bolaoId,

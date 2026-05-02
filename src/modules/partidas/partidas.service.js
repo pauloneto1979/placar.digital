@@ -1,9 +1,12 @@
 const { HttpError } = require('../../shared/errors/http-error');
 const { ensureCanAdminBolao } = require('../../shared/permissions/bolao-access');
+const notificacoesRepository = require('../notificacoes/notificacoes.repository');
+const { createNotificacoesService } = require('../notificacoes/notificacoes.service');
 const rankingRepository = require('../ranking/ranking.repository');
 const { createRankingService } = require('../ranking/ranking.service');
 
 const STATUS = ['agendada', 'em_andamento', 'finalizada', 'cancelada', 'inativa'];
+const notificacoesService = createNotificacoesService(notificacoesRepository);
 const rankingService = createRankingService(rankingRepository);
 
 function clean(v) { return typeof v === 'string' ? v.trim() : ''; }
@@ -84,6 +87,7 @@ function createPartidasService(repository) {
       await auditResultado(auth, context, before, after);
       if (after.resultadoConfirmado) {
         await rankingService.recalcularPartidaPorResultado(after.id, auth, context);
+        await notificacoesService.gerarResultadoLancado(after.id);
       }
       return after;
     },
@@ -95,6 +99,7 @@ function createPartidasService(repository) {
       const after = await repository.update(id, data);
       await auditResultado(auth, context, before, after);
       await rankingService.recalcularPartidaPorResultado(after.id, auth, context);
+      await notificacoesService.gerarResultadoLancado(after.id);
       return after;
     }
   };
