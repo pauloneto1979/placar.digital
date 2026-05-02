@@ -5,9 +5,17 @@ const state = {
 
 const app = document.querySelector('#app');
 const message = document.querySelector('#message');
-const tokenInput = document.querySelector('#tokenInput');
-tokenInput.value = state.token;
 document.querySelector('#bolaoForm').elements.bolaoId.value = state.bolaoId;
+
+function redirectToLogin() {
+  window.location.href = '/app/login.html';
+}
+
+function clearSession() {
+  localStorage.removeItem('placar.token');
+  localStorage.removeItem('placar.admin.bolaoId');
+  redirectToLogin();
+}
 
 function showMessage(text) {
   message.textContent = text;
@@ -29,7 +37,10 @@ async function api(path, options = {}) {
 }
 
 async function validateSession() {
-  if (!state.token) return;
+  if (!state.token) {
+    redirectToLogin();
+    return;
+  }
   const session = await api('/auth/me');
   if (!['proprietario', 'administrador'].includes(session.user.perfilGlobal)) {
     throw new Error('Acesso administrativo negado.');
@@ -65,11 +76,7 @@ async function refresh() {
   renderList('#partidasList', partidas, ['dataHora', 'status', 'placarMandante', 'placarVisitante']);
 }
 
-document.querySelector('#saveTokenButton').addEventListener('click', async () => {
-  state.token = tokenInput.value.trim();
-  localStorage.setItem('placar.token', state.token);
-  try { await validateSession(); showMessage('Sessao validada.'); } catch (error) { showMessage(error.message); }
-});
+document.querySelector('#logoutButton').addEventListener('click', clearSession);
 
 document.querySelector('#bolaoForm').addEventListener('submit', async (event) => {
   event.preventDefault();

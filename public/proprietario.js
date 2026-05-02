@@ -5,10 +5,17 @@ const state = {
 };
 
 const message = document.querySelector('#message');
-const tokenInput = document.querySelector('#tokenInput');
 const app = document.querySelector('#app');
 
-tokenInput.value = state.token;
+function redirectToLogin() {
+  window.location.href = '/app/login.html';
+}
+
+function clearSession() {
+  localStorage.removeItem('placar.token');
+  localStorage.removeItem('placar.admin.bolaoId');
+  redirectToLogin();
+}
 
 function showMessage(text) {
   message.textContent = text;
@@ -48,6 +55,7 @@ async function api(path, options = {}) {
 async function validateSession() {
   if (!state.token) {
     app.hidden = true;
+    redirectToLogin();
     return;
   }
 
@@ -155,17 +163,7 @@ async function refreshAll() {
   document.querySelector('#configForm [name="gatewayPagamento"]').value = config.gatewayPagamento || '';
 }
 
-document.querySelector('#saveTokenButton').addEventListener('click', async () => {
-  state.token = tokenInput.value.trim();
-  localStorage.setItem('placar.token', state.token);
-
-  try {
-    await validateSession();
-    showMessage('Sessao validada.');
-  } catch (error) {
-    showMessage(error.message);
-  }
-});
+document.querySelector('#logoutButton').addEventListener('click', clearSession);
 
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.addEventListener('click', () => {

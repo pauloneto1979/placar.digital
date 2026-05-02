@@ -5,8 +5,16 @@ const state = {
 
 const app = document.querySelector('#app');
 const message = document.querySelector('#message');
-const tokenInput = document.querySelector('#tokenInput');
-tokenInput.value = state.token;
+
+function redirectToLogin() {
+  window.location.href = '/app/login.html';
+}
+
+function clearSession() {
+  localStorage.removeItem('placar.token');
+  localStorage.removeItem('placar.admin.bolaoId');
+  redirectToLogin();
+}
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -96,7 +104,10 @@ async function refresh() {
 }
 
 async function validateSession() {
-  if (!state.token) return;
+  if (!state.token) {
+    redirectToLogin();
+    return;
+  }
   const session = await api('/auth/me');
   if (session.user.perfilGlobal !== 'apostador' || !session.selectedBolao?.id || !session.selectedBolao?.participanteId) {
     throw new Error('Acesso permitido apenas ao apostador com bolao selecionado.');
@@ -106,11 +117,7 @@ async function validateSession() {
   await refresh();
 }
 
-document.querySelector('#saveTokenButton').addEventListener('click', async () => {
-  state.token = tokenInput.value.trim();
-  localStorage.setItem('placar.token', state.token);
-  try { await validateSession(); showMessage('Sessao validada.'); } catch (error) { showMessage(error.message); }
-});
+document.querySelector('#logoutButton').addEventListener('click', clearSession);
 
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.addEventListener('click', () => {
