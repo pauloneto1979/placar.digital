@@ -17,7 +17,6 @@ const roleLabel = document.querySelector('#roleLabel');
 const shell = document.querySelector('#shell');
 const bolaoSwitcher = document.querySelector('#bolaoSwitcher');
 const bolaoSelect = document.querySelector('#bolaoSelect');
-const refreshButton = document.querySelector('#refreshButton');
 
 const SCORE_RULE_OPTIONS = [
   { value: 'PLACAR_EXATO', label: 'Placar exato' },
@@ -34,7 +33,11 @@ const TIEBREAKER_OPTIONS = [
   { value: 'ORDEM_ALFABETICA', label: 'Ordem alfabetica' }
 ];
 
-const ROUTES_WITH_REFRESH = new Set(['home', 'ranking', 'jogos', 'regras', 'notificacoes']);
+const PRIZE_DISTRIBUTION_OPTIONS = [
+  { value: 'percentual', label: 'Percentual' },
+  { value: 'fixo', label: 'Valor fixo' },
+  { value: 'vencedor_leva_tudo', label: 'Tudo para o 1º colocado' }
+];
 
 const routes = [
   { id: 'home', label: 'Home', subtitle: 'Resumo, ranking e proximos jogos.' },
@@ -145,8 +148,6 @@ function renderChrome() {
   pageTitle.textContent = route.label;
   pageSubtitle.textContent = state.activeBolaoNome || route.subtitle;
   roleLabel.textContent = state.user.perfilGlobal || 'sessao';
-  refreshButton.textContent = 'Recarregar dados';
-  refreshButton.hidden = !ROUTES_WITH_REFRESH.has(route.id);
   renderMenu();
 
   if (state.boloes.length > 1) {
@@ -742,7 +743,11 @@ async function renderRegrasAdmin() {
       <form class="form-card" data-crud-form="bolaoConfig">
         <input name="id" type="hidden" value="${escapeHtml(configuracao.id || '')}">
         <label>Minutos antecedencia <input name="minutosAntecedenciaAposta" type="number" min="0" value="${escapeHtml(configuracao.minutosAntecedenciaAposta ?? 0)}"></label>
-        <label>Distribuicao premio <input name="tipoDistribuicaoPremio" value="${escapeHtml(configuracao.tipoDistribuicaoPremio || 'percentual')}"></label>
+        <label>Tipo de distribuição do prêmio
+          <select name="tipoDistribuicaoPremio">
+            ${staticOptionList(PRIZE_DISTRIBUTION_OPTIONS, configuracao.tipoDistribuicaoPremio || 'percentual')}
+          </select>
+        </label>
         <label>Observacoes <textarea name="observacoesRegras">${escapeHtml(configuracao.observacoesRegras || '')}</textarea></label>
         <label>Ativo
           <select name="ativo">
@@ -1009,8 +1014,6 @@ document.querySelector('#menuButton').addEventListener('click', () => {
   shell.classList.toggle('menu-open');
 });
 
-document.querySelector('#refreshButton').addEventListener('click', () => navigate(state.route));
-
 document.querySelector('#logoutButton').addEventListener('click', () => {
   localStorage.removeItem('placar.token');
   localStorage.removeItem('placar.user');
@@ -1030,8 +1033,11 @@ content.addEventListener('input', (event) => {
   if (!input) return;
   const card = input.closest('[data-partida-id]');
   const partidaId = card?.dataset.partidaId;
-  if (!partidaId) return;
   const status = card.querySelector('[data-save-status]');
+  if (!partidaId) {
+    status.textContent = 'Nao foi possivel identificar a partida.';
+    return;
+  }
   status.textContent = 'Salvando...';
   clearTimeout(pendingSaves.get(partidaId));
   pendingSaves.set(partidaId, window.setTimeout(async () => {
@@ -1047,6 +1053,8 @@ content.addEventListener('input', (event) => {
         body: JSON.stringify({ partidaId, palpiteMandante: Number(mandante), palpiteVisitante: Number(visitante) })
       });
       status.textContent = 'Salvo automaticamente';
+      showMessage('Aposta salva.');
+      await renderApostas();
     } catch (error) {
       status.textContent = error.message;
     }

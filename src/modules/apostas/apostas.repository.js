@@ -155,7 +155,15 @@ async function listMinhasApostas(bolaoId, participanteId) {
   const result = await query(
     `
       select
-        a.*,
+        a.id,
+        a.bolao_id,
+        a.participante_id,
+        p.id as partida_id,
+        a.placar_mandante,
+        a.placar_visitante,
+        a.status,
+        a.registrada_at,
+        a.atualizado_at,
         p.inicio_at,
         p.estadio,
         p.placar_mandante as oficial_mandante,
