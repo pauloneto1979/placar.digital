@@ -1,5 +1,7 @@
 const { HttpError } = require('../../shared/errors/http-error');
 const { ensureCanAdminBolao } = require('../../shared/permissions/bolao-access');
+const { hashPassword } = require('../../shared/utils/password');
+const crypto = require('crypto');
 
 const STATUS = ['convidado', 'ativo', 'bloqueado', 'removido'];
 
@@ -21,7 +23,13 @@ function payload(body, bolaoId) {
   if (!email.includes('@')) throw new HttpError(400, 'invalid_participant_email', 'Email invalido.');
   if (!STATUS.includes(status)) throw new HttpError(400, 'invalid_participant_status', 'Status invalido.');
 
-  return { bolaoId, nome, email, telefone, status };
+  const senhaInicial = clean(body.senhaInicial || body.senha_inicial || body.senha || body.password);
+
+  return { bolaoId, nome, email, telefone, status, senhaInicial };
+}
+
+function generateTemporaryPassword() {
+  return crypto.randomBytes(12).toString('base64url');
 }
 
 function createParticipantesService(repository) {
@@ -36,6 +44,55 @@ function createParticipantesService(repository) {
     if (existing && existing.id !== ignoreId) throw new HttpError(409, 'duplicated_participant_email', 'Email ja cadastrado neste bolao.');
   }
 
+  async function resolveCredencialApostador(data) {
+    const existing = await repository.findUsuarioByEmail(data.email);
+
+    if (existing && existing.perfilGlobal !== 'apostador') {
+      throw new HttpError(
+        409,
+        'participant_email_belongs_to_system_user',
+        'Email ja pertence a usuario proprietario/administrador. Use outro email ou ajuste o cadastro de usuario antes de vincular participante.'
+      );
+    }
+
+    if (existing && !existing.ativo) {
+      throw new HttpError(409, 'inactive_bettor_credential', 'Credencial de apostador existente esta inativa.');
+    }
+
+    if (existing) {
+      return {
+        usuario: existing,
+        credencialCriada: false,
+        senhaTemporaria: null
+      };
+    }
+
+    const senhaTemporaria = data.senhaInicial || generateTemporaryPassword();
+    const usuario = await repository.createUsuarioApostador({
+      nome: data.nome,
+      email: data.email,
+      senhaHash: hashPassword(senhaTemporaria)
+    });
+
+    return {
+      usuario,
+      credencialCriada: true,
+      senhaTemporaria: data.senhaInicial ? null : senhaTemporaria
+    };
+  }
+
+  function attachCredencialInfo(participante, credencial) {
+    return {
+      ...participante,
+      credencialApostador: {
+        usuarioId: credencial.usuario.id,
+        email: credencial.usuario.email,
+        criada: credencial.credencialCriada,
+        senhaTemporaria: credencial.senhaTemporaria
+      }
+    };
+  }
+
   return {
     getStatus() {
       return { module: 'participantes', implemented: true };
@@ -48,14 +105,18 @@ function createParticipantesService(repository) {
       await ensureCanAdminBolao(auth, bolaoId);
       const data = payload(body, bolaoId);
       await ensureUniqueEmail(bolaoId, data.email);
-      return repository.create(data);
+      const credencial = await resolveCredencialApostador(data);
+      const participante = await repository.create({ ...data, usuarioId: credencial.usuario.id });
+      return attachCredencialInfo(participante, credencial);
     },
     async update(bolaoId, id, body, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
       await ensureResource(id, bolaoId);
       const data = payload(body, bolaoId);
       await ensureUniqueEmail(bolaoId, data.email, id);
-      return repository.update(id, data);
+      const credencial = await resolveCredencialApostador(data);
+      const participante = await repository.update(id, { ...data, usuarioId: credencial.usuario.id });
+      return attachCredencialInfo(participante, credencial);
     },
     async updateStatus(bolaoId, id, body, auth) {
       await ensureCanAdminBolao(auth, bolaoId);

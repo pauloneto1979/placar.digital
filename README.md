@@ -146,6 +146,48 @@ Para selecionar o bolao:
 
 As senhas devem ser armazenadas em `usuarios.senha_hash` no formato PBKDF2 gerado pelo utilitario `src/shared/utils/password.js`.
 
+## Credenciais Do Apostador
+
+Modelo escolhido: `participantes.usuario_id` opcional apontando para `usuarios.id`.
+
+Justificativa:
+
+- `participantes` continua representando a participacao dentro de um bolao.
+- `usuarios` continua sendo a credencial de login.
+- o mesmo usuario apostador pode estar vinculado a participantes em varios boloes.
+- a permissao administrativa continua separada em `boloes_usuarios`; participantes nunca validam administrador.
+
+Fluxo oficial:
+
+- ao cadastrar ou alterar um participante, o sistema usa o email do participante para resolver a credencial
+- se nao existir usuario com o email, cria `usuarios.perfil_global = 'apostador'`, ativo, com senha informada em `senhaInicial` ou senha temporaria gerada
+- se existir usuario apostador ativo com o email, vincula o participante a esse usuario
+- se existir usuario proprietario/administrador com o email, retorna conflito e nao vincula automaticamente
+- o token final do apostador contem `bolaoId`, `papel = apostador` e `participanteId`
+
+Exemplo de cadastro de participante com senha definida:
+
+```json
+{
+  "nome": "Maria Apostadora",
+  "email": "maria@email.com",
+  "telefone": "11999999999",
+  "status": "ativo",
+  "senhaInicial": "Senha@123"
+}
+```
+
+Se `senhaInicial` nao for enviada e a credencial for criada, a resposta inclui `credencialApostador.senhaTemporaria` apenas naquele retorno.
+
+Testes manuais recomendados:
+
+- cadastrar participante com email novo e confirmar criacao de usuario apostador
+- fazer login com o email e senha inicial/temporaria
+- cadastrar o mesmo email de apostador em outro bolao e confirmar selecao de bolao
+- tentar cadastrar participante com email de administrador/proprietario e confirmar erro `participant_email_belongs_to_system_user`
+- tentar acessar rota administrativa com token de apostador e confirmar `403`
+- confirmar que administrador continua acessando apenas boloes em `boloes_usuarios`
+
 ## Modulo Proprietario
 
 O modulo do proprietario fica em `/api/v1/proprietario` e exige Bearer token com `perfilGlobal` igual a `proprietario`.
