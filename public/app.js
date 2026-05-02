@@ -27,6 +27,8 @@ const routes = [
   { id: 'notificacoes', label: 'Notificacoes', subtitle: 'Avisos do bolao.' },
   { id: 'participantes', label: 'Participantes', subtitle: 'Gestao operacional do bolao.', admin: true },
   { id: 'pagamentos', label: 'Pagamentos', subtitle: 'Controle financeiro das participacoes.', admin: true },
+  { id: 'fases', label: 'Fases', subtitle: 'Etapas e grupos do bolao.', admin: true },
+  { id: 'times', label: 'Times', subtitle: 'Selecoes e clubes disponiveis.', admin: true },
   { id: 'partidas', label: 'Partidas', subtitle: 'Resultados e jogos cadastrados.', admin: true },
   { id: 'boloes', label: 'Boloes', subtitle: 'Gestao geral de boloes.', owner: true },
   { id: 'usuarios', label: 'Usuarios', subtitle: 'Proprietarios e administradores.', owner: true },
@@ -139,6 +141,49 @@ function renderChrome() {
 
 function empty(text) {
   return `<div class="empty">${escapeHtml(text)}</div>`;
+}
+
+function optionList(rows, valueKey = 'id', labelKey = 'nome', selected = '') {
+  return rows.map((row) => `
+    <option value="${escapeHtml(row[valueKey])}" ${row[valueKey] === selected ? 'selected' : ''}>
+      ${escapeHtml(row[labelKey] || row.email || row.id)}
+    </option>
+  `).join('');
+}
+
+function dateTimeInput(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 16);
+}
+
+function formPayload(form) {
+  const data = Object.fromEntries(new FormData(form).entries());
+  Object.keys(data).forEach((key) => {
+    if (data[key] === '') delete data[key];
+  });
+  return data;
+}
+
+function setFormValues(form, row) {
+  form.reset();
+  Object.entries(row).forEach(([key, value]) => {
+    const field = form.elements[key];
+    if (!field) return;
+    if (field.type === 'datetime-local') {
+      field.value = dateTimeInput(value);
+      return;
+    }
+    field.value = value ?? '';
+  });
+}
+
+function clearForm(kind) {
+  const form = document.querySelector(`[data-crud-form="${kind}"]`);
+  if (!form) return;
+  form.reset();
+  if (form.elements.id) form.elements.id.value = '';
 }
 
 function getRankMedal(position) {
@@ -321,29 +366,256 @@ async function renderNotificacoes() {
   content.innerHTML = `<section class="card"><div class="card-title"><h2>Notificacoes</h2></div><div class="list">${rows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.titulo)}</strong><p class="muted">${escapeHtml(item.mensagem || item.tipo || '')}</p></div><span class="pill">${escapeHtml(item.status || '')}</span></article>`).join('') || empty('Sem notificacoes.')}</div></section>`;
 }
 
-async function renderAdminList(kind) {
-  const endpoints = {
-    participantes: `/participantes/boloes/${state.activeBolaoId}`,
-    pagamentos: `/pagamentos/boloes/${state.activeBolaoId}`,
-    partidas: `/partidas/boloes/${state.activeBolaoId}`
-  };
-  const rows = await api(endpoints[kind]);
-  content.innerHTML = `
-    <section class="card">
-      <div class="card-title"><h2>${escapeHtml(currentRoute().label)}</h2><span class="pill">administracao</span></div>
-      <div class="list">${rows.map((row) => `<article class="row-card"><div><strong>${escapeHtml(row.nome || row.email || row.id)}</strong><p class="muted">${escapeHtml(row.status || row.formaPagamento || row.dataHora || '')}</p></div><span class="pill">${escapeHtml(row.valor ? money(row.valor) : row.sigla || row.tipo || '')}</span></article>`).join('') || empty('Nenhum registro encontrado.')}</div>
-    </section>
+function editableRow(kind, row, title, subtitle, badge = '') {
+  return `
+    <article class="row-card">
+      <div>
+        <strong>${escapeHtml(title)}</strong>
+        <p class="muted">${escapeHtml(subtitle || '')}</p>
+      </div>
+      <div class="actions">
+        ${badge ? `<span class="pill">${escapeHtml(badge)}</span>` : ''}
+        <button class="secondary" type="button" data-edit-kind="${kind}" data-id="${escapeHtml(row.id)}">Editar</button>
+      </div>
+    </article>
   `;
 }
 
 async function renderBoloesOwner() {
   const rows = await api('/proprietario/boloes');
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>Boloes</h2></div><div class="list">${rows.map((row) => `<article class="row-card"><div><strong>${escapeHtml(row.nome)}</strong><p class="muted">${escapeHtml(row.descricao || '')}</p></div><span class="pill">${escapeHtml(row.status)}</span></article>`).join('') || empty('Nenhum bolao cadastrado.')}</div></section>`;
+  state.data.boloes = rows;
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Bolões</h2><span class="pill">proprietário</span></div>
+      <form class="form-card" data-crud-form="boloes">
+        <input name="id" type="hidden">
+        <label>Nome <input name="nome" required></label>
+        <label>Descrição <input name="descricao"></label>
+        <label>Data início <input name="dataInicio" type="datetime-local"></label>
+        <label>Data fim <input name="dataFim" type="datetime-local"></label>
+        <label>Status
+          <select name="status">
+            <option value="ativo">ativo</option>
+            <option value="fechado">fechado</option>
+            <option value="inativo">inativo</option>
+          </select>
+        </label>
+        <div class="form-actions">
+          <button type="submit">Salvar bolão</button>
+          <button class="ghost" type="button" data-reset-form="boloes">Novo</button>
+        </div>
+      </form>
+    </section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('boloes', row, row.nome, row.descricao, row.status)).join('') || empty('Nenhum bolão cadastrado.')}</div></section>
+  `;
 }
 
 async function renderUsuariosOwner() {
   const rows = await api('/proprietario/usuarios');
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>Usuarios</h2></div><div class="list">${rows.map((row) => `<article class="row-card"><div><strong>${escapeHtml(row.nome)}</strong><p class="muted">${escapeHtml(row.email)}</p></div><span class="pill">${escapeHtml(row.perfil || row.status)}</span></article>`).join('') || empty('Nenhum usuario cadastrado.')}</div></section>`;
+  state.data.usuarios = rows;
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Usuários</h2><span class="pill">proprietário</span></div>
+      <form class="form-card" data-crud-form="usuarios">
+        <input name="id" type="hidden">
+        <label>Nome <input name="nome" required></label>
+        <label>Email <input name="email" type="email" required></label>
+        <label>Senha <input name="senha" type="password" placeholder="Obrigatória apenas no cadastro"></label>
+        <label>Perfil
+          <select name="perfil">
+            <option value="administrador">administrador</option>
+            <option value="proprietario">proprietario</option>
+          </select>
+        </label>
+        <label>Status
+          <select name="status">
+            <option value="ativo">ativo</option>
+            <option value="inativo">inativo</option>
+          </select>
+        </label>
+        <div class="form-actions">
+          <button type="submit">Salvar usuário</button>
+          <button class="ghost" type="button" data-reset-form="usuarios">Novo</button>
+        </div>
+      </form>
+    </section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('usuarios', row, row.nome, row.email, row.perfil || row.status)).join('') || empty('Nenhum usuário cadastrado.')}</div></section>
+  `;
+}
+
+async function renderParticipantesAdmin() {
+  const rows = await api(`/participantes/boloes/${state.activeBolaoId}`);
+  state.data.participantes = rows;
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Participantes</h2><span class="pill">administração</span></div>
+      <form class="form-card" data-crud-form="participantes">
+        <input name="id" type="hidden">
+        <label>Nome <input name="nome" required></label>
+        <label>Email <input name="email" type="email" required></label>
+        <label>Telefone <input name="telefone"></label>
+        <label>Senha inicial <input name="senhaInicial" type="password" placeholder="Opcional"></label>
+        <label>Status
+          <select name="status">
+            <option value="ativo">ativo</option>
+            <option value="convidado">convidado</option>
+            <option value="bloqueado">bloqueado</option>
+            <option value="removido">removido</option>
+          </select>
+        </label>
+        <div class="form-actions">
+          <button type="submit">Salvar participante</button>
+          <button class="ghost" type="button" data-reset-form="participantes">Novo</button>
+        </div>
+      </form>
+    </section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('participantes', row, row.nome, `${row.email} ${row.telefone || ''}`, row.status)).join('') || empty('Nenhum participante cadastrado.')}</div></section>
+  `;
+}
+
+async function renderPagamentosAdmin() {
+  const [rows, participantes] = await Promise.all([
+    api(`/pagamentos/boloes/${state.activeBolaoId}`),
+    api(`/participantes/boloes/${state.activeBolaoId}`)
+  ]);
+  state.data.pagamentos = rows;
+  state.data.participantes = participantes;
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Pagamentos</h2><span class="pill">administração</span></div>
+      <form class="form-card" data-crud-form="pagamentos">
+        <input name="id" type="hidden">
+        <label>Participante <select name="participanteId" required>${optionList(participantes)}</select></label>
+        <label>Valor <input name="valor" type="number" min="0" step="0.01" required></label>
+        <label>Status
+          <select name="status">
+            <option value="pendente">pendente</option>
+            <option value="pago">pago</option>
+            <option value="cancelado">cancelado</option>
+          </select>
+        </label>
+        <label>Forma
+          <select name="formaPagamento">
+            <option value="manual">manual</option>
+            <option value="pix">pix</option>
+            <option value="dinheiro">dinheiro</option>
+            <option value="outro">outro</option>
+          </select>
+        </label>
+        <label>Data pagamento <input name="dataPagamento" type="datetime-local"></label>
+        <label>Observação <input name="observacao"></label>
+        <div class="form-actions">
+          <button type="submit">Salvar pagamento</button>
+          <button class="ghost" type="button" data-reset-form="pagamentos">Novo</button>
+        </div>
+      </form>
+    </section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('pagamentos', row, row.participanteId, `${row.formaPagamento || ''} ${row.observacao || ''}`, `${row.status} ${money(row.valor)}`)).join('') || empty('Nenhum pagamento cadastrado.')}</div></section>
+  `;
+}
+
+async function renderFasesAdmin() {
+  const rows = await api(`/fases/boloes/${state.activeBolaoId}`);
+  state.data.fases = rows;
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Fases</h2><span class="pill">administração</span></div>
+      <form class="form-card" data-crud-form="fases">
+        <input name="id" type="hidden">
+        <label>Nome <input name="nome" required></label>
+        <label>Ordem <input name="ordem" type="number" min="0" value="0"></label>
+        <label>Tipo
+          <select name="tipo">
+            <option value="grupos">grupos</option>
+            <option value="oitavas">oitavas</option>
+            <option value="quartas">quartas</option>
+            <option value="semifinal">semifinal</option>
+            <option value="final">final</option>
+            <option value="outro">outro</option>
+          </select>
+        </label>
+        <label>Status
+          <select name="status">
+            <option value="pendente">pendente</option>
+            <option value="ativa">ativa</option>
+            <option value="encerrada">encerrada</option>
+          </select>
+        </label>
+        <div class="form-actions">
+          <button type="submit">Salvar fase</button>
+          <button class="ghost" type="button" data-reset-form="fases">Nova</button>
+        </div>
+      </form>
+    </section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('fases', row, row.nome, `Ordem ${row.ordem} · ${row.tipo}`, row.status)).join('') || empty('Nenhuma fase cadastrada.')}</div></section>
+  `;
+}
+
+async function renderTimesAdmin() {
+  const rows = await api(`/times/boloes/${state.activeBolaoId}`);
+  state.data.times = rows;
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Times</h2><span class="pill">administração</span></div>
+      <form class="form-card" data-crud-form="times">
+        <input name="id" type="hidden">
+        <label>Nome <input name="nome" required></label>
+        <label>Sigla <input name="sigla"></label>
+        <label>País <input name="pais"></label>
+        <label>Status
+          <select name="status">
+            <option value="ativo">ativo</option>
+            <option value="inativo">inativo</option>
+          </select>
+        </label>
+        <div class="form-actions">
+          <button type="submit">Salvar time</button>
+          <button class="ghost" type="button" data-reset-form="times">Novo</button>
+        </div>
+      </form>
+    </section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('times', row, row.nome, `${row.sigla || ''} ${row.pais || ''}`, row.status)).join('') || empty('Nenhum time cadastrado.')}</div></section>
+  `;
+}
+
+async function renderPartidasAdmin() {
+  const [rows, fases, times] = await Promise.all([
+    api(`/partidas/boloes/${state.activeBolaoId}`),
+    api(`/fases/boloes/${state.activeBolaoId}`),
+    api(`/times/boloes/${state.activeBolaoId}`)
+  ]);
+  state.data.partidas = rows;
+  state.data.fases = fases;
+  state.data.times = times;
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Partidas</h2><span class="pill">administração</span></div>
+      <form class="form-card" data-crud-form="partidas">
+        <input name="id" type="hidden">
+        <label>Fase <select name="faseId"><option value="">sem fase</option>${optionList(fases)}</select></label>
+        <label>Mandante <select name="timeMandanteId" required>${optionList(times)}</select></label>
+        <label>Visitante <select name="timeVisitanteId" required>${optionList(times)}</select></label>
+        <label>Data/hora <input name="dataHora" type="datetime-local" required></label>
+        <label>Estádio <input name="estadio"></label>
+        <label>Placar mandante <input name="placarMandante" type="number" min="0"></label>
+        <label>Placar visitante <input name="placarVisitante" type="number" min="0"></label>
+        <label>Status
+          <select name="status">
+            <option value="agendada">agendada</option>
+            <option value="em_andamento">em andamento</option>
+            <option value="finalizada">finalizada</option>
+            <option value="cancelada">cancelada</option>
+            <option value="inativa">inativa</option>
+          </select>
+        </label>
+        <div class="form-actions">
+          <button type="submit">Salvar partida</button>
+          <button class="ghost" type="button" data-reset-form="partidas">Nova</button>
+        </div>
+      </form>
+    </section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('partidas', row, `${row.timeMandanteId} x ${row.timeVisitanteId}`, `${dateTime(row.dataHora)} ${row.estadio || ''}`, row.status)).join('') || empty('Nenhuma partida cadastrada.')}</div></section>
+  `;
 }
 
 async function renderConfiguracoesOwner() {
@@ -358,9 +630,11 @@ const renderers = {
   jogos: renderJogos,
   regras: renderRegras,
   notificacoes: renderNotificacoes,
-  participantes: () => renderAdminList('participantes'),
-  pagamentos: () => renderAdminList('pagamentos'),
-  partidas: () => renderAdminList('partidas'),
+  participantes: renderParticipantesAdmin,
+  pagamentos: renderPagamentosAdmin,
+  fases: renderFasesAdmin,
+  times: renderTimesAdmin,
+  partidas: renderPartidasAdmin,
   boloes: renderBoloesOwner,
   usuarios: renderUsuariosOwner,
   configuracoes: renderConfiguracoesOwner
@@ -390,6 +664,61 @@ async function switchBolao(bolaoId) {
   await navigate(state.route);
 }
 
+async function submitCrud(kind, form) {
+  const data = formPayload(form);
+  const id = data.id;
+  delete data.id;
+
+  const config = {
+    boloes: {
+      create: '/proprietario/boloes',
+      update: (itemId) => `/proprietario/boloes/${itemId}`
+    },
+    usuarios: {
+      create: '/proprietario/usuarios',
+      update: (itemId) => `/proprietario/usuarios/${itemId}`
+    },
+    participantes: {
+      create: `/participantes/boloes/${state.activeBolaoId}`,
+      update: (itemId) => `/participantes/boloes/${state.activeBolaoId}/${itemId}`
+    },
+    pagamentos: {
+      create: `/pagamentos/boloes/${state.activeBolaoId}`,
+      update: (itemId) => `/pagamentos/boloes/${state.activeBolaoId}/${itemId}`
+    },
+    fases: {
+      create: `/fases/boloes/${state.activeBolaoId}`,
+      update: (itemId) => `/fases/boloes/${state.activeBolaoId}/${itemId}`
+    },
+    times: {
+      create: `/times/boloes/${state.activeBolaoId}`,
+      update: (itemId) => `/times/boloes/${state.activeBolaoId}/${itemId}`
+    },
+    partidas: {
+      create: `/partidas/boloes/${state.activeBolaoId}`,
+      update: (itemId) => `/partidas/boloes/${state.activeBolaoId}/${itemId}`
+    }
+  }[kind];
+
+  if (!config) return;
+
+  await api(id ? config.update(id) : config.create, {
+    method: id ? 'PUT' : 'POST',
+    body: JSON.stringify(data)
+  });
+
+  showMessage(id ? 'Registro atualizado.' : 'Registro criado.');
+  await navigate(state.route);
+}
+
+function editCrud(kind, id) {
+  const row = (state.data[kind] || []).find((item) => item.id === id);
+  const form = document.querySelector(`[data-crud-form="${kind}"]`);
+  if (!row || !form) return;
+  setFormValues(form, row);
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 async function init() {
   if (!state.token) {
     redirectLogin();
@@ -414,7 +743,28 @@ menu.addEventListener('click', (event) => {
 
 content.addEventListener('click', (event) => {
   const route = event.target.closest('[data-route]')?.dataset.route;
-  if (route) navigate(route);
+  if (route) {
+    navigate(route);
+    return;
+  }
+
+  const editButton = event.target.closest('[data-edit-kind]');
+  if (editButton) {
+    editCrud(editButton.dataset.editKind, editButton.dataset.id);
+    return;
+  }
+
+  const resetButton = event.target.closest('[data-reset-form]');
+  if (resetButton) {
+    clearForm(resetButton.dataset.resetForm);
+  }
+});
+
+content.addEventListener('submit', (event) => {
+  const form = event.target.closest('[data-crud-form]');
+  if (!form) return;
+  event.preventDefault();
+  submitCrud(form.dataset.crudForm, form).catch((error) => showMessage(error.message));
 });
 
 document.querySelector('#menuButton').addEventListener('click', () => {

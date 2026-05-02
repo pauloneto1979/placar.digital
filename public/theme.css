@@ -431,6 +431,18 @@ label {
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
+.form-actions,
+.actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.form-actions {
+  align-self: end;
+}
+
 .empty {
   color: var(--muted);
   padding: 12px 0;
