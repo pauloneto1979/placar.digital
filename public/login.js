@@ -16,6 +16,10 @@ function redirectForSession(result) {
 
   if (result.selectedBolao?.id) {
     localStorage.setItem('placar.admin.bolaoId', result.selectedBolao.id);
+    localStorage.setItem('placar.selectedBolaoNome', result.selectedBolao.nome || '');
+  } else {
+    localStorage.removeItem('placar.admin.bolaoId');
+    localStorage.removeItem('placar.selectedBolaoNome');
   }
 
   const perfil = result.user?.perfilGlobal;

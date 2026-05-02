@@ -5,7 +5,8 @@ const state = {
 
 const app = document.querySelector('#app');
 const message = document.querySelector('#message');
-document.querySelector('#bolaoForm').elements.bolaoId.value = state.bolaoId;
+const menuButton = document.querySelector('#menuButton');
+const sidebar = document.querySelector('#sidebar');
 
 function redirectToLogin() {
   window.location.href = '/app/login.html';
@@ -45,11 +46,28 @@ async function validateSession() {
   if (!['proprietario', 'administrador'].includes(session.user.perfilGlobal)) {
     throw new Error('Acesso administrativo negado.');
   }
+
+  if (session.selectedBolao?.id) {
+    state.bolaoId = session.selectedBolao.id;
+    localStorage.setItem('placar.admin.bolaoId', state.bolaoId);
+  }
+
+  if (!state.bolaoId) {
+    app.hidden = false;
+    showMessage('Selecione um bolao no login para acessar o modulo administrador.');
+    return;
+  }
+
   app.hidden = false;
-  if (state.bolaoId) await refresh();
+  await refresh();
 }
 
 function renderList(selector, rows, fields) {
+  if (!rows.length) {
+    document.querySelector(selector).innerHTML = '<article class="item"><div>Nenhum registro encontrado.</div></article>';
+    return;
+  }
+
   document.querySelector(selector).innerHTML = rows.map((row) => `
     <article class="item">
       <div>
@@ -78,11 +96,9 @@ async function refresh() {
 
 document.querySelector('#logoutButton').addEventListener('click', clearSession);
 
-document.querySelector('#bolaoForm').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  state.bolaoId = event.currentTarget.elements.bolaoId.value.trim();
-  localStorage.setItem('placar.admin.bolaoId', state.bolaoId);
-  try { await refresh(); showMessage('Bolao carregado.'); } catch (error) { showMessage(error.message); }
+menuButton.addEventListener('click', () => {
+  const collapsed = app.classList.toggle('sidebar-collapsed');
+  menuButton.setAttribute('aria-expanded', String(!collapsed));
 });
 
 document.querySelectorAll('.tab').forEach((tab) => {
@@ -91,6 +107,7 @@ document.querySelectorAll('.tab').forEach((tab) => {
     document.querySelectorAll('.panel').forEach((item) => item.classList.remove('active'));
     tab.classList.add('active');
     document.querySelector(`#${tab.dataset.panel}`).classList.add('active');
+    sidebar.classList.remove('mobile-open');
   });
 });
 

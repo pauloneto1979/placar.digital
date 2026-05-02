@@ -6,29 +6,34 @@
     <title>Placar.digital - Administrador</title>
     <link rel="stylesheet" href="/app/proprietario.css">
   </head>
-  <body>
+  <body class="admin-page">
     <header class="topbar">
+      <button id="menuButton" class="menu-button" type="button" aria-label="Abrir menu" aria-expanded="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
       <div class="brand"><img src="/app/logo-placar-digital.jpeg" alt="Placar.digital"><span>Modulo Administrador</span></div>
       <span id="sessionLabel">Sessao ativa</span>
       <button id="logoutButton" type="button">Sair</button>
     </header>
-    <main id="app" class="layout" hidden>
-      <form id="bolaoForm" class="form compact">
-        <label>Bolao ID <input name="bolaoId" required></label>
-        <button type="submit">Carregar</button>
-      </form>
-      <nav class="tabs">
-        <button class="tab active" data-panel="participantes" type="button">Participantes</button>
-        <button class="tab" data-panel="pagamentos" type="button">Pagamentos</button>
-        <button class="tab" data-panel="fases" type="button">Fases</button>
-        <button class="tab" data-panel="times" type="button">Times</button>
-        <button class="tab" data-panel="partidas" type="button">Partidas</button>
-      </nav>
-      <section id="participantes" class="panel active"><div id="participantesList" class="list"></div></section>
-      <section id="pagamentos" class="panel"><div id="pagamentosList" class="list"></div></section>
-      <section id="fases" class="panel"><div id="fasesList" class="list"></div></section>
-      <section id="times" class="panel"><div id="timesList" class="list"></div></section>
-      <section id="partidas" class="panel"><div id="partidasList" class="list"></div></section>
+    <main id="app" class="admin-shell" hidden>
+      <aside id="sidebar" class="sidebar">
+        <nav class="tabs sidebar-tabs">
+          <button class="tab active" data-panel="participantes" type="button">Participantes</button>
+          <button class="tab" data-panel="pagamentos" type="button">Pagamentos</button>
+          <button class="tab" data-panel="fases" type="button">Fases</button>
+          <button class="tab" data-panel="times" type="button">Times</button>
+          <button class="tab" data-panel="partidas" type="button">Partidas</button>
+        </nav>
+      </aside>
+      <section class="admin-content">
+        <section id="participantes" class="panel active"><div id="participantesList" class="list"></div></section>
+        <section id="pagamentos" class="panel"><div id="pagamentosList" class="list"></div></section>
+        <section id="fases" class="panel"><div id="fasesList" class="list"></div></section>
+        <section id="times" class="panel"><div id="timesList" class="list"></div></section>
+        <section id="partidas" class="panel"><div id="partidasList" class="list"></div></section>
+      </section>
     </main>
     <p id="message" class="message"></p>
     <script src="/app/administrador.js"></script>

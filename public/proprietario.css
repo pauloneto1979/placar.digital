@@ -156,6 +156,72 @@ label {
   position: fixed;
 }
 
+.admin-page .topbar {
+  grid-template-columns: auto 1fr auto auto;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.menu-button {
+  align-items: center;
+  background: transparent;
+  border-color: #2a3442;
+  display: grid;
+  gap: 4px;
+  height: 40px;
+  justify-content: center;
+  padding: 8px;
+  width: 44px;
+}
+
+.menu-button span {
+  background: #c8ff2e;
+  border-radius: 999px;
+  display: block;
+  height: 2px;
+  width: 20px;
+}
+
+.admin-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: calc(100vh - 74px);
+}
+
+.sidebar {
+  background: #0c131d;
+  border-right: 1px solid #1d2a3a;
+  padding: 18px 12px;
+}
+
+.sidebar-tabs {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.sidebar-tabs .tab {
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
+}
+
+.admin-content {
+  padding: 22px;
+}
+
+.sidebar-collapsed {
+  grid-template-columns: 0 1fr;
+}
+
+.sidebar-collapsed .sidebar {
+  border-right: 0;
+  overflow: hidden;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .login-page {
   background: #070d14;
 }
@@ -205,5 +271,24 @@ label {
 
   .tabs {
     flex-wrap: wrap;
+  }
+
+  .admin-page .topbar {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .admin-page #sessionLabel {
+    display: none;
+  }
+
+  .admin-shell,
+  .admin-shell.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar,
+  .sidebar-collapsed .sidebar {
+    border-right: 0;
+    padding: 12px;
   }
 }
