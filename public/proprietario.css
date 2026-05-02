@@ -11,19 +11,35 @@ body {
 
 .topbar {
   align-items: center;
-  background: #10223a;
+  background: #050b12;
   color: #fff;
   display: grid;
   gap: 12px;
   grid-template-columns: 1fr minmax(220px, 360px) auto;
-  padding: 14px 20px;
+  padding: 10px 20px;
+}
+
+.brand {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand img {
+  border-radius: 6px;
+  display: block;
+  height: 54px;
+  object-fit: cover;
+  object-position: center;
+  width: 126px;
 }
 
 .topbar span {
-  color: #b7c4d8;
-  display: block;
+  color: #c8ff2e;
   font-size: 13px;
-  margin-top: 2px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 input,
