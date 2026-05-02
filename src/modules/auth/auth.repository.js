@@ -26,7 +26,7 @@ async function listUserBoloes(usuarioId) {
       select
         null::uuid as participante_id,
         bu.id as vinculo_administrativo_id,
-        bu.perfil as papel,
+        bu.perfil::text as papel,
         case when bu.ativo then 'ativo' else 'inativo' end as participante_status,
         b.id as bolao_id,
         b.nome as bolao_nome,
@@ -45,8 +45,8 @@ async function listUserBoloes(usuarioId) {
       select
         p.id as participante_id,
         null::uuid as vinculo_administrativo_id,
-        p.papel,
-        p.status as participante_status,
+        p.papel::text as papel,
+        p.status::text as participante_status,
         b.id as bolao_id,
         b.nome as bolao_nome,
         b.slug as bolao_slug,
@@ -74,7 +74,7 @@ async function findUserBolao(usuarioId, bolaoId) {
       select
         null::uuid as participante_id,
         bu.id as vinculo_administrativo_id,
-        bu.perfil as papel,
+        bu.perfil::text as papel,
         case when bu.ativo then 'ativo' else 'inativo' end as participante_status,
         b.id as bolao_id,
         b.nome as bolao_nome,
@@ -94,8 +94,8 @@ async function findUserBolao(usuarioId, bolaoId) {
       select
         p.id as participante_id,
         null::uuid as vinculo_administrativo_id,
-        p.papel,
-        p.status as participante_status,
+        p.papel::text as papel,
+        p.status::text as participante_status,
         b.id as bolao_id,
         b.nome as bolao_nome,
         b.slug as bolao_slug,
