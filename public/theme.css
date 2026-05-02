@@ -161,6 +161,18 @@ label {
   min-height: 22px;
 }
 
+.message[data-tone="success"] {
+  color: var(--success);
+}
+
+.message[data-tone="error"] {
+  color: var(--danger);
+}
+
+.card-message {
+  margin: 6px 0 0;
+}
+
 .select-grid {
   display: grid;
   gap: 14px;

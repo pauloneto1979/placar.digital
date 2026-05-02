@@ -5,7 +5,8 @@ const state = {
   activeBolaoId: localStorage.getItem('placar.activeBolaoId') || '',
   activeBolaoNome: localStorage.getItem('placar.activeBolaoNome') || '',
   route: 'home',
-  data: {}
+  data: {},
+  formMessages: {}
 };
 
 const content = document.querySelector('#content');
@@ -39,6 +40,8 @@ const PRIZE_DISTRIBUTION_OPTIONS = [
   { value: 'vencedor_leva_tudo', label: 'Tudo para o 1º colocado' }
 ];
 
+const RULE_FORM_KINDS = new Set(['bolaoConfig', 'regrasPontuacao', 'criteriosDesempate', 'distribuicaoPremios']);
+
 const routes = [
   { id: 'home', label: 'Home', subtitle: 'Resumo, ranking e proximos jogos.' },
   { id: 'apostas', label: 'Apostas', subtitle: 'Registre seus palpites jogo a jogo.', roles: ['apostador'] },
@@ -65,8 +68,9 @@ function escapeHtml(value) {
     .replace(/'/g, '&#039;');
 }
 
-function showMessage(text) {
+function showMessage(text, tone = 'warning') {
   message.textContent = text;
+  message.dataset.tone = tone;
   window.setTimeout(() => { message.textContent = ''; }, 3600);
 }
 
@@ -180,6 +184,33 @@ function staticOptionList(options, selected = '') {
       ${escapeHtml(option.label)}
     </option>
   `).join('');
+}
+
+function optionLabel(options, value, fallback = '') {
+  return options.find((option) => option.value === value)?.label || fallback || value || '';
+}
+
+function setFormMessage(kind, text, tone = 'warning') {
+  state.formMessages[kind] = { text, tone };
+  const el = document.querySelector(`[data-form-message="${kind}"]`);
+  if (!el) return;
+  el.hidden = false;
+  el.dataset.tone = tone;
+  el.textContent = text;
+}
+
+function clearFormMessage(kind) {
+  delete state.formMessages[kind];
+  const el = document.querySelector(`[data-form-message="${kind}"]`);
+  if (!el) return;
+  el.hidden = true;
+  el.textContent = '';
+  el.dataset.tone = 'warning';
+}
+
+function scopedMessage(kind) {
+  const current = state.formMessages[kind];
+  return `<p class="message card-message" data-form-message="${kind}" data-tone="${escapeHtml(current?.tone || 'warning')}" ${current ? '' : 'hidden'}>${escapeHtml(current?.text || '')}</p>`;
 }
 
 function findById(rows, id) {
@@ -407,13 +438,50 @@ async function renderRegras() {
     return;
   }
 
-  const regras = await api(`/apostas/boloes/${state.activeBolaoId}/regras`);
-  const rows = [
-    ...(regras.regrasPontuacao || []).map((item) => `Pontuacao - ${item.codigo} - ${item.pontos} pts`),
-    ...(regras.criteriosDesempate || []).map((item) => `Desempate - ${item.codigo}`),
-    ...(regras.distribuicaoPremios || []).map((item) => `Premio - ${item.posicao} lugar - ${item.percentual}%`)
-  ];
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>Regras do bolao</h2></div><div class="list">${rows.map((text) => `<article class="row-card"><strong>${escapeHtml(text)}</strong></article>`).join('') || empty('Sem regras configuradas.')}</div></section>`;
+  const regras = await api(`/ranking/boloes/${state.activeBolaoId}/regras`);
+  const configuracao = regras.configuracaoBolao;
+  const configRows = configuracao ? [
+    `Minutos de antecedencia: ${configuracao.minutosAntecedenciaAposta ?? 0}`,
+    `Tipo de distribuicao do premio: ${optionLabel(PRIZE_DISTRIBUTION_OPTIONS, configuracao.tipoDistribuicaoPremio, configuracao.tipoDistribuicaoPremio)}`,
+    configuracao.observacoesRegras ? `Observacoes: ${configuracao.observacoesRegras}` : null
+  ].filter(Boolean) : [];
+
+  const regrasRows = (regras.regrasPontuacao || []).map((item) => ({
+    title: optionLabel(SCORE_RULE_OPTIONS, item.codigo, item.codigo),
+    subtitle: `${item.descricao} - ${item.pontos} pts - prioridade ${item.prioridade}`
+  }));
+  const criteriosRows = (regras.criteriosDesempate || []).map((item) => ({
+    title: optionLabel(TIEBREAKER_OPTIONS, item.codigo, item.codigo),
+    subtitle: `${item.descricao} - ordem ${item.ordem}`
+  }));
+  const premiosRows = (regras.distribuicaoPremios || []).map((item) => ({
+    title: `${item.posicao} lugar`,
+    subtitle: `${item.percentual}% - ${item.descricao || 'sem descricao'}`
+  }));
+
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>Configuracao do bolao</h2><span class="pill">somente leitura</span></div>
+      <div class="list">
+        ${configRows.map((text) => `<article class="row-card"><div><strong>${escapeHtml(text)}</strong></div></article>`).join('') || empty('Nenhuma configuracao principal ativa para este bolao.')}
+      </div>
+    </section>
+
+    <section class="grid three">
+      <article class="card">
+        <div class="card-title"><h2>Regras de pontuacao</h2></div>
+        <div class="list">${regrasRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhuma regra de pontuacao ativa.')}</div>
+      </article>
+      <article class="card">
+        <div class="card-title"><h2>Critérios de desempate</h2></div>
+        <div class="list">${criteriosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhum criterio de desempate ativo.')}</div>
+      </article>
+      <article class="card">
+        <div class="card-title"><h2>Distribuicao de premios</h2></div>
+        <div class="list">${premiosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhuma distribuicao de premios ativa.')}</div>
+      </article>
+    </section>
+  `;
 }
 
 async function renderNotificacoes() {
@@ -756,6 +824,7 @@ async function renderRegrasAdmin() {
           </select>
         </label>
         <div class="form-actions"><button type="submit">Salvar configuracao</button></div>
+        ${scopedMessage('bolaoConfig')}
       </form>
     </section>
 
@@ -775,6 +844,7 @@ async function renderRegrasAdmin() {
           <label>Prioridade <input name="prioridade" type="number" min="0" value="0"></label>
           <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
           <div class="form-actions"><button type="submit">Salvar regra</button><button class="ghost" type="button" data-reset-form="regrasPontuacao">Nova</button></div>
+          ${scopedMessage('regrasPontuacao')}
         </form>
       </article>
 
@@ -792,6 +862,7 @@ async function renderRegrasAdmin() {
           <label>Ordem <input name="ordem" type="number" min="1" value="1" required></label>
           <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
           <div class="form-actions"><button type="submit">Salvar criterio</button><button class="ghost" type="button" data-reset-form="criteriosDesempate">Novo</button></div>
+          ${scopedMessage('criteriosDesempate')}
         </form>
       </article>
 
@@ -804,6 +875,7 @@ async function renderRegrasAdmin() {
           <label>Descricao <input name="descricao"></label>
           <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">nao</option></select></label>
           <div class="form-actions"><button type="submit">Salvar premio</button><button class="ghost" type="button" data-reset-form="distribuicaoPremios">Novo</button></div>
+          ${scopedMessage('distribuicaoPremios')}
         </form>
       </article>
     </section>
@@ -883,6 +955,10 @@ async function submitCrud(kind, form) {
   const id = data.id;
   delete data.id;
 
+  if (RULE_FORM_KINDS.has(kind)) {
+    clearFormMessage(kind);
+  }
+
   if (kind === 'configuracoesGerais') {
     if (data.notificacoesAtivas !== undefined) {
       data.notificacoesAtivas = data.notificacoesAtivas === 'true';
@@ -950,6 +1026,15 @@ async function submitCrud(kind, form) {
     body: JSON.stringify(data)
   });
 
+  if (RULE_FORM_KINDS.has(kind)) {
+    state.formMessages[kind] = {
+      text: id ? 'Registro atualizado com sucesso.' : 'Registro salvo com sucesso.',
+      tone: 'success'
+    };
+    await navigate(state.route);
+    return;
+  }
+
   showMessage(id ? 'Registro atualizado.' : 'Registro criado.');
   await navigate(state.route);
 }
@@ -1000,6 +1085,7 @@ content.addEventListener('click', (event) => {
   const resetButton = event.target.closest('[data-reset-form]');
   if (resetButton) {
     clearForm(resetButton.dataset.resetForm);
+    clearFormMessage(resetButton.dataset.resetForm);
   }
 });
 
@@ -1007,7 +1093,13 @@ content.addEventListener('submit', (event) => {
   const form = event.target.closest('[data-crud-form]');
   if (!form) return;
   event.preventDefault();
-  submitCrud(form.dataset.crudForm, form).catch((error) => showMessage(error.message));
+  submitCrud(form.dataset.crudForm, form).catch((error) => {
+    if (RULE_FORM_KINDS.has(form.dataset.crudForm)) {
+      setFormMessage(form.dataset.crudForm, error.message, 'error');
+      return;
+    }
+    showMessage(error.message, 'error');
+  });
 });
 
 document.querySelector('#menuButton').addEventListener('click', () => {
