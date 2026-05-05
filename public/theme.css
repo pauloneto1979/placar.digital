@@ -310,6 +310,26 @@ label {
   padding: 10px 12px;
 }
 
+.locale-switcher {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 0.86rem;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.locale-switcher select {
+  min-height: 38px;
+  min-width: 76px;
+  padding: 8px 10px;
+}
+
+.auth-locale-switcher {
+  justify-content: flex-end;
+  margin: 0 0 14px;
+}
+
 .hamburger {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border);

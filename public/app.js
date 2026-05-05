@@ -1,4 +1,4 @@
-const state = {
+﻿const state = {
   token: localStorage.getItem('placar.token') || '',
   user: JSON.parse(localStorage.getItem('placar.user') || '{}'),
   boloes: JSON.parse(localStorage.getItem('placar.boloes') || '[]'),
@@ -19,47 +19,50 @@ const shell = document.querySelector('#shell');
 const bolaoSwitcher = document.querySelector('#bolaoSwitcher');
 const bolaoSelect = document.querySelector('#bolaoSelect');
 const profileButton = document.querySelector('#profileButton');
+const localeSelect = document.querySelector('#localeSelect');
+const i18n = window.PlacarI18n;
+const t = (key, params, fallback) => i18n.t(key, params, fallback);
 
 const SCORE_RULE_OPTIONS = [
-  { value: 'PLACAR_EXATO', label: 'Placar exato' },
-  { value: 'RESULTADO_CORRETO', label: 'Resultado correto' },
-  { value: 'PLACAR_INVERTIDO', label: 'Placar invertido' }
+  { value: 'PLACAR_EXATO', labelKey: 'options.scoreRules.PLACAR_EXATO' },
+  { value: 'RESULTADO_CORRETO', labelKey: 'options.scoreRules.RESULTADO_CORRETO' },
+  { value: 'PLACAR_INVERTIDO', labelKey: 'options.scoreRules.PLACAR_INVERTIDO' }
 ];
 
 const TIEBREAKER_OPTIONS = [
-  { value: 'PLACARES_EXATOS', label: 'Maior número de placares exatos' },
-  { value: 'RESULTADOS_CORRETOS', label: 'Maior número de resultados corretos' },
-  { value: 'PLACARES_INVERTIDOS', label: 'Maior número de placares invertidos' },
-  { value: 'MENOR_DIFERENCA_GOLS', label: 'Menor diferença total de gols' },
-  { value: 'ORDEM_PAGAMENTO', label: 'Ordem de pagamento' },
-  { value: 'ORDEM_ALFABETICA', label: 'Ordem alfabética' }
+  { value: 'PLACARES_EXATOS', labelKey: 'options.tiebreakers.PLACARES_EXATOS' },
+  { value: 'RESULTADOS_CORRETOS', labelKey: 'options.tiebreakers.RESULTADOS_CORRETOS' },
+  { value: 'PLACARES_INVERTIDOS', labelKey: 'options.tiebreakers.PLACARES_INVERTIDOS' },
+  { value: 'MENOR_DIFERENCA_GOLS', labelKey: 'options.tiebreakers.MENOR_DIFERENCA_GOLS' },
+  { value: 'ORDEM_PAGAMENTO', labelKey: 'options.tiebreakers.ORDEM_PAGAMENTO' },
+  { value: 'ORDEM_ALFABETICA', labelKey: 'options.tiebreakers.ORDEM_ALFABETICA' }
 ];
 
 const PRIZE_DISTRIBUTION_OPTIONS = [
-  { value: 'percentual', label: 'Percentual' },
-  { value: 'fixo', label: 'Valor fixo' },
-  { value: 'vencedor_leva_tudo', label: 'Tudo para o 1º colocado' }
+  { value: 'percentual', labelKey: 'options.prizeDistribution.percentual' },
+  { value: 'fixo', labelKey: 'options.prizeDistribution.fixo' },
+  { value: 'vencedor_leva_tudo', labelKey: 'options.prizeDistribution.vencedor_leva_tudo' }
 ];
 
 const RULE_FORM_KINDS = new Set(['bolaoConfig', 'regrasPontuacao', 'criteriosDesempate', 'distribuicaoPremios']);
 const PROFILE_FORM_KINDS = new Set(['meuPerfil', 'minhaSenha']);
 
 const routes = [
-  { id: 'home', label: 'Placar', subtitle: 'Resumo, ranking e próximos jogos.' },
-  { id: 'apostas', label: 'Apostas', subtitle: 'Registre seus palpites jogo a jogo.', roles: ['apostador'] },
-  { id: 'ranking', label: 'Ranking', subtitle: 'Pontuação, desempates e premiação.' },
-  { id: 'jogos', label: 'Jogos', subtitle: 'Calendário e resultados do bolão.' },
-  { id: 'regras', label: 'Regras', subtitle: 'Pontuação, desempate e prêmios.' },
-  { id: 'notificacoes', label: 'Notificações', subtitle: 'Avisos do bolão.' },
-  { id: 'participantes', label: 'Participantes', subtitle: 'Gestão operacional do bolão.', admin: true },
-  { id: 'pagamentos', label: 'Pagamentos', subtitle: 'Controle financeiro das participações.', admin: true },
-  { id: 'fases', label: 'Fases', subtitle: 'Etapas e grupos do bolão.', admin: true },
-  { id: 'times', label: 'Times', subtitle: 'Seleções e clubes disponíveis.', admin: true },
-  { id: 'partidas', label: 'Partidas', subtitle: 'Resultados e jogos cadastrados.', admin: true },
-  { id: 'boloes', label: 'Bolões', subtitle: 'Gestão geral de bolões.', owner: true },
-  { id: 'usuarios', label: 'Usuários', subtitle: 'Proprietários e administradores.', owner: true },
-  { id: 'configuracoes', label: 'Configurações', subtitle: 'Preferências gerais da plataforma.', owner: true },
-  { id: 'perfil', label: 'Meu perfil', subtitle: 'Atualize seus dados de acesso.', hidden: true }
+  { id: 'home', labelKey: 'nav.home', subtitleKey: 'subtitles.home' },
+  { id: 'apostas', labelKey: 'nav.apostas', subtitleKey: 'subtitles.apostas', roles: ['apostador'] },
+  { id: 'ranking', labelKey: 'nav.ranking', subtitleKey: 'subtitles.ranking' },
+  { id: 'jogos', labelKey: 'nav.jogos', subtitleKey: 'subtitles.jogos' },
+  { id: 'regras', labelKey: 'nav.regras', subtitleKey: 'subtitles.regras' },
+  { id: 'notificacoes', labelKey: 'nav.notificacoes', subtitleKey: 'subtitles.notificacoes' },
+  { id: 'participantes', labelKey: 'nav.participantes', subtitleKey: 'subtitles.participantes', admin: true },
+  { id: 'pagamentos', labelKey: 'nav.pagamentos', subtitleKey: 'subtitles.pagamentos', admin: true },
+  { id: 'fases', labelKey: 'nav.fases', subtitleKey: 'subtitles.fases', admin: true },
+  { id: 'times', labelKey: 'nav.times', subtitleKey: 'subtitles.times', admin: true },
+  { id: 'partidas', labelKey: 'nav.partidas', subtitleKey: 'subtitles.partidas', admin: true },
+  { id: 'boloes', labelKey: 'nav.boloes', subtitleKey: 'subtitles.boloes', owner: true },
+  { id: 'usuarios', labelKey: 'nav.usuarios', subtitleKey: 'subtitles.usuarios', owner: true },
+  { id: 'configuracoes', labelKey: 'nav.configuracoes', subtitleKey: 'subtitles.configuracoes', owner: true },
+  { id: 'perfil', labelKey: 'nav.perfil', subtitleKey: 'subtitles.perfil', hidden: true }
 ];
 
 function escapeHtml(value) {
@@ -78,20 +81,24 @@ function showMessage(text, tone = 'warning') {
 }
 
 function roleLabelText() {
-  return ({
-    proprietario: 'Proprietário',
-    administrador: 'Administrador',
-    apostador: 'Apostador'
-  }[state.user.perfilGlobal] || 'Sessão');
+  return t(`roles.${state.user.perfilGlobal}`, {}, t('common.session'));
 }
 
 function money(value) {
-  return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return Number(value || 0).toLocaleString(i18n.getLocale(), { style: 'currency', currency: 'BRL' });
 }
 
 function dateTime(value) {
-  if (!value) return 'sem data';
-  return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  if (!value) return t('common.noDate');
+  return new Date(value).toLocaleString(i18n.getLocale(), { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function statusLabel(value) {
+  return t(`status.${value}`, {}, value || '');
+}
+
+function badgeLabel(value) {
+  return t(`status.${value}`, {}, t(`roles.${value}`, {}, value || ''));
 }
 
 function isOwner() {
@@ -135,7 +142,7 @@ async function api(path, options = {}) {
     }
   });
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.message || 'Erro ao acessar API.');
+  if (!response.ok) throw new Error(body?.message || t('messages.apiError'));
   return body;
 }
 
@@ -153,18 +160,20 @@ function currentRoute() {
 function renderMenu() {
   menu.innerHTML = routes.filter((item) => !item.hidden && routeAllowed(item)).map((item) => `
     <button class="nav-item ${item.id === state.route ? 'active' : ''}" type="button" data-route="${item.id}">
-      ${escapeHtml(item.label)}
+      ${escapeHtml(t(item.labelKey))}
     </button>
   `).join('');
 }
 
 function renderChrome() {
   const route = currentRoute();
-  pageTitle.textContent = route.label;
-  pageSubtitle.textContent = state.activeBolaoNome || route.subtitle;
+  pageTitle.textContent = t(route.labelKey);
+  pageSubtitle.textContent = state.activeBolaoNome || t(route.subtitleKey);
   roleLabel.textContent = roleLabelText();
   shell.dataset.role = state.user.perfilGlobal || 'sessao';
   profileButton.classList.toggle('active', state.route === 'perfil');
+  localeSelect.value = i18n.getLocale();
+  i18n.applyI18n(document);
   renderMenu();
 
   if (state.boloes.length > 1) {
@@ -194,13 +203,15 @@ function optionList(rows, valueKey = 'id', labelKey = 'nome', selected = '') {
 function staticOptionList(options, selected = '') {
   return options.map((option) => `
     <option value="${escapeHtml(option.value)}" ${option.value === selected ? 'selected' : ''}>
-      ${escapeHtml(option.label)}
+      ${escapeHtml(t(option.labelKey, {}, option.label || option.value))}
     </option>
   `).join('');
 }
 
 function optionLabel(options, value, fallback = '') {
-  return options.find((option) => option.value === value)?.label || fallback || value || '';
+  const option = options.find((item) => item.value === value);
+  if (option) return t(option.labelKey, {}, option.label || option.value);
+  return fallback || value || '';
 }
 
 function setFormMessage(kind, text, tone = 'warning') {
@@ -274,7 +285,7 @@ function getRankMedal(position) {
 
 async function loadBaseData() {
   if (!state.activeBolaoId && !isOwner()) {
-    content.innerHTML = empty('Nenhum bolão ativo encontrado para esta sessão.');
+    content.innerHTML = empty(t('messages.noActivePool'));
     return false;
   }
 
@@ -316,31 +327,31 @@ async function renderHome() {
   content.innerHTML = `
     <section class="grid three">
       <article class="card">
-        <div class="card-title"><h2>Seu desempenho</h2><span class="pill">${escapeHtml(state.activeBolaoNome || 'Bolão')}</span></div>
+        <div class="card-title"><h2>${escapeHtml(t('home.performance'))}</h2><span class="pill">${escapeHtml(state.activeBolaoNome || t('common.pool'))}</span></div>
         <div class="kpi">${escapeHtml(meuRanking.posicao || '-')}</div>
-        <p class="muted">${escapeHtml(meuRanking.pontosAtuais ?? 0)} pontos no ranking</p>
+        <p class="muted">${escapeHtml(t('home.pointsInRanking', { points: meuRanking.pontosAtuais ?? 0 }))}</p>
       </article>
       <article class="card">
-        <div class="card-title"><h2>Arrecadado</h2></div>
+        <div class="card-title"><h2>${escapeHtml(t('home.collected'))}</h2></div>
         <div class="kpi">${money(dashboard?.totalArrecadado)}</div>
-        <p class="muted">${escapeHtml(dashboard?.participantesTotal || 0)} participantes</p>
+        <p class="muted">${escapeHtml(t('home.participants', { count: dashboard?.participantesTotal || 0 }))}</p>
       </article>
       <article class="card">
-        <div class="card-title"><h2>Último resultado</h2></div>
+        <div class="card-title"><h2>${escapeHtml(t('home.lastResult'))}</h2></div>
         ${ultimoResultado ? `
           <strong>${escapeHtml(ultimoResultado.mandante)} ${ultimoResultado.placarOficial.mandante} x ${ultimoResultado.placarOficial.visitante} ${escapeHtml(ultimoResultado.visitante)}</strong>
-          <p class="muted">Seu palpite: ${ultimoResultado.meuPalpite ? `${ultimoResultado.meuPalpite.mandante} x ${ultimoResultado.meuPalpite.visitante}` : 'sem aposta'}</p>
-        ` : empty('Sem resultado recente.')}
+          <p class="muted">${escapeHtml(t('home.yourBet', { bet: ultimoResultado.meuPalpite ? `${ultimoResultado.meuPalpite.mandante} x ${ultimoResultado.meuPalpite.visitante}` : t('common.noBet') }))}</p>
+        ` : empty(t('home.noRecentResult'))}
       </article>
     </section>
     <section class="grid two">
       <article class="card">
-        <div class="card-title"><h2>Top 3 ranking</h2><button class="secondary" data-route="ranking" type="button">Ver completo</button></div>
-        <div class="list">${ranking.slice(0, 3).map(renderRankingRow).join('') || empty('Ranking ainda vazio.')}</div>
+        <div class="card-title"><h2>${escapeHtml(t('home.top3'))}</h2><button class="secondary" data-route="ranking" type="button">${escapeHtml(t('home.viewFull'))}</button></div>
+        <div class="list">${ranking.slice(0, 3).map(renderRankingRow).join('') || empty(t('home.rankingEmpty'))}</div>
       </article>
       <article class="card">
-        <div class="card-title"><h2>Próximos jogos</h2><button class="secondary" data-route="${isApostador() ? 'apostas' : 'jogos'}" type="button">${isApostador() ? 'Apostar' : 'Ver jogos'}</button></div>
-        <div class="list">${jogos.slice(0, 4).map(renderGameCard).join('') || empty('Nenhum jogo cadastrado.')}</div>
+        <div class="card-title"><h2>${escapeHtml(t('home.nextGames'))}</h2><button class="secondary" data-route="${isApostador() ? 'apostas' : 'jogos'}" type="button">${escapeHtml(isApostador() ? t('home.bet') : t('home.viewGames'))}</button></div>
+        <div class="list">${jogos.slice(0, 4).map(renderGameCard).join('') || empty(t('home.noGames'))}</div>
       </article>
     </section>
   `;
@@ -358,8 +369,8 @@ function currentParticipanteId() {
 }
 
 function renderGameCard(game) {
-  const mandante = game.mandante?.nome || game.mandante || game.timeMandante || 'Mandante';
-  const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || 'Visitante';
+  const mandante = game.mandante?.nome || game.mandante || game.timeMandante || t('games.homeTeam');
+  const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || t('games.awayTeam');
   const placarMandante = game.placarMandante ?? game.placar_mandante;
   const placarVisitante = game.placarVisitante ?? game.placar_visitante;
   const hasScore = placarMandante !== null && placarMandante !== undefined && placarVisitante !== null && placarVisitante !== undefined;
@@ -368,12 +379,12 @@ function renderGameCard(game) {
       <div>
         <div class="team-line">
           <strong>${escapeHtml(mandante)}</strong>
-          <span class="score">${hasScore ? `${escapeHtml(placarMandante)} x ${escapeHtml(placarVisitante)}` : 'x'}</span>
+          <span class="score">${hasScore ? `${escapeHtml(placarMandante)} ${escapeHtml(t('common.scoreSeparator'))} ${escapeHtml(placarVisitante)}` : escapeHtml(t('common.scoreSeparator'))}</span>
           <strong>${escapeHtml(visitante)}</strong>
         </div>
-        <p class="muted">${escapeHtml(game.fase || game.faseNome || '')} ${dateTime(game.dataHora || game.inicioAt || game.inicio_at)} - ${escapeHtml(game.status || '')}</p>
+        <p class="muted">${escapeHtml(game.fase || game.faseNome || '')} ${dateTime(game.dataHora || game.inicioAt || game.inicio_at)} - ${escapeHtml(statusLabel(game.status))}</p>
       </div>
-      <span class="pill">${escapeHtml(game.estadio || 'jogo')}</span>
+      <span class="pill">${escapeHtml(game.estadio || t('common.game'))}</span>
     </article>
   `;
 }
@@ -385,23 +396,23 @@ function renderRankingRow(item) {
       <div class="medal">${getRankMedal(item.posicao)}</div>
       <div>
         <strong>${escapeHtml(item.participante)}</strong>
-        <p class="muted">Exatos ${item.acertosExatos || 0} · Resultados ${item.acertosResultado || 0} · Dif. gols ${item.diferencaGolsTotal || 0}</p>
+        <p class="muted">${escapeHtml(t('ranking.exact'))} ${item.acertosExatos || 0} · ${escapeHtml(t('ranking.results'))} ${item.acertosResultado || 0} · ${escapeHtml(t('ranking.goalDiff'))} ${item.diferencaGolsTotal || 0}</p>
       </div>
-      <div class="score">${escapeHtml(item.pontosAtuais || 0)} pts</div>
+      <div class="score">${escapeHtml(item.pontosAtuais || 0)} ${escapeHtml(t('ranking.pointsAbbr'))}</div>
     </article>
   `;
 }
 
 async function renderApostas() {
   if (!isApostador()) {
-    content.innerHTML = empty('Apostas ficam disponíveis apenas para apostadores.');
+    content.innerHTML = empty(t('bets.onlyBettors'));
     return;
   }
   const apostas = await api(`/apostas/boloes/${state.activeBolaoId}/minhas`);
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Meus palpites</h2><span class="pill">salvamento automático</span></div>
-      <div class="list">${apostas.map(renderBetCard).join('') || empty('Nenhum jogo disponível para aposta.')}</div>
+      <div class="card-title"><h2>${escapeHtml(t('bets.myGuesses'))}</h2><span class="pill">${escapeHtml(t('bets.autosave'))}</span></div>
+      <div class="list">${apostas.map(renderBetCard).join('') || empty(t('bets.none'))}</div>
     </section>
   `;
 }
@@ -410,7 +421,7 @@ function renderBetCard(aposta) {
   const canEdit = Boolean(aposta.podeAlterar);
   const left = aposta.meuPalpite?.mandante ?? '';
   const right = aposta.meuPalpite?.visitante ?? '';
-  const status = canEdit ? 'Salvo automaticamente' : (aposta.statusAposta === 'sem_aposta' ? 'Ainda não disponível' : 'Aposta encerrada');
+  const status = canEdit ? t('bets.savedAutomatically') : (aposta.statusAposta === 'sem_aposta' ? t('bets.notAvailable') : t('bets.closed'));
   return `
     <article class="match-card" data-partida-id="${escapeHtml(aposta.partidaId)}">
       <div>
@@ -418,7 +429,7 @@ function renderBetCard(aposta) {
           <strong>${escapeHtml(aposta.mandante)}</strong>
           <div class="bet-inputs">
             <input type="number" min="0" inputmode="numeric" value="${escapeHtml(left)}" data-bet-side="mandante" ${canEdit ? '' : 'disabled'}>
-            <span class="score">x</span>
+            <span class="score">${escapeHtml(t('common.scoreSeparator'))}</span>
             <input type="number" min="0" inputmode="numeric" value="${escapeHtml(right)}" data-bet-side="visitante" ${canEdit ? '' : 'disabled'}>
           </div>
           <strong>${escapeHtml(aposta.visitante)}</strong>
@@ -432,17 +443,17 @@ function renderBetCard(aposta) {
 
 async function renderRanking() {
   const ranking = await api(`/ranking/boloes/${state.activeBolaoId}/atual`);
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>Ranking completo</h2></div><div class="list">${ranking.map(renderRankingRow).join('') || empty('Ranking vazio.')}</div></section>`;
+  content.innerHTML = `<section class="card"><div class="card-title"><h2>${escapeHtml(t('ranking.full'))}</h2></div><div class="list">${ranking.map(renderRankingRow).join('') || empty(t('ranking.empty'))}</div></section>`;
 }
 
 async function renderJogos() {
   const jogos = await api(`/apostas/boloes/${state.activeBolaoId}/jogos`);
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>Jogos e resultados</h2></div><div class="list">${jogos.map(renderGameCard).join('') || empty('Nenhum jogo cadastrado.')}</div></section>`;
+  content.innerHTML = `<section class="card"><div class="card-title"><h2>${escapeHtml(t('games.title'))}</h2></div><div class="list">${jogos.map(renderGameCard).join('') || empty(t('games.none'))}</div></section>`;
 }
 
 async function renderRegras() {
   if (!state.activeBolaoId) {
-    content.innerHTML = `<section class="card">${empty('Selecione um bolão para visualizar as regras.')}</section>`;
+    content.innerHTML = `<section class="card">${empty(t('rules.selectPool'))}</section>`;
     return;
   }
 
@@ -454,44 +465,44 @@ async function renderRegras() {
   const regras = await api(`/ranking/boloes/${state.activeBolaoId}/regras`);
   const configuracao = regras.configuracaoBolao;
   const configRows = configuracao ? [
-    `Minutos de antecedência: ${configuracao.minutosAntecedenciaAposta ?? 0}`,
-    `Tipo de distribuição do prêmio: ${optionLabel(PRIZE_DISTRIBUTION_OPTIONS, configuracao.tipoDistribuicaoPremio, configuracao.tipoDistribuicaoPremio)}`,
-    configuracao.observacoesRegras ? `Observações: ${configuracao.observacoesRegras}` : null
+    t('rules.minutes', { minutes: configuracao.minutosAntecedenciaAposta ?? 0 }),
+    t('rules.prizeType', { type: optionLabel(PRIZE_DISTRIBUTION_OPTIONS, configuracao.tipoDistribuicaoPremio, configuracao.tipoDistribuicaoPremio) }),
+    configuracao.observacoesRegras ? t('rules.observations', { text: configuracao.observacoesRegras }) : null
   ].filter(Boolean) : [];
 
   const regrasRows = (regras.regrasPontuacao || []).map((item) => ({
     title: optionLabel(SCORE_RULE_OPTIONS, item.codigo, item.codigo),
-    subtitle: `${item.descricao} - ${item.pontos} pts - prioridade ${item.prioridade}`
+    subtitle: t('rules.pointsPriority', { description: item.descricao, points: item.pontos, priority: item.prioridade })
   }));
   const criteriosRows = (regras.criteriosDesempate || []).map((item) => ({
     title: optionLabel(TIEBREAKER_OPTIONS, item.codigo, item.codigo),
-    subtitle: `${item.descricao} - ordem ${item.ordem}`
+    subtitle: t('rules.order', { description: item.descricao, order: item.ordem })
   }));
   const premiosRows = (regras.distribuicaoPremios || []).map((item) => ({
-    title: `${item.posicao}º lugar`,
-    subtitle: `${item.percentual}% - ${item.descricao || 'sem descrição'}`
+    title: t('rules.place', { position: item.posicao }),
+    subtitle: t('rules.prizePercent', { percent: item.percentual, description: item.descricao || t('common.noDescription') })
   }));
 
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Configuração do bolão</h2><span class="pill">somente leitura</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('rules.configTitle'))}</h2><span class="pill">${escapeHtml(t('common.readOnly'))}</span></div>
       <div class="list">
-        ${configRows.map((text) => `<article class="row-card"><div><strong>${escapeHtml(text)}</strong></div></article>`).join('') || empty('Nenhuma configuração principal ativa para este bolão.')}
+        ${configRows.map((text) => `<article class="row-card"><div><strong>${escapeHtml(text)}</strong></div></article>`).join('') || empty(t('rules.noConfig'))}
       </div>
     </section>
 
     <section class="grid three">
       <article class="card">
-        <div class="card-title"><h2>Regras de pontuação</h2></div>
-        <div class="list">${regrasRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhuma regra de pontuação ativa.')}</div>
+        <div class="card-title"><h2>${escapeHtml(t('rules.scoreRules'))}</h2></div>
+        <div class="list">${regrasRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty(t('rules.noScoreRules'))}</div>
       </article>
       <article class="card">
-        <div class="card-title"><h2>Critérios de desempate</h2></div>
-        <div class="list">${criteriosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhum critério de desempate ativo.')}</div>
+        <div class="card-title"><h2>${escapeHtml(t('rules.tiebreakers'))}</h2></div>
+        <div class="list">${criteriosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty(t('rules.noTiebreakers'))}</div>
       </article>
       <article class="card">
-        <div class="card-title"><h2>Distribuição de prêmios</h2></div>
-        <div class="list">${premiosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty('Nenhuma distribuição de prêmios ativa.')}</div>
+        <div class="card-title"><h2>${escapeHtml(t('rules.prizes'))}</h2></div>
+        <div class="list">${premiosRows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.title)}</strong><p class="muted">${escapeHtml(item.subtitle)}</p></div></article>`).join('') || empty(t('rules.noPrizes'))}</div>
       </article>
     </section>
   `;
@@ -499,16 +510,16 @@ async function renderRegras() {
 
 async function renderNotificacoes() {
   if (!state.activeBolaoId) {
-    content.innerHTML = `<section class="card">${empty('Selecione um bolão para visualizar as notificações.')}</section>`;
+    content.innerHTML = `<section class="card">${empty(t('notifications.selectPool'))}</section>`;
     return;
   }
 
   const path = isApostador() ? `/notificacoes/boloes/${state.activeBolaoId}/minhas` : `/notificacoes/boloes/${state.activeBolaoId}`;
   const rows = await api(path);
   const emptyMessage = isApostador()
-    ? 'Você ainda não possui notificações neste bolão.'
-    : 'Não há notificações registradas para o bolão selecionado.';
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>Notificações</h2><span class="pill">${escapeHtml(state.activeBolaoNome || 'bolão')}</span></div><div class="list">${rows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.titulo)}</strong><p class="muted">${escapeHtml(item.mensagem || item.tipo || '')}</p></div><span class="pill">${escapeHtml(item.status || '')}</span></article>`).join('') || empty(emptyMessage)}</div></section>`;
+    ? t('notifications.emptyMine')
+    : t('notifications.emptyAdmin');
+  content.innerHTML = `<section class="card"><div class="card-title"><h2>${escapeHtml(t('notifications.title'))}</h2><span class="pill">${escapeHtml(state.activeBolaoNome || t('common.pool'))}</span></div><div class="list">${rows.map((item) => `<article class="row-card"><div><strong>${escapeHtml(item.titulo)}</strong><p class="muted">${escapeHtml(item.mensagem || item.tipo || '')}</p></div><span class="pill">${escapeHtml(statusLabel(item.status))}</span></article>`).join('') || empty(emptyMessage)}</div></section>`;
 }
 
 function editableRow(kind, row, title, subtitle, badge = '') {
@@ -519,8 +530,8 @@ function editableRow(kind, row, title, subtitle, badge = '') {
         <p class="muted">${escapeHtml(subtitle || '')}</p>
       </div>
       <div class="actions">
-        ${badge ? `<span class="pill">${escapeHtml(badge)}</span>` : ''}
-        <button class="secondary" type="button" data-edit-kind="${kind}" data-id="${escapeHtml(row.id)}">Editar</button>
+        ${badge ? `<span class="pill">${escapeHtml(badgeLabel(badge))}</span>` : ''}
+        <button class="secondary" type="button" data-edit-kind="${kind}" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
       </div>
     </article>
   `;
@@ -529,12 +540,12 @@ function editableRow(kind, row, title, subtitle, badge = '') {
 function regraActions(row, index, rows) {
   const buttons = [];
   if (index > 0) {
-    buttons.push(`<button class="ghost" type="button" data-move-rule="up" data-id="${escapeHtml(row.id)}">Subir</button>`);
+    buttons.push(`<button class="ghost" type="button" data-move-rule="up" data-id="${escapeHtml(row.id)}">${escapeHtml(t('rules.moveUp'))}</button>`);
   }
   if (index < rows.length - 1) {
-    buttons.push(`<button class="ghost" type="button" data-move-rule="down" data-id="${escapeHtml(row.id)}">Descer</button>`);
+    buttons.push(`<button class="ghost" type="button" data-move-rule="down" data-id="${escapeHtml(row.id)}">${escapeHtml(t('rules.moveDown'))}</button>`);
   }
-  buttons.push(`<button class="secondary" type="button" data-edit-kind="regrasPontuacao" data-id="${escapeHtml(row.id)}">Editar</button>`);
+  buttons.push(`<button class="secondary" type="button" data-edit-kind="regrasPontuacao" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>`);
   return buttons.join('');
 }
 
@@ -543,10 +554,10 @@ function regraRow(row, index, rows) {
     <article class="row-card">
       <div>
         <strong>${escapeHtml(optionLabel(SCORE_RULE_OPTIONS, row.codigo, row.codigo))}</strong>
-        <p class="muted">${escapeHtml(`${row.descricao} - ${row.pontos} pts - prioridade ${row.prioridade}`)}</p>
+        <p class="muted">${escapeHtml(t('rules.pointsPriority', { description: row.descricao, points: row.pontos, priority: row.prioridade }))}</p>
       </div>
       <div class="actions">
-        <span class="pill">${escapeHtml(row.ativo ? 'ativo' : 'inativo')}</span>
+        <span class="pill">${escapeHtml(statusLabel(row.ativo ? 'ativo' : 'inativo'))}</span>
         ${regraActions(row, index, rows)}
       </div>
     </article>
@@ -559,21 +570,21 @@ async function renderMeuPerfil() {
   content.innerHTML = `
     <section class="grid two">
       <article class="card">
-        <div class="card-title"><h2>Meus dados</h2><span class="pill">${escapeHtml(roleLabelText())}</span></div>
+        <div class="card-title"><h2>${escapeHtml(t('profile.myData'))}</h2><span class="pill">${escapeHtml(roleLabelText())}</span></div>
         <form class="form-grid" data-crud-form="meuPerfil">
-          <label>Nome <input name="nome" value="${escapeHtml(perfil.nome || '')}" required></label>
-          <label>Email <input name="email" type="email" value="${escapeHtml(perfil.email || '')}" readonly></label>
-          <div class="form-actions"><button type="submit">Salvar dados</button></div>
+          <label>${escapeHtml(t('profile.name'))} <input name="nome" value="${escapeHtml(perfil.nome || '')}" required></label>
+          <label>${escapeHtml(t('profile.email'))} <input name="email" type="email" value="${escapeHtml(perfil.email || '')}" readonly></label>
+          <div class="form-actions"><button type="submit">${escapeHtml(t('profile.saveData'))}</button></div>
           ${scopedMessage('meuPerfil')}
         </form>
       </article>
       <article class="card">
-        <div class="card-title"><h2>Trocar senha</h2></div>
+        <div class="card-title"><h2>${escapeHtml(t('profile.changePassword'))}</h2></div>
         <form class="form-grid" data-crud-form="minhaSenha">
-          <label>Senha atual <input name="senhaAtual" type="password" required></label>
-          <label>Nova senha <input name="novaSenha" type="password" required></label>
-          <label>Confirmar nova senha <input name="confirmarNovaSenha" type="password" required></label>
-          <div class="form-actions"><button type="submit">Atualizar senha</button></div>
+          <label>${escapeHtml(t('profile.currentPassword'))} <input name="senhaAtual" type="password" required></label>
+          <label>${escapeHtml(t('profile.newPassword'))} <input name="novaSenha" type="password" required></label>
+          <label>${escapeHtml(t('profile.confirmPassword'))} <input name="confirmarNovaSenha" type="password" required></label>
+          <div class="form-actions"><button type="submit">${escapeHtml(t('profile.updatePassword'))}</button></div>
           ${scopedMessage('minhaSenha')}
         </form>
       </article>
@@ -586,27 +597,27 @@ async function renderBoloesOwner() {
   state.data.boloes = rows;
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Bolões</h2><span class="pill">proprietário</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('owner.pools'))}</h2><span class="pill">${escapeHtml(t('common.owner'))}</span></div>
       <form class="form-card" data-crud-form="boloes">
         <input name="id" type="hidden">
-        <label>Nome <input name="nome" required></label>
-        <label>Descrição <input name="descricao"></label>
-        <label>Data início <input name="dataInicio" type="datetime-local"></label>
-        <label>Data fim <input name="dataFim" type="datetime-local"></label>
-        <label>Status
+        <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
+        <label>${escapeHtml(t('owner.description'))} <input name="descricao"></label>
+        <label>${escapeHtml(t('owner.startDate'))} <input name="dataInicio" type="datetime-local"></label>
+        <label>${escapeHtml(t('owner.endDate'))} <input name="dataFim" type="datetime-local"></label>
+        <label>${escapeHtml(t('owner.status'))}
           <select name="status">
-            <option value="ativo">ativo</option>
-            <option value="fechado">fechado</option>
-            <option value="inativo">inativo</option>
+            <option value="ativo">${escapeHtml(statusLabel('ativo'))}</option>
+            <option value="fechado">${escapeHtml(statusLabel('fechado'))}</option>
+            <option value="inativo">${escapeHtml(statusLabel('inativo'))}</option>
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">Salvar bolão</button>
-          <button class="ghost" type="button" data-reset-form="boloes">Novo</button>
+          <button type="submit">${escapeHtml(t('owner.savePool'))}</button>
+          <button class="ghost" type="button" data-reset-form="boloes">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('boloes', row, row.nome, row.descricao, row.status)).join('') || empty('Nenhum bolão cadastrado.')}</div></section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('boloes', row, row.nome, row.descricao, row.status)).join('') || empty(t('owner.noPools'))}</div></section>
   `;
 }
 
@@ -615,31 +626,31 @@ async function renderUsuariosOwner() {
   state.data.usuarios = rows;
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Usuários</h2><span class="pill">proprietário</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('owner.users'))}</h2><span class="pill">${escapeHtml(t('common.owner'))}</span></div>
       <form class="form-card" data-crud-form="usuarios">
         <input name="id" type="hidden">
-        <label>Nome <input name="nome" required></label>
-        <label>Email <input name="email" type="email" required></label>
-        <label>Senha <input name="senha" type="password" placeholder="Obrigatória apenas no cadastro"></label>
-        <label>Perfil
+        <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
+        <label>${escapeHtml(t('auth.email'))} <input name="email" type="email" required></label>
+        <label>${escapeHtml(t('owner.password'))} <input name="senha" type="password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"></label>
+        <label>${escapeHtml(t('owner.profile'))}
           <select name="perfil">
-            <option value="administrador">administrador</option>
-            <option value="proprietario">proprietário</option>
+            <option value="administrador">${escapeHtml(t('roles.administrador'))}</option>
+            <option value="proprietario">${escapeHtml(t('roles.proprietario'))}</option>
           </select>
         </label>
-        <label>Status
+        <label>${escapeHtml(t('owner.status'))}
           <select name="status">
-            <option value="ativo">ativo</option>
-            <option value="inativo">inativo</option>
+            <option value="ativo">${escapeHtml(statusLabel('ativo'))}</option>
+            <option value="inativo">${escapeHtml(statusLabel('inativo'))}</option>
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">Salvar usuário</button>
-          <button class="ghost" type="button" data-reset-form="usuarios">Novo</button>
+          <button type="submit">${escapeHtml(t('owner.saveUser'))}</button>
+          <button class="ghost" type="button" data-reset-form="usuarios">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('usuarios', row, row.nome, row.email, row.perfil || row.status)).join('') || empty('Nenhum usuário cadastrado.')}</div></section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('usuarios', row, row.nome, row.email, row.perfil || row.status)).join('') || empty(t('owner.noUsers'))}</div></section>
   `;
 }
 
@@ -648,28 +659,28 @@ async function renderParticipantesAdmin() {
   state.data.participantes = rows;
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Participantes</h2><span class="pill">administração</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('admin.participants'))}</h2><span class="pill">${escapeHtml(t('common.administration'))}</span></div>
       <form class="form-card" data-crud-form="participantes">
         <input name="id" type="hidden">
-        <label>Nome <input name="nome" required></label>
-        <label>Email <input name="email" type="email" required></label>
-        <label>Telefone <input name="telefone"></label>
-        <label>Senha inicial <input name="senhaInicial" type="password" placeholder="Opcional"></label>
-        <label>Status
+        <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
+        <label>${escapeHtml(t('auth.email'))} <input name="email" type="email" required></label>
+        <label>${escapeHtml(t('admin.phone'))} <input name="telefone"></label>
+        <label>${escapeHtml(t('admin.initialPassword'))} <input name="senhaInicial" type="password" placeholder="${escapeHtml(t('admin.optional'))}"></label>
+        <label>${escapeHtml(t('owner.status'))}
           <select name="status">
-            <option value="ativo">ativo</option>
-            <option value="convidado">convidado</option>
-            <option value="bloqueado">bloqueado</option>
-            <option value="removido">removido</option>
+            <option value="ativo">${escapeHtml(statusLabel('ativo'))}</option>
+            <option value="convidado">${escapeHtml(statusLabel('convidado'))}</option>
+            <option value="bloqueado">${escapeHtml(statusLabel('bloqueado'))}</option>
+            <option value="removido">${escapeHtml(statusLabel('removido'))}</option>
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">Salvar participante</button>
-          <button class="ghost" type="button" data-reset-form="participantes">Novo</button>
+          <button type="submit">${escapeHtml(t('admin.saveParticipant'))}</button>
+          <button class="ghost" type="button" data-reset-form="participantes">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('participantes', row, row.nome, `${row.email} ${row.telefone || ''}`, row.status)).join('') || empty('Nenhum participante cadastrado.')}</div></section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('participantes', row, row.nome, `${row.email} ${row.telefone || ''}`, row.status)).join('') || empty(t('admin.noParticipants'))}</div></section>
   `;
 }
 
@@ -684,11 +695,11 @@ async function renderPagamentosAdmin() {
     const participante = findById(participantes, row.participanteId);
     const gatewayInfo = [];
     if (row.gateway) gatewayInfo.push(row.gateway);
-    if (row.statusGateway) gatewayInfo.push(`gateway ${row.statusGateway}`);
-    if (row.orderNsu) gatewayInfo.push(`pedido ${row.orderNsu}`);
+    if (row.statusGateway) gatewayInfo.push(t('admin.gateway', { status: row.statusGateway }));
+    if (row.orderNsu) gatewayInfo.push(t('admin.order', { order: row.orderNsu }));
     const checkoutParts = [];
     if (gatewayInfo.length) checkoutParts.push(escapeHtml(gatewayInfo.join(' · ')));
-    if (row.checkoutUrl) checkoutParts.push(`<a href="${escapeHtml(row.checkoutUrl)}" target="_blank" rel="noreferrer">Abrir checkout</a>`);
+    if (row.checkoutUrl) checkoutParts.push(`<a href="${escapeHtml(row.checkoutUrl)}" target="_blank" rel="noreferrer">${escapeHtml(t('admin.openCheckout'))}</a>`);
     return `
       <article class="row-card">
         <div>
@@ -696,51 +707,51 @@ async function renderPagamentosAdmin() {
           <p class="muted">
             ${escapeHtml([
               money(row.valor),
-              row.formaPagamento || 'manual',
-              row.dataPagamento ? `pago em ${dateTime(row.dataPagamento)}` : 'sem data de pagamento',
+              statusLabel(row.formaPagamento || 'manual'),
+              row.dataPagamento ? t('admin.paidAt', { date: dateTime(row.dataPagamento) }) : t('admin.noPaymentDate'),
               row.observacao || ''
             ].filter(Boolean).join(' · '))}
           </p>
           ${checkoutParts.length ? `<p class="muted">${checkoutParts.join(' · ')}</p>` : ''}
         </div>
         <div class="actions">
-          <span class="pill">${escapeHtml(row.status || 'pendente')}</span>
-          <button class="secondary" type="button" data-edit-kind="pagamentos" data-id="${escapeHtml(row.id)}">Editar</button>
+          <span class="pill">${escapeHtml(statusLabel(row.status || 'pendente'))}</span>
+          <button class="secondary" type="button" data-edit-kind="pagamentos" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
         </div>
       </article>
     `;
   };
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Pagamentos</h2><span class="pill">administração</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('admin.payments'))}</h2><span class="pill">${escapeHtml(t('common.administration'))}</span></div>
       <form class="form-card" data-crud-form="pagamentos">
         <input name="id" type="hidden">
-        <label>Participante <select name="participanteId" required>${optionList(participantes)}</select></label>
-        <label>Valor <input name="valor" type="number" min="0" step="0.01" required></label>
-        <label>Status
+        <label>${escapeHtml(t('admin.participant'))} <select name="participanteId" required>${optionList(participantes)}</select></label>
+        <label>${escapeHtml(t('admin.value'))} <input name="valor" type="number" min="0" step="0.01" required></label>
+        <label>${escapeHtml(t('owner.status'))}
           <select name="status">
-            <option value="pendente">pendente</option>
-            <option value="pago">pago</option>
-            <option value="cancelado">cancelado</option>
+            <option value="pendente">${escapeHtml(statusLabel('pendente'))}</option>
+            <option value="pago">${escapeHtml(statusLabel('pago'))}</option>
+            <option value="cancelado">${escapeHtml(statusLabel('cancelado'))}</option>
           </select>
         </label>
-        <label>Forma
+        <label>${escapeHtml(t('admin.form'))}
           <select name="formaPagamento">
-            <option value="manual">manual</option>
-            <option value="pix">pix</option>
-            <option value="dinheiro">dinheiro</option>
-            <option value="outro">outro</option>
+            <option value="manual">${escapeHtml(statusLabel('manual'))}</option>
+            <option value="pix">${escapeHtml(statusLabel('pix'))}</option>
+            <option value="dinheiro">${escapeHtml(statusLabel('dinheiro'))}</option>
+            <option value="outro">${escapeHtml(statusLabel('outro'))}</option>
           </select>
         </label>
-        <label>Data pagamento <input name="dataPagamento" type="datetime-local"></label>
-        <label>Observação <input name="observacao"></label>
+        <label>${escapeHtml(t('admin.paymentDate'))} <input name="dataPagamento" type="datetime-local"></label>
+        <label>${escapeHtml(t('admin.observation'))} <input name="observacao"></label>
         <div class="form-actions">
-          <button type="submit">Salvar pagamento</button>
-          <button class="ghost" type="button" data-reset-form="pagamentos">Novo</button>
+          <button type="submit">${escapeHtml(t('admin.savePayment'))}</button>
+          <button class="ghost" type="button" data-reset-form="pagamentos">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map(paymentRow).join('') || empty('Nenhum pagamento cadastrado.')}</div></section>
+    <section class="card"><div class="list">${rows.map(paymentRow).join('') || empty(t('admin.noPayments'))}</div></section>
   `;
 }
 
@@ -749,35 +760,35 @@ async function renderFasesAdmin() {
   state.data.fases = rows;
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Fases</h2><span class="pill">administração</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('admin.phases'))}</h2><span class="pill">${escapeHtml(t('common.administration'))}</span></div>
       <form class="form-card" data-crud-form="fases">
         <input name="id" type="hidden">
-        <label>Nome <input name="nome" required></label>
-        <label>Ordem <input name="ordem" type="number" min="0" value="0"></label>
-        <label>Tipo
+        <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
+        <label>${escapeHtml(t('admin.orderLabel'))} <input name="ordem" type="number" min="0" value="0"></label>
+        <label>${escapeHtml(t('admin.type'))}
           <select name="tipo">
-            <option value="grupos">grupos</option>
-            <option value="oitavas">oitavas</option>
-            <option value="quartas">quartas</option>
-            <option value="semifinal">semifinal</option>
-            <option value="final">final</option>
-            <option value="outro">outro</option>
+            <option value="grupos">${escapeHtml(statusLabel('grupos'))}</option>
+            <option value="oitavas">${escapeHtml(statusLabel('oitavas'))}</option>
+            <option value="quartas">${escapeHtml(statusLabel('quartas'))}</option>
+            <option value="semifinal">${escapeHtml(statusLabel('semifinal'))}</option>
+            <option value="final">${escapeHtml(statusLabel('final'))}</option>
+            <option value="outro">${escapeHtml(statusLabel('outro'))}</option>
           </select>
         </label>
-        <label>Status
+        <label>${escapeHtml(t('owner.status'))}
           <select name="status">
-            <option value="pendente">pendente</option>
-            <option value="ativa">ativa</option>
-            <option value="encerrada">encerrada</option>
+            <option value="pendente">${escapeHtml(statusLabel('pendente'))}</option>
+            <option value="ativa">${escapeHtml(statusLabel('ativa'))}</option>
+            <option value="encerrada">${escapeHtml(statusLabel('encerrada'))}</option>
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">Salvar fase</button>
-          <button class="ghost" type="button" data-reset-form="fases">Nova</button>
+          <button type="submit">${escapeHtml(t('admin.savePhase'))}</button>
+          <button class="ghost" type="button" data-reset-form="fases">${escapeHtml(t('common.newFemale'))}</button>
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('fases', row, row.nome, `Ordem ${row.ordem} · ${row.tipo}`, row.status)).join('') || empty('Nenhuma fase cadastrada.')}</div></section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('fases', row, row.nome, `${t('admin.orderValue', { order: row.ordem })} · ${statusLabel(row.tipo)}`, row.status)).join('') || empty(t('admin.noPhases'))}</div></section>
   `;
 }
 
@@ -786,25 +797,25 @@ async function renderTimesAdmin() {
   state.data.times = rows;
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Times</h2><span class="pill">administração</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('admin.teams'))}</h2><span class="pill">${escapeHtml(t('common.administration'))}</span></div>
       <form class="form-card" data-crud-form="times">
         <input name="id" type="hidden">
-        <label>Nome <input name="nome" required></label>
-        <label>Sigla <input name="sigla"></label>
-        <label>País <input name="pais"></label>
-        <label>Status
+        <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
+        <label>${escapeHtml(t('admin.abbreviation'))} <input name="sigla"></label>
+        <label>${escapeHtml(t('admin.country'))} <input name="pais"></label>
+        <label>${escapeHtml(t('owner.status'))}
           <select name="status">
-            <option value="ativo">ativo</option>
-            <option value="inativo">inativo</option>
+            <option value="ativo">${escapeHtml(statusLabel('ativo'))}</option>
+            <option value="inativo">${escapeHtml(statusLabel('inativo'))}</option>
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">Salvar time</button>
-          <button class="ghost" type="button" data-reset-form="times">Novo</button>
+          <button type="submit">${escapeHtml(t('admin.saveTeam'))}</button>
+          <button class="ghost" type="button" data-reset-form="times">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('times', row, row.nome, `${row.sigla || ''} ${row.pais || ''}`, row.status)).join('') || empty('Nenhum time cadastrado.')}</div></section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('times', row, row.nome, `${row.sigla || ''} ${row.pais || ''}`, row.status)).join('') || empty(t('admin.noTeams'))}</div></section>
   `;
 }
 
@@ -826,37 +837,37 @@ async function renderPartidasAdmin() {
     return `${mandante}${score}${visitante}`;
   };
   const partidaSubtitle = (row) => {
-    const fase = findById(fases, row.faseId)?.nome || 'sem fase';
-    return `${fase} - ${dateTime(row.dataHora)} - ${row.estadio || 'sem estádio'}`;
+    const fase = findById(fases, row.faseId)?.nome || t('games.noPhase');
+    return `${fase} - ${dateTime(row.dataHora)} - ${row.estadio || t('games.noStadium')}`;
   };
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Partidas</h2><span class="pill">administração</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('admin.matches'))}</h2><span class="pill">${escapeHtml(t('common.administration'))}</span></div>
       <form class="form-card" data-crud-form="partidas">
         <input name="id" type="hidden">
-        <label>Fase <select name="faseId"><option value="">sem fase</option>${optionList(fases)}</select></label>
-        <label>Mandante <select name="timeMandanteId" required>${optionList(times)}</select></label>
-        <label>Visitante <select name="timeVisitanteId" required>${optionList(times)}</select></label>
-        <label>Data/hora <input name="dataHora" type="datetime-local" required></label>
-        <label>Estádio <input name="estadio"></label>
-        <label>Placar mandante <input name="placarMandante" type="number" min="0"></label>
-        <label>Placar visitante <input name="placarVisitante" type="number" min="0"></label>
-        <label>Status
+        <label>${escapeHtml(t('admin.phase'))} <select name="faseId"><option value="">${escapeHtml(t('games.noPhase'))}</option>${optionList(fases)}</select></label>
+        <label>${escapeHtml(t('admin.home'))} <select name="timeMandanteId" required>${optionList(times)}</select></label>
+        <label>${escapeHtml(t('admin.away'))} <select name="timeVisitanteId" required>${optionList(times)}</select></label>
+        <label>${escapeHtml(t('admin.dateTime'))} <input name="dataHora" type="datetime-local" required></label>
+        <label>${escapeHtml(t('admin.stadium'))} <input name="estadio"></label>
+        <label>${escapeHtml(t('admin.homeScore'))} <input name="placarMandante" type="number" min="0"></label>
+        <label>${escapeHtml(t('admin.awayScore'))} <input name="placarVisitante" type="number" min="0"></label>
+        <label>${escapeHtml(t('owner.status'))}
           <select name="status">
-            <option value="agendada">agendada</option>
-            <option value="em_andamento">em andamento</option>
-            <option value="finalizada">finalizada</option>
-            <option value="cancelada">cancelada</option>
-            <option value="inativa">inativa</option>
+            <option value="agendada">${escapeHtml(statusLabel('agendada'))}</option>
+            <option value="em_andamento">${escapeHtml(statusLabel('em_andamento'))}</option>
+            <option value="finalizada">${escapeHtml(statusLabel('finalizada'))}</option>
+            <option value="cancelada">${escapeHtml(statusLabel('cancelada'))}</option>
+            <option value="inativa">${escapeHtml(statusLabel('inativa'))}</option>
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">Salvar partida</button>
-          <button class="ghost" type="button" data-reset-form="partidas">Nova</button>
+          <button type="submit">${escapeHtml(t('admin.saveMatch'))}</button>
+          <button class="ghost" type="button" data-reset-form="partidas">${escapeHtml(t('common.newFemale'))}</button>
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('partidas', row, partidaTitle(row), partidaSubtitle(row), row.status)).join('') || empty('Nenhuma partida cadastrada.')}</div></section>
+    <section class="card"><div class="list">${rows.map((row) => editableRow('partidas', row, partidaTitle(row), partidaSubtitle(row), row.status)).join('') || empty(t('admin.noMatches'))}</div></section>
   `;
 }
 
@@ -875,84 +886,84 @@ async function renderRegrasAdmin() {
 
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Configuração do bolão</h2><span class="pill">administração</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('rules.configTitle'))}</h2><span class="pill">${escapeHtml(t('common.administration'))}</span></div>
       <form class="form-card" data-crud-form="bolaoConfig">
         <input name="id" type="hidden" value="${escapeHtml(configuracao.id || '')}">
-        <label>Minutos de antecedência da aposta <input name="minutosAntecedenciaAposta" type="number" min="0" value="${escapeHtml(configuracao.minutosAntecedenciaAposta ?? 0)}"></label>
-        <label>Tipo de distribuição do prêmio
+        <label>${escapeHtml(t('rules.minutesBeforeBet'))} <input name="minutosAntecedenciaAposta" type="number" min="0" value="${escapeHtml(configuracao.minutosAntecedenciaAposta ?? 0)}"></label>
+        <label>${escapeHtml(t('rules.prizeTypeLabel'))}
           <select name="tipoDistribuicaoPremio">
             ${staticOptionList(PRIZE_DISTRIBUTION_OPTIONS, configuracao.tipoDistribuicaoPremio || 'percentual')}
           </select>
         </label>
-        <label>Observações <textarea name="observacoesRegras">${escapeHtml(configuracao.observacoesRegras || '')}</textarea></label>
-        <label>Ativo
+        <label>${escapeHtml(t('rules.observationsLabel'))} <textarea name="observacoesRegras">${escapeHtml(configuracao.observacoesRegras || '')}</textarea></label>
+        <label>${escapeHtml(t('rules.active'))}
           <select name="ativo">
-            <option value="true" ${configuracao.ativo !== false ? 'selected' : ''}>sim</option>
-            <option value="false" ${configuracao.ativo === false ? 'selected' : ''}>não</option>
+            <option value="true" ${configuracao.ativo !== false ? 'selected' : ''}>${escapeHtml(t('common.yes'))}</option>
+            <option value="false" ${configuracao.ativo === false ? 'selected' : ''}>${escapeHtml(t('common.no'))}</option>
           </select>
         </label>
-        <div class="form-actions"><button type="submit">Salvar configuração</button></div>
+        <div class="form-actions"><button type="submit">${escapeHtml(t('rules.saveConfig'))}</button></div>
         ${scopedMessage('bolaoConfig')}
       </form>
     </section>
 
     <section class="grid three">
       <article class="card">
-        <div class="card-title"><h2>Regras de pontuação</h2></div>
+        <div class="card-title"><h2>${escapeHtml(t('rules.scoreRules'))}</h2></div>
         <form class="form-grid" data-crud-form="regrasPontuacao">
           <input name="id" type="hidden">
-          <label>Código
+          <label>${escapeHtml(t('rules.code'))}
             <select name="codigo" required>
-              <option value="">Selecione</option>
+              <option value="">${escapeHtml(t('common.select'))}</option>
               ${staticOptionList(SCORE_RULE_OPTIONS)}
             </select>
           </label>
-          <label>Descrição <input name="descricao" required></label>
-          <label>Pontos <input name="pontos" type="number" min="0" required></label>
-          <label>Prioridade (1 = mais importante) <input name="prioridade" type="number" min="1" value="1" required></label>
-          <p class="help-text">A pontuação não é cumulativa. Quando mais de uma regra se aplicar, vale a regra com maior prioridade.</p>
-          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">não</option></select></label>
-          <div class="form-actions"><button type="submit">Salvar regra</button><button class="ghost" type="button" data-reset-form="regrasPontuacao">Nova</button></div>
+          <label>${escapeHtml(t('rules.description'))} <input name="descricao" required></label>
+          <label>${escapeHtml(t('rules.points'))} <input name="pontos" type="number" min="0" required></label>
+          <label>${escapeHtml(t('rules.priority'))} <input name="prioridade" type="number" min="1" value="1" required></label>
+          <p class="help-text">${escapeHtml(t('rules.priorityHelp'))}</p>
+          <label>${escapeHtml(t('rules.active'))} <select name="ativo"><option value="true">${escapeHtml(t('common.yes'))}</option><option value="false">${escapeHtml(t('common.no'))}</option></select></label>
+          <div class="form-actions"><button type="submit">${escapeHtml(t('rules.saveRule'))}</button><button class="ghost" type="button" data-reset-form="regrasPontuacao">${escapeHtml(t('common.newFemale'))}</button></div>
           ${scopedMessage('regrasPontuacao')}
         </form>
       </article>
 
       <article class="card">
-        <div class="card-title"><h2>Critérios de desempate</h2></div>
+        <div class="card-title"><h2>${escapeHtml(t('rules.tiebreakers'))}</h2></div>
         <form class="form-grid" data-crud-form="criteriosDesempate">
           <input name="id" type="hidden">
-          <label>Código
+          <label>${escapeHtml(t('rules.code'))}
             <select name="codigo" required>
-              <option value="">Selecione</option>
+              <option value="">${escapeHtml(t('common.select'))}</option>
               ${staticOptionList(TIEBREAKER_OPTIONS)}
             </select>
           </label>
-          <label>Descrição <input name="descricao" required></label>
-          <label>Ordem <input name="ordem" type="number" min="1" value="1" required></label>
-          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">não</option></select></label>
-          <div class="form-actions"><button type="submit">Salvar critério</button><button class="ghost" type="button" data-reset-form="criteriosDesempate">Novo</button></div>
+          <label>${escapeHtml(t('rules.description'))} <input name="descricao" required></label>
+          <label>${escapeHtml(t('admin.orderLabel'))} <input name="ordem" type="number" min="1" value="1" required></label>
+          <label>${escapeHtml(t('rules.active'))} <select name="ativo"><option value="true">${escapeHtml(t('common.yes'))}</option><option value="false">${escapeHtml(t('common.no'))}</option></select></label>
+          <div class="form-actions"><button type="submit">${escapeHtml(t('rules.saveTiebreaker'))}</button><button class="ghost" type="button" data-reset-form="criteriosDesempate">${escapeHtml(t('common.new'))}</button></div>
           ${scopedMessage('criteriosDesempate')}
         </form>
       </article>
 
       <article class="card">
-        <div class="card-title"><h2>Distribuição de prêmios</h2></div>
+        <div class="card-title"><h2>${escapeHtml(t('rules.prizes'))}</h2></div>
         <form class="form-grid" data-crud-form="distribuicaoPremios">
           <input name="id" type="hidden">
-          <label>Posição <input name="posicao" type="number" min="1" required></label>
-          <label>Percentual <input name="percentual" type="number" min="0" max="100" step="0.01" required></label>
-          <label>Descrição <input name="descricao"></label>
-          <label>Ativo <select name="ativo"><option value="true">sim</option><option value="false">não</option></select></label>
-          <div class="form-actions"><button type="submit">Salvar prêmio</button><button class="ghost" type="button" data-reset-form="distribuicaoPremios">Novo</button></div>
+          <label>${escapeHtml(t('rules.position'))} <input name="posicao" type="number" min="1" required></label>
+          <label>${escapeHtml(t('rules.percent'))} <input name="percentual" type="number" min="0" max="100" step="0.01" required></label>
+          <label>${escapeHtml(t('rules.description'))} <input name="descricao"></label>
+          <label>${escapeHtml(t('rules.active'))} <select name="ativo"><option value="true">${escapeHtml(t('common.yes'))}</option><option value="false">${escapeHtml(t('common.no'))}</option></select></label>
+          <div class="form-actions"><button type="submit">${escapeHtml(t('rules.savePrize'))}</button><button class="ghost" type="button" data-reset-form="distribuicaoPremios">${escapeHtml(t('common.new'))}</button></div>
           ${scopedMessage('distribuicaoPremios')}
         </form>
       </article>
     </section>
 
     <section class="grid three">
-      <article class="card"><div class="card-title"><h3>Regras cadastradas</h3></div><div class="list">${regras.map((row, index) => regraRow(row, index, regras)).join('') || empty('Nenhuma regra configurada. Use o formulário acima para cadastrar.')}</div></article>
-      <article class="card"><div class="card-title"><h3>Critérios cadastrados</h3></div><div class="list">${criterios.map((row) => editableRow('criteriosDesempate', row, optionLabel(TIEBREAKER_OPTIONS, row.codigo, row.codigo), `${row.descricao} - ordem ${row.ordem}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhum critério configurado. Use o formulário acima para cadastrar.')}</div></article>
-      <article class="card"><div class="card-title"><h3>Prêmios cadastrados</h3></div><div class="list">${premios.map((row) => editableRow('distribuicaoPremios', row, `${row.posicao}º lugar`, `${row.percentual}% - ${row.descricao || ''}`, row.ativo ? 'ativo' : 'inativo')).join('') || empty('Nenhuma premiação configurada. Use o formulário acima para cadastrar.')}</div></article>
+      <article class="card"><div class="card-title"><h3>${escapeHtml(t('rules.registeredRules'))}</h3></div><div class="list">${regras.map((row, index) => regraRow(row, index, regras)).join('') || empty(t('rules.noRegisteredRules'))}</div></article>
+      <article class="card"><div class="card-title"><h3>${escapeHtml(t('rules.registeredTiebreakers'))}</h3></div><div class="list">${criterios.map((row) => editableRow('criteriosDesempate', row, optionLabel(TIEBREAKER_OPTIONS, row.codigo, row.codigo), t('rules.order', { description: row.descricao, order: row.ordem }), row.ativo ? 'ativo' : 'inativo')).join('') || empty(t('rules.noRegisteredTiebreakers'))}</div></article>
+      <article class="card"><div class="card-title"><h3>${escapeHtml(t('rules.registeredPrizes'))}</h3></div><div class="list">${premios.map((row) => editableRow('distribuicaoPremios', row, t('rules.place', { position: row.posicao }), t('rules.prizePercent', { percent: row.percentual, description: row.descricao || '' }), row.ativo ? 'ativo' : 'inativo')).join('') || empty(t('rules.noRegisteredPrizes'))}</div></article>
     </section>
   `;
 }
@@ -961,18 +972,18 @@ async function renderConfiguracoesOwner() {
   const config = await api('/proprietario/configuracoes-gerais').catch(() => ({}));
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>Configurações gerais</h2><span class="pill">plataforma</span></div>
+      <div class="card-title"><h2>${escapeHtml(t('owner.generalSettings'))}</h2><span class="pill">${escapeHtml(t('common.platform'))}</span></div>
       <form class="form-card" data-crud-form="configuracoesGerais">
-        <label>Tempo de sessão (segundos) <input name="tempoSessao" type="number" min="1" value="${escapeHtml(config.tempoSessao || '')}"></label>
-        <label>Email remetente <input name="emailRemetente" type="email" value="${escapeHtml(config.emailRemetente || '')}"></label>
-        <label>Notificações ativas
+        <label>${escapeHtml(t('owner.sessionTime'))} <input name="tempoSessao" type="number" min="1" value="${escapeHtml(config.tempoSessao || '')}"></label>
+        <label>${escapeHtml(t('owner.senderEmail'))} <input name="emailRemetente" type="email" value="${escapeHtml(config.emailRemetente || '')}"></label>
+        <label>${escapeHtml(t('owner.notificationsActive'))}
           <select name="notificacoesAtivas">
-            <option value="true" ${config.notificacoesAtivas !== false ? 'selected' : ''}>sim</option>
-            <option value="false" ${config.notificacoesAtivas === false ? 'selected' : ''}>não</option>
+            <option value="true" ${config.notificacoesAtivas !== false ? 'selected' : ''}>${escapeHtml(t('common.yes'))}</option>
+            <option value="false" ${config.notificacoesAtivas === false ? 'selected' : ''}>${escapeHtml(t('common.no'))}</option>
           </select>
         </label>
-        <label>Gateway de pagamento <input name="gatewayPagamento" value="${escapeHtml(config.gatewayPagamento || '')}"></label>
-        <div class="form-actions"><button type="submit">Salvar configurações</button></div>
+        <label>${escapeHtml(t('owner.paymentGateway'))} <input name="gatewayPagamento" value="${escapeHtml(config.gatewayPagamento || '')}"></label>
+        <div class="form-actions"><button type="submit">${escapeHtml(t('owner.saveSettings'))}</button></div>
       </form>
     </section>
   `;
@@ -996,7 +1007,7 @@ async function moveRulePriority(regraId, direction) {
     });
   }
 
-  state.formMessages.regrasPontuacao = { text: 'Prioridade atualizada com sucesso.', tone: 'success' };
+  state.formMessages.regrasPontuacao = { text: t('rules.priorityUpdated'), tone: 'success' };
   await navigate('regras');
 }
 
@@ -1022,7 +1033,7 @@ async function navigate(routeId) {
   const route = routes.find((item) => item.id === routeId && routeAllowed(item));
   state.route = route ? route.id : 'home';
   renderChrome();
-  content.innerHTML = '<section class="card"><div class="empty">Carregando...</div></section>';
+  content.innerHTML = `<section class="card"><div class="empty">${escapeHtml(t('common.loading'))}</div></section>`;
   try {
     await renderers[state.route]();
   } catch (error) {
@@ -1063,7 +1074,7 @@ async function submitCrud(kind, form) {
       method: 'PUT',
       body: JSON.stringify(data)
     });
-    showMessage('Configurações salvas.');
+    showMessage(t('owner.settingsSaved'));
     await navigate(state.route);
     return;
   }
@@ -1075,20 +1086,20 @@ async function submitCrud(kind, form) {
     });
     state.user = { ...state.user, nome: updated.nome, email: updated.email };
     localStorage.setItem('placar.user', JSON.stringify(state.user));
-    state.formMessages.meuPerfil = { text: 'Dados atualizados com sucesso.', tone: 'success' };
+    state.formMessages.meuPerfil = { text: t('profile.updated'), tone: 'success' };
     await navigate('perfil');
     return;
   }
 
   if (kind === 'minhaSenha') {
     if ((data.novaSenha || '') !== (data.confirmarNovaSenha || '')) {
-      throw new Error('A confirmação da nova senha não confere.');
+      throw new Error(t('profile.passwordMismatch'));
     }
     await api('/auth/minha-senha', {
       method: 'PUT',
       body: JSON.stringify(data)
     });
-    state.formMessages.minhaSenha = { text: 'Senha atualizada com sucesso.', tone: 'success' };
+    state.formMessages.minhaSenha = { text: t('profile.passwordUpdated'), tone: 'success' };
     await navigate('perfil');
     return;
   }
@@ -1149,14 +1160,14 @@ async function submitCrud(kind, form) {
 
   if (RULE_FORM_KINDS.has(kind)) {
     state.formMessages[kind] = {
-      text: id ? 'Registro atualizado com sucesso.' : 'Registro salvo com sucesso.',
+      text: id ? t('messages.recordUpdatedSuccess') : t('messages.recordSavedSuccess'),
       tone: 'success'
     };
     await navigate(state.route);
     return;
   }
 
-  showMessage(id ? 'Registro atualizado.' : 'Registro criado.');
+  showMessage(id ? t('messages.recordUpdated') : t('messages.recordCreated'));
   await navigate(state.route);
 }
 
@@ -1252,6 +1263,12 @@ bolaoSelect.addEventListener('change', () => {
   switchBolao(bolaoSelect.value).catch((error) => showMessage(error.message));
 });
 
+localeSelect.addEventListener('change', () => {
+  i18n.setLocale(localeSelect.value)
+    .then(() => navigate(state.route))
+    .catch(() => showMessage(t('messages.apiError'), 'error'));
+});
+
 const pendingSaves = new Map();
 content.addEventListener('input', (event) => {
   const input = event.target.closest('[data-bet-side]');
@@ -1260,16 +1277,16 @@ content.addEventListener('input', (event) => {
   const partidaId = card?.dataset.partidaId;
   const status = card.querySelector('[data-save-status]');
   if (!partidaId) {
-    status.textContent = 'Não foi possível identificar a partida.';
+    status.textContent = t('bets.cannotIdentifyMatch');
     return;
   }
-  status.textContent = 'Salvando...';
+  status.textContent = t('bets.saving');
   clearTimeout(pendingSaves.get(partidaId));
   pendingSaves.set(partidaId, window.setTimeout(async () => {
     const mandante = card.querySelector('[data-bet-side="mandante"]').value;
     const visitante = card.querySelector('[data-bet-side="visitante"]').value;
     if (mandante === '' || visitante === '') {
-      status.textContent = 'Informe os dois placares';
+      status.textContent = t('bets.fillBothScores');
       return;
     }
     try {
@@ -1277,8 +1294,8 @@ content.addEventListener('input', (event) => {
         method: 'POST',
         body: JSON.stringify({ partidaId, palpiteMandante: Number(mandante), palpiteVisitante: Number(visitante) })
       });
-      status.textContent = 'Salvo automaticamente';
-      showMessage('Aposta salva.');
+      status.textContent = t('bets.savedAutomatically');
+      showMessage(t('bets.saved'));
       await renderApostas();
     } catch (error) {
       status.textContent = error.message;
@@ -1286,6 +1303,6 @@ content.addEventListener('input', (event) => {
   }, 650));
 });
 
-init().catch((error) => {
+i18n.ready.then(() => init()).catch((error) => {
   content.innerHTML = `<section class="card">${empty(error.message)}</section>`;
 });

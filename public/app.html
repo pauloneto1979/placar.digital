@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Placar.digital</title>
+    <title data-i18n="common.appName">Placar.digital</title>
     <link rel="stylesheet" href="/app/theme.css">
   </head>
   <body>
@@ -14,7 +14,7 @@
             <img src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
             <div class="brand-copy">
               <strong>Placar.digital</strong>
-              <span id="roleLabel">Carregando</span>
+              <span id="roleLabel" data-i18n="common.loading">Carregando...</span>
             </div>
           </div>
           <nav id="menu" class="menu"></nav>
@@ -23,25 +23,33 @@
 
       <main class="main">
         <header class="topbar">
-          <button id="menuButton" class="hamburger" type="button" aria-label="Abrir menu">
+          <button id="menuButton" class="hamburger" type="button" aria-label="Abrir menu" data-i18n-aria-label="topbar.openMenu">
             <span></span><span></span><span></span>
           </button>
           <div class="page-title">
-            <h1 id="pageTitle">Placar</h1>
-            <p id="pageSubtitle">Visão geral do seu bolão.</p>
+            <h1 id="pageTitle" data-i18n="nav.home">Placar</h1>
+            <p id="pageSubtitle" data-i18n="subtitles.home">Resumo, ranking e próximos jogos.</p>
           </div>
           <div class="topbar-actions">
             <div id="bolaoSwitcher" class="bolao-switcher bolao-switcher-top" hidden>
-              <label>Bolão ativo <select id="bolaoSelect"></select></label>
+              <label><span data-i18n="topbar.activePool">Bolão ativo</span> <select id="bolaoSelect"></select></label>
             </div>
-            <button id="profileButton" class="ghost" type="button">Meu perfil</button>
-            <button id="logoutButton" class="ghost" type="button">Sair</button>
+            <label class="locale-switcher"><span data-i18n="common.language">Idioma</span>
+              <select id="localeSelect" aria-label="Idioma" data-i18n-aria-label="common.language">
+                <option value="pt-BR">PT</option>
+                <option value="en-US">EN</option>
+                <option value="es-ES">ES</option>
+              </select>
+            </label>
+            <button id="profileButton" class="ghost" type="button" data-i18n="topbar.profile">Meu perfil</button>
+            <button id="logoutButton" class="ghost" type="button" data-i18n="topbar.logout">Sair</button>
           </div>
         </header>
         <section id="content" class="content"></section>
         <p id="message" class="message"></p>
       </main>
     </div>
+    <script src="/app/i18n/i18n.js"></script>
     <script src="/app/app.js"></script>
   </body>
 </html>

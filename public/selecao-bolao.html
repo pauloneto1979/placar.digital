@@ -3,17 +3,25 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Placar.digital - Selecionar Bolão</title>
+    <title data-i18n="auth.selectionTitle">Placar.digital - Selecionar Bolão</title>
     <link rel="stylesheet" href="/app/theme.css">
   </head>
   <body class="select-page">
     <main class="auth-card wide">
+      <label class="locale-switcher auth-locale-switcher"><span data-i18n="common.language">Idioma</span>
+        <select id="localeSelect" aria-label="Idioma" data-i18n-aria-label="common.language">
+          <option value="pt-BR">PT</option>
+          <option value="en-US">EN</option>
+          <option value="es-ES">ES</option>
+        </select>
+      </label>
       <img class="auth-logo" src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
-      <h1 class="auth-title">Escolha o bolão</h1>
-      <p class="auth-subtitle">Você possui mais de um bolão vinculado. Selecione onde quer jogar agora.</p>
+      <h1 class="auth-title" data-i18n="auth.selectionHeading">Escolha o bolão</h1>
+      <p class="auth-subtitle" data-i18n="auth.selectionSubtitle">Você possui mais de um bolão vinculado. Selecione onde quer jogar agora.</p>
       <section id="boloesList" class="select-grid"></section>
       <p id="message" class="auth-message"></p>
     </main>
+    <script src="/app/i18n/i18n.js"></script>
     <script src="/app/selecao-bolao.js"></script>
   </body>
 </html>

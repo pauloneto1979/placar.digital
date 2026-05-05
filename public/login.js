@@ -1,5 +1,8 @@
 const form = document.querySelector('#loginForm');
 const message = document.querySelector('#message');
+const localeSelect = document.querySelector('#localeSelect');
+const i18n = window.PlacarI18n;
+const t = (key, params, fallback) => i18n.t(key, params, fallback);
 
 function showMessage(text) {
   message.textContent = text;
@@ -26,28 +29,39 @@ async function postJson(path, payload) {
     body: JSON.stringify(payload)
   });
   const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.message || 'Não foi possível entrar.');
+  if (!response.ok) throw new Error(body?.message || t('auth.loginError'));
   return body;
 }
 
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  showMessage('Validando acesso...');
+i18n.ready.then(() => {
+  localeSelect.value = i18n.getLocale();
+  i18n.applyI18n(document);
 
-  try {
-    const result = await postJson('/auth/login', Object.fromEntries(new FormData(form)));
+  localeSelect.addEventListener('change', () => {
+    i18n.setLocale(localeSelect.value).then(() => {
+      localeSelect.value = i18n.getLocale();
+    });
+  });
 
-    if (result.status === 'bolao_selection_required') {
-      localStorage.setItem('placar.selectionToken', result.selectionToken);
-      localStorage.setItem('placar.pendingUser', JSON.stringify(result.user || {}));
-      localStorage.setItem('placar.boloes', JSON.stringify(result.boloes || []));
-      window.location.href = '/app/selecao-bolao.html';
-      return;
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    showMessage(t('auth.validating'));
+
+    try {
+      const result = await postJson('/auth/login', Object.fromEntries(new FormData(form)));
+
+      if (result.status === 'bolao_selection_required') {
+        localStorage.setItem('placar.selectionToken', result.selectionToken);
+        localStorage.setItem('placar.pendingUser', JSON.stringify(result.user || {}));
+        localStorage.setItem('placar.boloes', JSON.stringify(result.boloes || []));
+        window.location.href = '/app/selecao-bolao.html';
+        return;
+      }
+
+      saveSession(result);
+      window.location.href = '/app/app.html';
+    } catch (error) {
+      showMessage(error.message);
     }
-
-    saveSession(result);
-    window.location.href = '/app/app.html';
-  } catch (error) {
-    showMessage(error.message);
-  }
+  });
 });
