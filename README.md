@@ -310,8 +310,41 @@ Módulo interno criado:
 - `src/modules/provedores_esportivos/provedores_esportivos.repository.js`
 - `src/modules/provedores_esportivos/provedores_esportivos.service.js`
 - `src/modules/provedores_esportivos/provider-factory.js`
+- `src/modules/provedores_esportivos/football-data-sync.service.js`
+- `src/modules/provedores_esportivos/sports-data-sync.job.js`
 
 A factory interna resolve o provedor ativo para jobs futuros de sincronização e também permite marcar `last_sync_at` após uma execução bem-sucedida.
+
+### Sincronização Football-Data.org
+
+O job interno de dados esportivos é iniciado junto com o servidor e acorda a cada 1 minuto.
+
+Regras da sincronização atual:
+
+- executa apenas quando o provider ativo for `football-data`
+- exige `enabled = true`
+- exige `api_token` preenchido
+- usa `base_url` da tabela `provedores_dados_esportivos`
+- respeita `sync_interval_seconds`, com mínimo efetivo de 60 segundos
+- faz no máximo 1 chamada HTTP por execução
+- consulta `GET {base_url}/matches`
+- envia o header `X-Auth-Token`
+- não registra o token em logs
+- trata HTTP `429` como rate limit com aviso controlado
+- atualiza `last_sync_at` apenas quando a consulta ao provider é bem-sucedida
+- protege contra execução simultânea no mesmo processo
+
+A sincronização não cria partidas automaticamente. Ela atualiza somente partidas já cadastradas e vinculadas pelo campo:
+
+- `partidas.football_data_match_id`
+
+Quando um jogo externo chega como `FINISHED` e possui placar completo em `score.fullTime.home` e `score.fullTime.away`, o sistema:
+
+- atualiza o placar da partida vinculada
+- marca `resultado_confirmado = true`
+- reaproveita o fluxo atual de resultado para auditoria, recálculo de pontuação, ranking e notificações
+
+Se não houver mudança relevante em status, data/hora ou placar, nada é salvo e nenhum recálculo é disparado.
 
 ## Principais Endpoints
 
@@ -416,6 +449,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/012_infinitepay_checkout.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/013_times_media_fields.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/014_sports_data_providers.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/015_partidas_football_data_match_id.sql
 ```
 
 ## Setup Local
@@ -496,6 +530,7 @@ Health checks úteis:
 - O ranking mantém a mesma regra de cálculo de pontos e usa apenas melhorias visuais e de leitura no frontend.
 - A leitura de ranking (`GET /api/v1/ranking/boloes/:bolaoId/atual`) não recalcula nem grava dados. O ranking é atualizado pelos fluxos de resultado confirmado ou pelos endpoints POST de recálculo.
 - Ao editar uma partida, o recálculo automático ocorre apenas quando há mudança relevante no resultado: placar, status ou confirmação do resultado. Alterações em dados operacionais como data, estádio ou outros campos não relacionados ao resultado não geram novo recálculo, auditoria ou notificação.
+- A rotina Football-Data.org atualiza somente partidas vinculadas por `football_data_match_id` e dispara o recálculo apenas quando o resultado externo muda a partida de forma relevante.
 - O upgrade visual global não altera regras de negócio, endpoints, autenticação, pontuação ou banco de dados.
 - A integração InfinitePay está preparada, mas depende da `INFINITEPAY_HANDLE` real no `.env`.
 - Provedores esportivos externos são configurados no banco pela tabela `provedores_dados_esportivos`. O provedor ativo é resolvido por factory interna, e a leitura da configuração não expõe `api_token`.

@@ -14,3 +14,4 @@
 \i db/migrations/012_infinitepay_checkout.sql
 \i db/migrations/013_times_media_fields.sql
 \i db/migrations/014_sports_data_providers.sql
+\i db/migrations/015_partidas_football_data_match_id.sql

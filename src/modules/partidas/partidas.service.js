@@ -36,7 +36,8 @@ function payload(body, bolaoId) {
     placarVisitante,
     status,
     ativo: status !== 'inativa' && body.ativo !== false,
-    resultadoConfirmado: placarMandante !== null && placarVisitante !== null && ['finalizada', 'encerrada'].includes(status)
+    resultadoConfirmado: placarMandante !== null && placarVisitante !== null && ['finalizada', 'encerrada'].includes(status),
+    footballDataMatchId: clean(body.footballDataMatchId || body.football_data_match_id) || null
   };
 }
 
@@ -67,8 +68,9 @@ function createPartidasService(repository) {
   }
   async function auditResultado(auth, context, before, after) {
     if (!deveRecalcularResultado(before, after)) return;
+    const auditContext = context || {};
     await repository.createAuditLog({
-      usuarioId: auth.usuarioId,
+      usuarioId: auth?.usuarioId || null,
       bolaoId: after.bolaoId,
       entidade: 'partida',
       entidadeId: after.id,
@@ -79,9 +81,18 @@ function createPartidasService(repository) {
         ...after,
         dataHoraAuditoria: new Date().toISOString()
       },
-      ip: context.ip,
-      userAgent: context.userAgent
+      ip: auditContext.ip,
+      userAgent: auditContext.userAgent
     });
+  }
+  async function aplicarAlteracaoResultado(before, after, auth, context) {
+    await auditResultado(auth, context, before, after);
+    if (deveRecalcularResultado(before, after)) {
+      await rankingService.recalcularPartidaPorResultado(after.id, auth || {}, context || {});
+      await notificacoesService.gerarResultadoLancado(after.id);
+      return { recalculado: true };
+    }
+    return { recalculado: false };
   }
   return {
     getStatus() { return { module: 'partidas', implemented: true }; },
@@ -93,11 +104,7 @@ function createPartidasService(repository) {
       const data = payload(body, bolaoId);
       await validate(data);
       const after = await repository.update(id, data);
-      await auditResultado(auth, context, before, after);
-      if (deveRecalcularResultado(before, after)) {
-        await rankingService.recalcularPartidaPorResultado(after.id, auth, context);
-        await notificacoesService.gerarResultadoLancado(after.id);
-      }
+      await aplicarAlteracaoResultado(before, after, auth, context);
       return after;
     },
     async informarResultado(bolaoId, id, body, auth, context) {
@@ -106,10 +113,24 @@ function createPartidasService(repository) {
       const data = { ...before, placarMandante: intOrNull(body.placarMandante ?? body.placar_mandante), placarVisitante: intOrNull(body.placarVisitante ?? body.placar_visitante), status: body.status || 'finalizada', resultadoConfirmado: true, ativo: true };
       if (data.placarMandante === null || data.placarVisitante === null) throw new HttpError(400, 'invalid_match_score', 'Informe os dois placares.');
       const after = await repository.update(id, data);
-      await auditResultado(auth, context, before, after);
-      await rankingService.recalcularPartidaPorResultado(after.id, auth, context);
-      await notificacoesService.gerarResultadoLancado(after.id);
+      await aplicarAlteracaoResultado(before, after, auth, context);
       return after;
+    },
+    async aplicarAtualizacaoExterna(before, changes, context = {}) {
+      const afterData = {
+        ...before,
+        ...changes,
+        bolaoId: before.bolaoId,
+        faseId: before.faseId,
+        timeMandanteId: before.timeMandanteId,
+        timeVisitanteId: before.timeVisitanteId,
+        estadio: before.estadio,
+        ativo: changes.status === 'inativa' ? false : before.ativo !== false,
+        footballDataMatchId: before.footballDataMatchId
+      };
+      const after = await repository.update(before.id, afterData);
+      const result = await aplicarAlteracaoResultado(before, after, { usuarioId: null }, context);
+      return { partida: after, ...result };
     }
   };
 }
