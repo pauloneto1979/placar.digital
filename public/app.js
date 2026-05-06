@@ -20,6 +20,7 @@ const bolaoSwitcher = document.querySelector('#bolaoSwitcher');
 const bolaoSelect = document.querySelector('#bolaoSelect');
 const profileButton = document.querySelector('#profileButton');
 const localeSelect = document.querySelector('#localeSelect');
+const localeCurrentLabel = document.querySelector('#localeCurrentLabel');
 const i18n = window.PlacarI18n;
 const t = (key, params, fallback) => i18n.t(key, params, fallback);
 
@@ -78,6 +79,17 @@ function showMessage(text, tone = 'warning') {
   message.textContent = text;
   message.dataset.tone = tone;
   window.setTimeout(() => { message.textContent = ''; }, 3600);
+}
+
+function localeLabel(locale) {
+  return t(`common.localeNames.${locale}`, {}, locale);
+}
+
+function syncLocaleControl() {
+  localeSelect.value = i18n.getLocale();
+  if (localeCurrentLabel) {
+    localeCurrentLabel.textContent = localeLabel(i18n.getLocale());
+  }
 }
 
 function roleLabelText() {
@@ -198,8 +210,8 @@ function renderChrome() {
   roleLabel.textContent = roleLabelText();
   shell.dataset.role = state.user.perfilGlobal || 'sessao';
   profileButton.classList.toggle('active', state.route === 'perfil');
-  localeSelect.value = i18n.getLocale();
   i18n.applyI18n(document);
+  syncLocaleControl();
   renderMenu();
 
   if (state.boloes.length > 1) {

@@ -69,6 +69,8 @@ O frontend publicado usa app unificado:
 
 O tema visual é centralizado em `public/theme.css` e cobre login, seleção de bolão, home, ranking, apostas, partidas e telas administrativas. A abordagem atual é mobile-first, com botões maiores, cards consistentes, formulários responsivos, estados vazios padronizados e mensagens de erro/sucesso no mesmo padrão visual.
 
+A barra superior e os controles auxiliares usam o mesmo padrão visual do app: seletor de idioma em formato de pílula com ícone de globo, e ações de perfil/saída com botões de ícone acessíveis.
+
 A Home/Placar do apostador funciona como dashboard premium do bolão ativo:
 
 - posição atual, pontuação, diferença para o líder e palpites pendentes

@@ -8,7 +8,14 @@
   </head>
   <body class="login-page">
     <main class="auth-card">
-      <label class="locale-switcher auth-locale-switcher"><span data-i18n="common.language">Idioma</span>
+      <label class="locale-pill auth-locale-switcher" data-i18n-title="common.language">
+        <span class="locale-pill__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="presentation"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm6.92 9h-3.1a15.67 15.67 0 0 0-1.38-5A8.06 8.06 0 0 1 18.92 11ZM12 4.08A13.72 13.72 0 0 1 13.86 11h-3.72A13.72 13.72 0 0 1 12 4.08ZM4.08 13h3.1a15.67 15.67 0 0 0 1.38 5A8.06 8.06 0 0 1 4.08 13Zm3.1-2h-3.1a8.06 8.06 0 0 1 4.48-5 15.67 15.67 0 0 0-1.38 5Zm4.82 8.92A13.72 13.72 0 0 1 10.14 13h3.72A13.72 13.72 0 0 1 12 19.92ZM14.26 13H9.74a13.74 13.74 0 0 1 0-2h4.52a13.74 13.74 0 0 1 0 2Zm.18 5a15.67 15.67 0 0 0 1.38-5h3.1a8.06 8.06 0 0 1-4.48 5Z"/></svg>
+        </span>
+        <span id="localeCurrentLabel" class="locale-pill__label">Português</span>
+        <span class="locale-pill__arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="presentation"><path d="m6.7 9.3 5.3 5.3 5.3-5.3 1.4 1.4-6.7 6.6-6.7-6.6 1.4-1.4Z"/></svg>
+        </span>
         <select id="localeSelect" aria-label="Idioma" data-i18n-aria-label="common.language">
           <option value="pt-BR">PT</option>
           <option value="en-US">EN</option>

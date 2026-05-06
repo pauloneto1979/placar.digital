@@ -1,6 +1,7 @@
 const list = document.querySelector('#boloesList');
 const message = document.querySelector('#message');
 const localeSelect = document.querySelector('#localeSelect');
+const localeCurrentLabel = document.querySelector('#localeCurrentLabel');
 const selectionToken = localStorage.getItem('placar.selectionToken') || '';
 const boloes = JSON.parse(localStorage.getItem('placar.boloes') || '[]');
 const i18n = window.PlacarI18n;
@@ -8,6 +9,14 @@ const t = (key, params, fallback) => i18n.t(key, params, fallback);
 
 function showMessage(text) {
   message.textContent = text;
+}
+
+function syncLocaleControl() {
+  const locale = i18n.getLocale();
+  localeSelect.value = locale;
+  if (localeCurrentLabel) {
+    localeCurrentLabel.textContent = t(`common.localeNames.${locale}`, {}, locale);
+  }
 }
 
 function escapeHtml(value) {
@@ -42,12 +51,12 @@ async function selectBolao(bolaoId) {
 }
 
 i18n.ready.then(() => {
-  localeSelect.value = i18n.getLocale();
   i18n.applyI18n(document);
+  syncLocaleControl();
 
   localeSelect.addEventListener('change', () => {
     i18n.setLocale(localeSelect.value).then(() => {
-      localeSelect.value = i18n.getLocale();
+      syncLocaleControl();
       renderBoloes();
     });
   });
