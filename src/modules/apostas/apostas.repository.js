@@ -8,8 +8,22 @@ function mapPartida(row) {
     fase: row.fase_nome,
     dataHora: row.inicio_at,
     estadio: row.estadio,
-    mandante: { id: row.time_mandante_id, nome: row.mandante_nome, sigla: row.mandante_sigla },
-    visitante: { id: row.time_visitante_id, nome: row.visitante_nome, sigla: row.visitante_sigla },
+    mandante: {
+      id: row.time_mandante_id,
+      nome: row.mandante_nome,
+      sigla: row.mandante_sigla,
+      codigoFifa: row.mandante_codigo_fifa,
+      escudoUrl: row.mandante_escudo_url,
+      bandeiraUrl: row.mandante_bandeira_url
+    },
+    visitante: {
+      id: row.time_visitante_id,
+      nome: row.visitante_nome,
+      sigla: row.visitante_sigla,
+      codigoFifa: row.visitante_codigo_fifa,
+      escudoUrl: row.visitante_escudo_url,
+      bandeiraUrl: row.visitante_bandeira_url
+    },
     placarMandante: row.placar_mandante,
     placarVisitante: row.placar_visitante,
     status: row.status
@@ -77,7 +91,19 @@ async function getTop3Ranking(bolaoId) {
 async function getJogosDoDia(bolaoId) {
   const result = await query(
     `
-      select p.*, f.nome as fase_nome, tm.nome as mandante_nome, tm.sigla as mandante_sigla, tv.nome as visitante_nome, tv.sigla as visitante_sigla
+      select
+        p.*,
+        f.nome as fase_nome,
+        tm.nome as mandante_nome,
+        tm.sigla as mandante_sigla,
+        tm.codigo_fifa as mandante_codigo_fifa,
+        tm.escudo_url as mandante_escudo_url,
+        tm.bandeira_url as mandante_bandeira_url,
+        tv.nome as visitante_nome,
+        tv.sigla as visitante_sigla,
+        tv.codigo_fifa as visitante_codigo_fifa,
+        tv.escudo_url as visitante_escudo_url,
+        tv.bandeira_url as visitante_bandeira_url
       from partidas p
       left join fases f on f.id = p.fase_id
       join times tm on tm.id = p.time_mandante_id
@@ -94,7 +120,19 @@ async function getJogosDoDia(bolaoId) {
 async function listJogos(bolaoId, filters) {
   const result = await query(
     `
-      select p.*, f.nome as fase_nome, tm.nome as mandante_nome, tm.sigla as mandante_sigla, tv.nome as visitante_nome, tv.sigla as visitante_sigla
+      select
+        p.*,
+        f.nome as fase_nome,
+        tm.nome as mandante_nome,
+        tm.sigla as mandante_sigla,
+        tm.codigo_fifa as mandante_codigo_fifa,
+        tm.escudo_url as mandante_escudo_url,
+        tm.bandeira_url as mandante_bandeira_url,
+        tv.nome as visitante_nome,
+        tv.sigla as visitante_sigla,
+        tv.codigo_fifa as visitante_codigo_fifa,
+        tv.escudo_url as visitante_escudo_url,
+        tv.bandeira_url as visitante_bandeira_url
       from partidas p
       left join fases f on f.id = p.fase_id
       join times tm on tm.id = p.time_mandante_id
@@ -171,7 +209,15 @@ async function listMinhasApostas(bolaoId, participanteId) {
         p.status as partida_status,
         f.nome as fase_nome,
         tm.nome as mandante_nome,
-        tv.nome as visitante_nome
+        tm.sigla as mandante_sigla,
+        tm.codigo_fifa as mandante_codigo_fifa,
+        tm.escudo_url as mandante_escudo_url,
+        tm.bandeira_url as mandante_bandeira_url,
+        tv.nome as visitante_nome,
+        tv.sigla as visitante_sigla,
+        tv.codigo_fifa as visitante_codigo_fifa,
+        tv.escudo_url as visitante_escudo_url,
+        tv.bandeira_url as visitante_bandeira_url
       from partidas p
       left join apostas a on a.partida_id = p.id and a.participante_id = $2
       left join fases f on f.id = p.fase_id

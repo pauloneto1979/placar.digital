@@ -368,6 +368,59 @@ function currentParticipanteId() {
   }
 }
 
+function teamMeta(team) {
+  if (!team || typeof team !== 'object') {
+    return {
+      nome: typeof team === 'string' ? team : '',
+      sigla: '',
+      codigoFifa: '',
+      escudoUrl: '',
+      bandeiraUrl: ''
+    };
+  }
+
+  return {
+    nome: team.nome || '',
+    sigla: team.sigla || '',
+    codigoFifa: team.codigoFifa || team.codigo_fifa || '',
+    escudoUrl: team.escudoUrl || team.escudo_url || '',
+    bandeiraUrl: team.bandeiraUrl || team.bandeira_url || ''
+  };
+}
+
+function teamFallbackLabel(team, fallbackName = '') {
+  const data = teamMeta(team);
+  if (data.codigoFifa) return data.codigoFifa.slice(0, 3).toUpperCase();
+  if (data.sigla) return data.sigla.slice(0, 3).toUpperCase();
+  const base = data.nome || fallbackName || '';
+  return base
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || 'PD';
+}
+
+function renderTeamAvatar(team, fallbackName = '', size = 'md') {
+  const data = teamMeta(team);
+  const imageUrl = data.escudoUrl || data.bandeiraUrl;
+  const fallback = teamFallbackLabel(team, fallbackName);
+  const alt = data.nome || fallbackName || t('admin.teams');
+  return `
+    <span class="team-avatar team-avatar--${size}">
+      ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">` : ''}
+      <span class="team-avatar__fallback" ${imageUrl ? 'hidden' : ''}>${escapeHtml(fallback)}</span>
+    </span>
+  `;
+}
+
+function renderTeamName(team, fallbackName = '', size = 'md') {
+  const data = teamMeta(team);
+  const nome = data.nome || fallbackName || t('common.game');
+  return `<span class="team-name team-name--${size}">${renderTeamAvatar(team, nome, size)}<span>${escapeHtml(nome)}</span></span>`;
+}
+
 function renderGameCard(game) {
   const mandante = game.mandante?.nome || game.mandante || game.timeMandante || t('games.homeTeam');
   const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || t('games.awayTeam');
@@ -378,9 +431,9 @@ function renderGameCard(game) {
     <article class="match-card">
       <div>
         <div class="team-line">
-          <strong>${escapeHtml(mandante)}</strong>
+          ${renderTeamName(game.mandante || { nome: mandante }, mandante)}
           <span class="score">${hasScore ? `${escapeHtml(placarMandante)} ${escapeHtml(t('common.scoreSeparator'))} ${escapeHtml(placarVisitante)}` : escapeHtml(t('common.scoreSeparator'))}</span>
-          <strong>${escapeHtml(visitante)}</strong>
+          ${renderTeamName(game.visitante || { nome: visitante }, visitante)}
         </div>
         <p class="muted">${escapeHtml(game.fase || game.faseNome || '')} ${dateTime(game.dataHora || game.inicioAt || game.inicio_at)} - ${escapeHtml(statusLabel(game.status))}</p>
       </div>
@@ -422,17 +475,19 @@ function renderBetCard(aposta) {
   const left = aposta.meuPalpite?.mandante ?? '';
   const right = aposta.meuPalpite?.visitante ?? '';
   const status = canEdit ? t('bets.savedAutomatically') : (aposta.statusAposta === 'sem_aposta' ? t('bets.notAvailable') : t('bets.closed'));
+  const mandante = aposta.mandante?.nome || aposta.mandante || t('games.homeTeam');
+  const visitante = aposta.visitante?.nome || aposta.visitante || t('games.awayTeam');
   return `
     <article class="match-card" data-partida-id="${escapeHtml(aposta.partidaId)}">
       <div>
         <div class="team-line">
-          <strong>${escapeHtml(aposta.mandante)}</strong>
+          ${renderTeamName(aposta.mandante || { nome: mandante }, mandante)}
           <div class="bet-inputs">
             <input type="number" min="0" inputmode="numeric" value="${escapeHtml(left)}" data-bet-side="mandante" ${canEdit ? '' : 'disabled'}>
             <span class="score">${escapeHtml(t('common.scoreSeparator'))}</span>
             <input type="number" min="0" inputmode="numeric" value="${escapeHtml(right)}" data-bet-side="visitante" ${canEdit ? '' : 'disabled'}>
           </div>
-          <strong>${escapeHtml(aposta.visitante)}</strong>
+          ${renderTeamName(aposta.visitante || { nome: visitante }, visitante)}
         </div>
         <p class="muted">${escapeHtml(aposta.fase || '')} · ${dateTime(aposta.dataHora)} · ${escapeHtml(aposta.estadio || '')}</p>
       </div>
@@ -795,6 +850,19 @@ async function renderFasesAdmin() {
 async function renderTimesAdmin() {
   const rows = await api(`/times/boloes/${state.activeBolaoId}`);
   state.data.times = rows;
+  const teamSummary = (row) => [row.sigla || row.codigoFifa || '', row.pais || ''].filter(Boolean).join(' · ');
+  const teamRow = (row) => `
+    <article class="row-card">
+      <div>
+        <strong>${renderTeamName(row, row.nome, 'sm')}</strong>
+        <p class="muted">${escapeHtml(teamSummary(row))}</p>
+      </div>
+      <div class="actions">
+        <span class="pill">${escapeHtml(badgeLabel(row.status))}</span>
+        <button class="secondary" type="button" data-edit-kind="times" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
+      </div>
+    </article>
+  `;
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>${escapeHtml(t('admin.teams'))}</h2><span class="pill">${escapeHtml(t('common.administration'))}</span></div>
@@ -802,6 +870,9 @@ async function renderTimesAdmin() {
         <input name="id" type="hidden">
         <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
         <label>${escapeHtml(t('admin.abbreviation'))} <input name="sigla"></label>
+        <label>${escapeHtml(t('admin.fifaCode'))} <input name="codigoFifa"></label>
+        <label>${escapeHtml(t('admin.shieldUrl'))} <input name="escudoUrl" type="url"></label>
+        <label>${escapeHtml(t('admin.flagUrl'))} <input name="bandeiraUrl" type="url"></label>
         <label>${escapeHtml(t('admin.country'))} <input name="pais"></label>
         <label>${escapeHtml(t('owner.status'))}
           <select name="status">
@@ -815,7 +886,7 @@ async function renderTimesAdmin() {
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('times', row, row.nome, `${row.sigla || ''} ${row.pais || ''}`, row.status)).join('') || empty(t('admin.noTeams'))}</div></section>
+    <section class="card"><div class="list">${rows.map(teamRow).join('') || empty(t('admin.noTeams'))}</div></section>
   `;
 }
 
@@ -828,17 +899,25 @@ async function renderPartidasAdmin() {
   state.data.partidas = rows;
   state.data.fases = fases;
   state.data.times = times;
-  const partidaTitle = (row) => {
-    const mandante = findById(times, row.timeMandanteId)?.nome || row.timeMandanteId;
-    const visitante = findById(times, row.timeVisitanteId)?.nome || row.timeVisitanteId;
+  const partidaRow = (row) => {
+    const mandante = findById(times, row.timeMandanteId) || { nome: row.timeMandanteId };
+    const visitante = findById(times, row.timeVisitanteId) || { nome: row.timeVisitanteId };
     const score = row.placarMandante !== null && row.placarMandante !== undefined && row.placarVisitante !== null && row.placarVisitante !== undefined
-      ? ` ${row.placarMandante} x ${row.placarVisitante} `
-      : ' x ';
-    return `${mandante}${score}${visitante}`;
-  };
-  const partidaSubtitle = (row) => {
+      ? `${row.placarMandante} ${t('common.scoreSeparator')} ${row.placarVisitante}`
+      : t('common.scoreSeparator');
     const fase = findById(fases, row.faseId)?.nome || t('games.noPhase');
-    return `${fase} - ${dateTime(row.dataHora)} - ${row.estadio || t('games.noStadium')}`;
+    return `
+      <article class="row-card">
+        <div>
+          <strong class="match-inline">${renderTeamName(mandante, mandante.nome, 'sm')}<span class="score score--inline">${escapeHtml(score)}</span>${renderTeamName(visitante, visitante.nome, 'sm')}</strong>
+          <p class="muted">${escapeHtml(`${fase} - ${dateTime(row.dataHora)} - ${row.estadio || t('games.noStadium')}`)}</p>
+        </div>
+        <div class="actions">
+          <span class="pill">${escapeHtml(badgeLabel(row.status))}</span>
+          <button class="secondary" type="button" data-edit-kind="partidas" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
+        </div>
+      </article>
+    `;
   };
   content.innerHTML = `
     <section class="card">
@@ -867,7 +946,7 @@ async function renderPartidasAdmin() {
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('partidas', row, partidaTitle(row), partidaSubtitle(row), row.status)).join('') || empty(t('admin.noMatches'))}</div></section>
+    <section class="card"><div class="list">${rows.map(partidaRow).join('') || empty(t('admin.noMatches'))}</div></section>
   `;
 }
 

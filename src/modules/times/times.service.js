@@ -2,10 +2,23 @@ const { HttpError } = require('../../shared/errors/http-error');
 const { ensureCanAdminBolao } = require('../../shared/permissions/bolao-access');
 
 function clean(v) { return typeof v === 'string' ? v.trim() : ''; }
+function cleanUrl(v) {
+  const value = clean(v);
+  return value || '';
+}
 function payload(body) {
   const nome = clean(body.nome);
   if (!nome) throw new HttpError(400, 'invalid_team_name', 'Nome do time e obrigatorio.');
-  return { nome, sigla: clean(body.sigla), pais: clean(body.pais), ativo: body.status ? body.status === 'ativo' : body.ativo !== false };
+  const sigla = clean(body.sigla);
+  return {
+    nome,
+    sigla,
+    codigoFifa: clean(body.codigoFifa || body.codigo_fifa) || sigla,
+    escudoUrl: cleanUrl(body.escudoUrl || body.escudo_url),
+    bandeiraUrl: cleanUrl(body.bandeiraUrl || body.bandeira_url),
+    pais: clean(body.pais),
+    ativo: body.status ? body.status === 'ativo' : body.ativo !== false
+  };
 }
 function createTimesService(repository) {
   async function ensure(id) { const item = await repository.findById(id); if (!item) throw new HttpError(404, 'team_not_found', 'Time nao encontrado.'); return item; }

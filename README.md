@@ -261,6 +261,16 @@ POST /api/v1/pagamentos/webhooks/infinitepay
 - `GET|POST /api/v1/partidas/boloes/:bolaoId`
 - `PUT /api/v1/partidas/boloes/:bolaoId/:id`
 
+Campos de time atualmente suportados:
+
+- `nome`
+- `sigla`
+- `codigoFifa`
+- `escudoUrl`
+- `bandeiraUrl`
+- `pais`
+- `status`
+
 ### Configurações Do Bolão
 
 - `GET|POST /api/v1/configuracoes-bolao/:bolaoId/configuracao`
@@ -308,6 +318,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/010_notificacoes.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/011_revisao_consistencia.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/012_infinitepay_checkout.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/013_times_media_fields.sql
 ```
 
 ## Setup Local
@@ -367,6 +378,7 @@ Health checks úteis:
 1. Criar participantes
 2. Confirmar ou gerar credenciais do apostador
 3. Configurar fases, times e partidas
+   os times agora podem receber `escudo_url`, `bandeira_url` e `codigo_fifa/sigla` para exibição visual no app
 4. Configurar regras do bolão
 5. Acompanhar pagamentos
 6. Lançar resultados
@@ -382,6 +394,7 @@ Health checks úteis:
 ## Observações Operacionais
 
 - O backend e o frontend publicados estão prontos para piloto controlado.
+- Partidas, palpites e listas de times exibem escudo ou bandeira quando configurados, com fallback visual para sigla/iniciais.
 - A integração InfinitePay está preparada, mas depende da `INFINITEPAY_HANDLE` real no `.env`.
 - O servidor atualmente roda `Node 18.19.1`, enquanto o projeto declara `>=20` em `package.json`.
 - Isso não impediu a operação atual, mas é um risco técnico de compatibilidade futura. A recomendação é migrar o runtime do servidor para `Node 20 LTS` antes de expandir o uso além do piloto.

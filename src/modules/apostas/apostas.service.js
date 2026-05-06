@@ -29,8 +29,20 @@ function mapMinhaAposta(row, minutosAntecedencia) {
     dataHora: row.inicio_at,
     fase: row.fase_nome,
     estadio: row.estadio,
-    mandante: row.mandante_nome,
-    visitante: row.visitante_nome,
+    mandante: {
+      nome: row.mandante_nome,
+      sigla: row.mandante_sigla,
+      codigoFifa: row.mandante_codigo_fifa,
+      escudoUrl: row.mandante_escudo_url,
+      bandeiraUrl: row.mandante_bandeira_url
+    },
+    visitante: {
+      nome: row.visitante_nome,
+      sigla: row.visitante_sigla,
+      codigoFifa: row.visitante_codigo_fifa,
+      escudoUrl: row.visitante_escudo_url,
+      bandeiraUrl: row.visitante_bandeira_url
+    },
     placarOficial: row.oficial_mandante === null || row.oficial_visitante === null ? null : {
       mandante: row.oficial_mandante,
       visitante: row.oficial_visitante

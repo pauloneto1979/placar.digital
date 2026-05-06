@@ -463,6 +463,65 @@ label {
   gap: 10px;
 }
 
+.team-name {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.team-name--sm {
+  gap: 8px;
+}
+
+.team-avatar {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 34px;
+  justify-content: center;
+  overflow: hidden;
+  width: 34px;
+}
+
+.team-avatar img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.team-avatar__fallback {
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.team-avatar--sm {
+  height: 28px;
+  width: 28px;
+}
+
+.team-avatar--sm .team-avatar__fallback {
+  font-size: 0.62rem;
+}
+
+.match-inline {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.score--inline {
+  min-width: 58px;
+  text-align: center;
+}
+
 .bet-inputs {
   align-items: center;
   display: flex;
