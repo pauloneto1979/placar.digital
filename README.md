@@ -237,6 +237,82 @@ Endpoint de webhook:
 POST /api/v1/pagamentos/webhooks/infinitepay
 ```
 
+## Provedores De Dados Esportivos
+
+O backend agora possui uma camada interna para configuração de provedores esportivos externos, permitindo trocar o provedor ativo sem alterar as regras de negócio do bolão.
+
+Tabela usada:
+
+- `provedores_dados_esportivos`
+
+Campos principais:
+
+- `provider`
+- `enabled`
+- `api_token`
+- `sync_interval_seconds`
+- `base_url`
+- `last_sync_at`
+
+Provedor suportado no momento:
+
+- `football-data`
+
+Arquitetura já preparada para expansão futura:
+
+- `api-football`
+- `rapidapi`
+- `outros`
+
+Regras atuais:
+
+- o `api_token` fica somente no backend
+- o token não deve ser exposto no frontend
+- o token não deve ser escrito em logs
+- se o provedor estiver desabilitado, o job futuro de sincronização não deve executar
+- quando a sincronização estiver desabilitada ou inválida, a factory registra apenas um aviso controlado, sem vazar segredos
+
+Migration adicionada:
+
+```bash
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/014_sports_data_providers.sql
+```
+
+Registro inicial criado pela migration:
+
+- `provider = football-data`
+- `enabled = false`
+- `sync_interval_seconds = 300`
+- `base_url = https://api.football-data.org/v4`
+
+Exemplo de ativação manual no banco:
+
+```sql
+update provedores_dados_esportivos
+set
+  enabled = true,
+  api_token = 'SEU_TOKEN_AQUI',
+  sync_interval_seconds = 300,
+  base_url = 'https://api.football-data.org/v4'
+where provider = 'football-data';
+```
+
+Exemplo para desativar:
+
+```sql
+update provedores_dados_esportivos
+set enabled = false
+where provider = 'football-data';
+```
+
+Módulo interno criado:
+
+- `src/modules/provedores_esportivos/provedores_esportivos.repository.js`
+- `src/modules/provedores_esportivos/provedores_esportivos.service.js`
+- `src/modules/provedores_esportivos/provider-factory.js`
+
+A factory interna resolve o provedor ativo para jobs futuros de sincronização e também permite marcar `last_sync_at` após uma execução bem-sucedida.
+
 ## Principais Endpoints
 
 ### Auth
@@ -339,6 +415,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/011_revisao_consistencia.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/012_infinitepay_checkout.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/013_times_media_fields.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/014_sports_data_providers.sql
 ```
 
 ## Setup Local
@@ -421,6 +498,7 @@ Health checks úteis:
 - Ao editar uma partida, o recálculo automático ocorre apenas quando há mudança relevante no resultado: placar, status ou confirmação do resultado. Alterações em dados operacionais como data, estádio ou outros campos não relacionados ao resultado não geram novo recálculo, auditoria ou notificação.
 - O upgrade visual global não altera regras de negócio, endpoints, autenticação, pontuação ou banco de dados.
 - A integração InfinitePay está preparada, mas depende da `INFINITEPAY_HANDLE` real no `.env`.
+- Provedores esportivos externos são configurados no banco pela tabela `provedores_dados_esportivos`. O provedor ativo é resolvido por factory interna, e a leitura da configuração não expõe `api_token`.
 - O servidor atualmente roda `Node 18.19.1`, enquanto o projeto declara `>=20` em `package.json`.
 - Isso não impediu a operação atual, mas é um risco técnico de compatibilidade futura. A recomendação é migrar o runtime do servidor para `Node 20 LTS` antes de expandir o uso além do piloto.
 
@@ -429,4 +507,5 @@ Health checks úteis:
 - arquitetura: `docs/architecture.md`
 - migrations: `db/migrations`
 - módulos de domínio: `src/modules`
+- provedores esportivos: `src/modules/provedores_esportivos`
 - app unificado: `public/app.html`, `public/app.js`, `public/theme.css`

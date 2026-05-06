@@ -13,3 +13,4 @@
 \i db/migrations/011_revisao_consistencia.sql
 \i db/migrations/012_infinitepay_checkout.sql
 \i db/migrations/013_times_media_fields.sql
+\i db/migrations/014_sports_data_providers.sql
