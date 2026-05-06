@@ -415,6 +415,7 @@ Health checks úteis:
 - Partidas, palpites e listas de times exibem escudo ou bandeira quando configurados, com fallback visual para sigla/iniciais.
 - O dashboard premium da Home usa endpoints existentes e respeita sempre o bolão selecionado.
 - O ranking mantém a mesma regra de cálculo de pontos e usa apenas melhorias visuais e de leitura no frontend.
+- A leitura de ranking (`GET /api/v1/ranking/boloes/:bolaoId/atual`) não recalcula nem grava dados. O ranking é atualizado pelos fluxos de resultado confirmado ou pelos endpoints POST de recálculo.
 - O upgrade visual global não altera regras de negócio, endpoints, autenticação, pontuação ou banco de dados.
 - A integração InfinitePay está preparada, mas depende da `INFINITEPAY_HANDLE` real no `.env`.
 - O servidor atualmente roda `Node 18.19.1`, enquanto o projeto declara `>=20` em `package.json`.

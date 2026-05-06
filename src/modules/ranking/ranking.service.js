@@ -256,7 +256,7 @@ function createRankingService(repository) {
 
   async function getRankingAtual(bolaoId, auth) {
     await ensureCanViewBolao(auth, bolaoId);
-    return (await calcularRankingAtual(bolaoId)).map(mapRankingResponse);
+    return repository.getRankingAtual(bolaoId);
   }
 
   async function getPremiacaoResumo(bolaoId, auth) {

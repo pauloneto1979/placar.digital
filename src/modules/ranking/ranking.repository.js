@@ -330,21 +330,21 @@ async function getRankingAtual(bolaoId) {
       select
         p.id as participante_id,
         p.nome,
-        coalesce(r.pontos_total, 0)::int as pontos_total,
-        coalesce(r.apostas_total, 0)::int as apostas_total,
-        coalesce(r.acertos_exatos, 0)::int as acertos_exatos,
-        coalesce(r.acertos_resultado, 0)::int as acertos_resultado,
-        coalesce(r.acertos_invertidos, 0)::int as acertos_invertidos,
-        coalesce(r.diferenca_gols_total, 0)::int as diferenca_gols_total,
+        r.pontos_total::int as pontos_total,
+        r.apostas_total::int as apostas_total,
+        r.acertos_exatos::int as acertos_exatos,
+        r.acertos_resultado::int as acertos_resultado,
+        r.acertos_invertidos::int as acertos_invertidos,
+        r.diferenca_gols_total::int as diferenca_gols_total,
         r.ordem_pagamento,
-        coalesce(r.posicao, 999999)::int as posicao,
-        coalesce(r.premio_previsto, 0)::numeric as premio_previsto
-      from participantes p
-      left join ranking r on r.participante_id = p.id and r.bolao_id = p.bolao_id
-      where p.bolao_id = $1
+        r.posicao::int as posicao,
+        r.premio_previsto::numeric as premio_previsto
+      from ranking r
+      join participantes p on p.id = r.participante_id and p.bolao_id = r.bolao_id
+      where r.bolao_id = $1
         and p.papel = 'apostador'
         and p.status <> 'removido'
-      order by coalesce(r.posicao, 999999) asc, p.nome asc
+      order by r.posicao asc, p.nome asc
     `,
     [bolaoId]
   );
