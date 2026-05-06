@@ -93,6 +93,32 @@ function dateTime(value) {
   return new Date(value).toLocaleString(i18n.getLocale(), { dateStyle: 'short', timeStyle: 'short' });
 }
 
+function gameDateValue(game) {
+  return game?.dataHora || game?.inicioAt || game?.inicio_at || game?.data_hora || '';
+}
+
+function officialScore(game) {
+  const mandante = game?.placarMandante ?? game?.placar_mandante ?? game?.placarOficial?.mandante;
+  const visitante = game?.placarVisitante ?? game?.placar_visitante ?? game?.placarOficial?.visitante;
+  const hasScore = mandante !== null && mandante !== undefined && visitante !== null && visitante !== undefined;
+  return hasScore ? { mandante, visitante } : null;
+}
+
+function countdownText(value) {
+  if (!value) return t('home.noCountdown');
+  const target = new Date(value).getTime();
+  if (Number.isNaN(target)) return t('home.noCountdown');
+  const diff = target - Date.now();
+  if (diff <= 0) return t('home.startsSoon');
+  const totalMinutes = Math.ceil(diff / 60000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return t('home.countdownDays', { days, hours });
+  if (hours > 0) return t('home.countdownHours', { hours, minutes });
+  return t('home.countdownMinutes', { minutes });
+}
+
 function statusLabel(value) {
   return t(`status.${value}`, {}, value || '');
 }
@@ -390,41 +416,122 @@ async function renderHome() {
     state.activeBolaoId ? api(`/apostas/boloes/${state.activeBolaoId}/jogos`).catch(() => []) : []
   ]);
   const meuRanking = ranking.find((item) => item.participanteId === currentParticipanteId()) || {};
-  const ultimoResultado = minhas.find((item) => item.placarOficial);
   const leaderPoints = ranking.length ? Number(ranking[0].pontosAtuais ?? ranking[0].pontos_atuais ?? 0) : 0;
-  const ultimoMandante = ultimoResultado?.mandante?.nome || ultimoResultado?.mandante || '';
-  const ultimoVisitante = ultimoResultado?.visitante?.nome || ultimoResultado?.visitante || '';
+  const meusPontos = Number(meuRanking.pontosAtuais ?? meuRanking.pontos_atuais ?? 0);
+  const gap = Math.max(0, leaderPoints - meusPontos);
+  const apostasPorPartida = new Map(minhas.map((item) => [String(item.partidaId), item]));
+  const palpitesPendentes = minhas.filter((item) => item.statusAposta === 'sem_aposta' && item.podeAlterar).length;
+  const jogosOrdenados = [...jogos].sort((a, b) => new Date(gameDateValue(a)).getTime() - new Date(gameDateValue(b)).getTime());
+  const proximosJogos = jogosOrdenados.filter((game) => {
+    const score = officialScore(game);
+    const status = game.status || '';
+    return !score && !['finalizada', 'cancelada', 'inativa'].includes(status);
+  });
+  const proximoJogo = proximosJogos[0] || jogosOrdenados.find((game) => !officialScore(game));
+  const resultados = jogosOrdenados
+    .filter((game) => officialScore(game))
+    .sort((a, b) => new Date(gameDateValue(b)).getTime() - new Date(gameDateValue(a)).getTime())
+    .slice(0, 3);
 
   content.innerHTML = `
-    <section class="grid three">
-      <article class="card">
-        <div class="card-title"><h2>${escapeHtml(t('home.performance'))}</h2><span class="pill">${escapeHtml(state.activeBolaoNome || t('common.pool'))}</span></div>
-        <div class="kpi">${escapeHtml(meuRanking.posicao || '-')}</div>
-        <p class="muted">${escapeHtml(t('home.pointsInRanking', { points: meuRanking.pontosAtuais ?? 0 }))}</p>
+    <section class="dashboard-hero card">
+      <div>
+        <span class="pill">${escapeHtml(state.activeBolaoNome || t('common.pool'))}</span>
+        <h2>${escapeHtml(t('home.dashboardTitle'))}</h2>
+        <p class="muted">${escapeHtml(t('home.dashboardSubtitle'))}</p>
+      </div>
+      <div class="dashboard-countdown">
+        <span>${escapeHtml(t('home.nextKickoff'))}</span>
+        <strong>${escapeHtml(countdownText(gameDateValue(proximoJogo)))}</strong>
+      </div>
+    </section>
+
+    <section class="dashboard-kpis">
+      <article class="card stat-card">
+        <span>${escapeHtml(t('home.currentPosition'))}</span>
+        <strong>${escapeHtml(meuRanking.posicao || '-')}</strong>
+        <p>${escapeHtml(t('home.positionHint'))}</p>
       </article>
-      <article class="card">
-        <div class="card-title"><h2>${escapeHtml(t('home.collected'))}</h2></div>
-        <div class="kpi">${money(dashboard?.totalArrecadado)}</div>
-        <p class="muted">${escapeHtml(t('home.participants', { count: dashboard?.participantesTotal || 0 }))}</p>
+      <article class="card stat-card">
+        <span>${escapeHtml(t('home.totalPoints'))}</span>
+        <strong>${escapeHtml(meusPontos)}</strong>
+        <p>${escapeHtml(t('home.pointsInRanking', { points: meusPontos }))}</p>
       </article>
-      <article class="card">
-        <div class="card-title"><h2>${escapeHtml(t('home.lastResult'))}</h2></div>
-        ${ultimoResultado ? `
-          <strong>${escapeHtml(ultimoMandante)} ${ultimoResultado.placarOficial.mandante} x ${ultimoResultado.placarOficial.visitante} ${escapeHtml(ultimoVisitante)}</strong>
-          <p class="muted">${escapeHtml(t('home.yourBet', { bet: ultimoResultado.meuPalpite ? `${ultimoResultado.meuPalpite.mandante} x ${ultimoResultado.meuPalpite.visitante}` : t('common.noBet') }))}</p>
-        ` : empty(t('home.noRecentResult'))}
+      <article class="card stat-card">
+        <span>${escapeHtml(t('home.gapToLeader'))}</span>
+        <strong>${escapeHtml(gap)}</strong>
+        <p>${escapeHtml(gap ? t('home.pointsBehindLeader', { points: gap }) : t('home.youAreLeader'))}</p>
+      </article>
+      <article class="card stat-card">
+        <span>${escapeHtml(t('home.pendingGuesses'))}</span>
+        <strong>${escapeHtml(isApostador() ? palpitesPendentes : '-')}</strong>
+        <p>${escapeHtml(isApostador() ? t('home.pendingGuessesHint') : t('home.pendingOnlyBettor'))}</p>
       </article>
     </section>
+
     <section class="grid two">
+      <article class="card">
+        <div class="card-title"><h2>${escapeHtml(t('home.nextGame'))}</h2><button class="secondary" data-route="${isApostador() ? 'apostas' : 'jogos'}" type="button">${escapeHtml(isApostador() ? t('home.bet') : t('home.viewGames'))}</button></div>
+        ${proximoJogo ? renderDashboardGameCard(proximoJogo, apostasPorPartida.get(String(proximoJogo.partidaId || proximoJogo.id))) : empty(t('home.noGames'))}
+      </article>
       <article class="card">
         <div class="card-title"><h2>${escapeHtml(t('home.top3'))}</h2><button class="secondary" data-route="ranking" type="button">${escapeHtml(t('home.viewFull'))}</button></div>
         <div class="list ranking-list">${ranking.slice(0, 3).map((item) => renderRankingRow(item, { leaderPoints, compact: true })).join('') || empty(t('home.rankingEmpty'))}</div>
       </article>
+    </section>
+
+    <section class="grid two">
       <article class="card">
         <div class="card-title"><h2>${escapeHtml(t('home.nextGames'))}</h2><button class="secondary" data-route="${isApostador() ? 'apostas' : 'jogos'}" type="button">${escapeHtml(isApostador() ? t('home.bet') : t('home.viewGames'))}</button></div>
-        <div class="list">${jogos.slice(0, 4).map(renderGameCard).join('') || empty(t('home.noGames'))}</div>
+        <div class="list dashboard-games">${proximosJogos.slice(0, 4).map((game) => renderDashboardGameCard(game, apostasPorPartida.get(String(game.partidaId || game.id)))).join('') || empty(t('home.noGames'))}</div>
+      </article>
+      <article class="card">
+        <div class="card-title"><h2>${escapeHtml(t('home.lastResults'))}</h2><span class="pill">${escapeHtml(t('home.participants', { count: dashboard?.participantesTotal || 0 }))}</span></div>
+        <div class="list">${resultados.map(renderDashboardResultCard).join('') || empty(t('home.noRecentResult'))}</div>
       </article>
     </section>
+  `;
+}
+
+function dashboardGuessStatus(bet) {
+  if (!isApostador()) return t('home.adminView');
+  if (!bet || bet.statusAposta === 'sem_aposta') return t('home.guessPending');
+  if (bet.podeAlterar) return t('home.guessOpen');
+  return t('home.guessLocked');
+}
+
+function renderDashboardGameCard(game, bet) {
+  const mandante = game.mandante?.nome || game.mandante || game.timeMandante || t('games.homeTeam');
+  const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || t('games.awayTeam');
+  const date = gameDateValue(game);
+  return `
+    <article class="dashboard-game">
+      <div class="dashboard-game__teams">
+        ${renderTeamName(game.mandante || { nome: mandante }, mandante)}
+        <span class="score">${escapeHtml(t('common.scoreSeparator'))}</span>
+        ${renderTeamName(game.visitante || { nome: visitante }, visitante)}
+      </div>
+      <div class="dashboard-game__meta">
+        <span>${escapeHtml(dateTime(date))}</span>
+        <span>${escapeHtml(statusLabel(game.status))}</span>
+        <span class="pill">${escapeHtml(dashboardGuessStatus(bet))}</span>
+      </div>
+      <div class="dashboard-game__countdown">${escapeHtml(countdownText(date))}</div>
+    </article>
+  `;
+}
+
+function renderDashboardResultCard(game) {
+  const mandante = game.mandante?.nome || game.mandante || game.timeMandante || t('games.homeTeam');
+  const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || t('games.awayTeam');
+  const score = officialScore(game);
+  return `
+    <article class="dashboard-result">
+      ${renderTeamName(game.mandante || { nome: mandante }, mandante, 'sm')}
+      <span class="score score--inline">${score ? `${escapeHtml(score.mandante)} ${escapeHtml(t('common.scoreSeparator'))} ${escapeHtml(score.visitante)}` : escapeHtml(t('common.scoreSeparator'))}</span>
+      ${renderTeamName(game.visitante || { nome: visitante }, visitante, 'sm')}
+      <span class="muted">${escapeHtml(dateTime(gameDateValue(game)))}</span>
+    </article>
   `;
 }
 

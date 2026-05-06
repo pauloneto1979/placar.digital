@@ -69,6 +69,14 @@ O frontend publicado usa app unificado:
 
 O tema visual é centralizado em `public/theme.css` e cobre login, seleção de bolão, home, ranking, apostas, partidas e telas administrativas. A abordagem atual é mobile-first, com botões maiores, cards consistentes, formulários responsivos, estados vazios padronizados e mensagens de erro/sucesso no mesmo padrão visual.
 
+A Home/Placar do apostador funciona como dashboard premium do bolão ativo:
+
+- posição atual, pontuação, diferença para o líder e palpites pendentes
+- próximo jogo com brasões/bandeiras, data, status do palpite e contador regressivo
+- próximos jogos do bolão com status visual do palpite
+- últimos resultados quando houver placar informado
+- top 3 do ranking reaproveitando o ranking atual
+
 O ranking do app foi atualizado para uma visualização mais competitiva e responsiva:
 
 - top 3 com medalhas
@@ -405,6 +413,7 @@ Health checks úteis:
 
 - O backend e o frontend publicados estão prontos para piloto controlado.
 - Partidas, palpites e listas de times exibem escudo ou bandeira quando configurados, com fallback visual para sigla/iniciais.
+- O dashboard premium da Home usa endpoints existentes e respeita sempre o bolão selecionado.
 - O ranking mantém a mesma regra de cálculo de pontos e usa apenas melhorias visuais e de leitura no frontend.
 - O upgrade visual global não altera regras de negócio, endpoints, autenticação, pontuação ou banco de dados.
 - A integração InfinitePay está preparada, mas depende da `INFINITEPAY_HANDLE` real no `.env`.
