@@ -40,6 +40,17 @@ function payload(body, bolaoId) {
   };
 }
 
+function resultadoMudou(before, after) {
+  const scoreChanged = before.placarMandante !== after.placarMandante || before.placarVisitante !== after.placarVisitante;
+  const statusChanged = before.status !== after.status;
+  const confirmationChanged = Boolean(before.resultadoConfirmado) !== Boolean(after.resultadoConfirmado);
+  return scoreChanged || statusChanged || confirmationChanged;
+}
+
+function deveRecalcularResultado(before, after) {
+  return after.resultadoConfirmado && resultadoMudou(before, after);
+}
+
 function createPartidasService(repository) {
   async function validate(data) {
     if (data.faseId && !(await repository.faseBelongsToBolao(data.faseId, data.bolaoId))) {
@@ -55,9 +66,7 @@ function createPartidasService(repository) {
     return item;
   }
   async function auditResultado(auth, context, before, after) {
-    const changedScore = before.placarMandante !== after.placarMandante || before.placarVisitante !== after.placarVisitante || before.status !== after.status;
-    const hasScore = after.placarMandante !== null && after.placarVisitante !== null;
-    if (!changedScore || !hasScore) return;
+    if (!deveRecalcularResultado(before, after)) return;
     await repository.createAuditLog({
       usuarioId: auth.usuarioId,
       bolaoId: after.bolaoId,
@@ -85,7 +94,7 @@ function createPartidasService(repository) {
       await validate(data);
       const after = await repository.update(id, data);
       await auditResultado(auth, context, before, after);
-      if (after.resultadoConfirmado) {
+      if (deveRecalcularResultado(before, after)) {
         await rankingService.recalcularPartidaPorResultado(after.id, auth, context);
         await notificacoesService.gerarResultadoLancado(after.id);
       }
