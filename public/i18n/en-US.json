@@ -79,7 +79,7 @@
     "partidas": "Registered games and results.",
     "boloes": "General pool management.",
     "usuarios": "Owners and administrators.",
-    "configuracoes": "General platform preferences.",
+    "configuracoes": "General settings and sports data providers.",
     "perfil": "Update your access data."
   },
   "topbar": {
@@ -355,5 +355,25 @@
     "recordUpdated": "Record updated.",
     "recordSavedSuccess": "Record saved successfully.",
     "recordUpdatedSuccess": "Record updated successfully."
+  },
+  "sportsProviders": {
+    "title": "Sports data providers",
+    "empty": "No sports data provider configured.",
+    "baseUrl": "Base URL",
+    "syncInterval": "Sync interval (seconds)",
+    "newToken": "New API token",
+    "tokenPlaceholder": "Fill only to change the token",
+    "tokenStatus": "Token: {token}",
+    "tokenNotConfigured": "not configured",
+    "lastSync": "Last sync: {date}",
+    "neverSynced": "never synced",
+    "save": "Save provider",
+    "enable": "Enable",
+    "disable": "Disable",
+    "active": "active",
+    "inactive": "inactive",
+    "saved": "Provider saved successfully.",
+    "enabled": "Provider enabled.",
+    "disabled": "Provider disabled."
   }
 }

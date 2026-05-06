@@ -269,7 +269,7 @@ Regras atuais:
 - o `api_token` fica somente no backend
 - o token não deve ser exposto no frontend
 - o token não deve ser escrito em logs
-- se o provedor estiver desabilitado, o job futuro de sincronização não deve executar
+- se o provedor estiver desabilitado, o job de sincronização não deve executar
 - quando a sincronização estiver desabilitada ou inválida, a factory registra apenas um aviso controlado, sem vazar segredos
 
 Migration adicionada:
@@ -285,18 +285,6 @@ Registro inicial criado pela migration:
 - `sync_interval_seconds = 300`
 - `base_url = https://api.football-data.org/v4`
 
-Exemplo de ativação manual no banco:
-
-```sql
-update provedores_dados_esportivos
-set
-  enabled = true,
-  api_token = 'SEU_TOKEN_AQUI',
-  sync_interval_seconds = 300,
-  base_url = 'https://api.football-data.org/v4'
-where provider = 'football-data';
-```
-
 Exemplo para desativar:
 
 ```sql
@@ -304,6 +292,22 @@ update provedores_dados_esportivos
 set enabled = false
 where provider = 'football-data';
 ```
+
+O provider também pode ser configurado pelo painel web:
+
+- menu `Configurações`
+- seção `Provedores esportivos`
+- disponível para `proprietario` e `administrador`
+- exibe apenas token mascarado, nunca o token completo
+- permite alterar `base_url`, `sync_interval_seconds`, `api_token` e ativar/desativar o provider
+
+Endpoints administrativos:
+
+- `GET /api/v1/provedores-esportivos`
+- `PUT /api/v1/provedores-esportivos/:provider`
+- `PATCH /api/v1/provedores-esportivos/:provider/status`
+
+Esses endpoints são protegidos por autenticação e aceitam apenas `proprietario` ou `administrador`. As respostas são sanitizadas e nunca retornam `api_token` completo.
 
 Módulo interno criado:
 

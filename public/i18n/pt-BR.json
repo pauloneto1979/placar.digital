@@ -79,7 +79,7 @@
     "partidas": "Resultados e jogos cadastrados.",
     "boloes": "Gestão geral de bolões.",
     "usuarios": "Proprietários e administradores.",
-    "configuracoes": "Preferências gerais da plataforma.",
+    "configuracoes": "Configura??es gerais e provedores esportivos.",
     "perfil": "Atualize seus dados de acesso."
   },
   "topbar": {
@@ -355,5 +355,25 @@
     "recordUpdated": "Registro atualizado.",
     "recordSavedSuccess": "Registro salvo com sucesso.",
     "recordUpdatedSuccess": "Registro atualizado com sucesso."
+  },
+  "sportsProviders": {
+    "title": "Provedores esportivos",
+    "empty": "Nenhum provedor esportivo configurado.",
+    "baseUrl": "URL base",
+    "syncInterval": "Intervalo de sincroniza??o (segundos)",
+    "newToken": "Novo token da API",
+    "tokenPlaceholder": "Informe somente para alterar o token",
+    "tokenStatus": "Token: {token}",
+    "tokenNotConfigured": "n?o configurado",
+    "lastSync": "?ltima sincroniza??o: {date}",
+    "neverSynced": "nunca sincronizado",
+    "save": "Salvar provedor",
+    "enable": "Ativar",
+    "disable": "Desativar",
+    "active": "ativo",
+    "inactive": "inativo",
+    "saved": "Provedor salvo com sucesso.",
+    "enabled": "Provedor ativado.",
+    "disabled": "Provedor desativado."
   }
 }

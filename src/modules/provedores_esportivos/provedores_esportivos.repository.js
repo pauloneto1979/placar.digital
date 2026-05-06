@@ -50,9 +50,34 @@ async function touchLastSync(provider, lastSyncAt = new Date()) {
   return result.rows[0] ? map(result.rows[0]) : null;
 }
 
+async function updateProvider(provider, data) {
+  const result = await query(
+    `
+      update provedores_dados_esportivos
+      set
+        enabled = coalesce($2, enabled),
+        sync_interval_seconds = coalesce($3, sync_interval_seconds),
+        base_url = coalesce($4, base_url),
+        api_token = case when $5::boolean then $6 else api_token end
+      where provider = $1
+      returning *
+    `,
+    [
+      provider,
+      data.enabled,
+      data.syncIntervalSeconds,
+      data.baseUrl,
+      data.updateApiToken === true,
+      data.apiToken || null
+    ]
+  );
+  return result.rows[0] ? map(result.rows[0], { includeSecret: true }) : null;
+}
+
 module.exports = {
   list,
   listEnabled,
   findByProvider,
-  touchLastSync
+  touchLastSync,
+  updateProvider
 };

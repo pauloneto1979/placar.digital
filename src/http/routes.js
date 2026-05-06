@@ -15,6 +15,7 @@ const { configuracoesGeraisRoutes } = require('../modules/configuracoes_gerais')
 const { notificacoesRoutes } = require('../modules/notificacoes');
 const { auditoriaRoutes } = require('../modules/auditoria');
 const { proprietarioRoutes } = require('../modules/proprietario');
+const { provedoresEsportivosRoutes } = require('../modules/provedores_esportivos');
 
 const routes = Router();
 
@@ -51,6 +52,7 @@ routes.use('/configuracoes-bolao', configuracoesBolaoRoutes);
 routes.use('/configuracoes-gerais', configuracoesGeraisRoutes);
 routes.use('/notificacoes', notificacoesRoutes);
 routes.use('/auditoria', auditoriaRoutes);
+routes.use('/provedores-esportivos', provedoresEsportivosRoutes);
 
 module.exports = {
   routes

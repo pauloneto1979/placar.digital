@@ -62,7 +62,7 @@ const routes = [
   { id: 'partidas', labelKey: 'nav.partidas', subtitleKey: 'subtitles.partidas', admin: true },
   { id: 'boloes', labelKey: 'nav.boloes', subtitleKey: 'subtitles.boloes', owner: true },
   { id: 'usuarios', labelKey: 'nav.usuarios', subtitleKey: 'subtitles.usuarios', owner: true },
-  { id: 'configuracoes', labelKey: 'nav.configuracoes', subtitleKey: 'subtitles.configuracoes', owner: true },
+  { id: 'configuracoes', labelKey: 'nav.configuracoes', subtitleKey: 'subtitles.configuracoes', admin: true },
   { id: 'perfil', labelKey: 'nav.perfil', subtitleKey: 'subtitles.perfil', hidden: true }
 ];
 
@@ -1284,9 +1284,13 @@ async function renderRegrasAdmin() {
 }
 
 async function renderConfiguracoesOwner() {
-  const config = await api('/proprietario/configuracoes-gerais').catch(() => ({}));
+  const [config, provedores] = await Promise.all([
+    isOwner() ? api('/proprietario/configuracoes-gerais').catch(() => ({})) : Promise.resolve(null),
+    api('/provedores-esportivos').catch(() => [])
+  ]);
+  const footballData = provedores.find((item) => item.provider === 'football-data') || provedores[0] || {};
   content.innerHTML = `
-    <section class="card">
+    ${isOwner() ? `<section class="card">
       <div class="card-title"><h2>${escapeHtml(t('owner.generalSettings'))}</h2><span class="pill">${escapeHtml(t('common.platform'))}</span></div>
       <form class="form-card" data-crud-form="configuracoesGerais">
         <label>${escapeHtml(t('owner.sessionTime'))} <input name="tempoSessao" type="number" min="1" value="${escapeHtml(config.tempoSessao || '')}"></label>
@@ -1300,7 +1304,46 @@ async function renderConfiguracoesOwner() {
         <label>${escapeHtml(t('owner.paymentGateway'))} <input name="gatewayPagamento" value="${escapeHtml(config.gatewayPagamento || '')}"></label>
         <div class="form-actions"><button type="submit">${escapeHtml(t('owner.saveSettings'))}</button></div>
       </form>
+    </section>` : ''}
+    <section class="card">
+      <div class="card-title">
+        <h2>${escapeHtml(t('sportsProviders.title'))}</h2>
+        <span class="pill">${escapeHtml(footballData.enabled ? statusLabel('ativo') : statusLabel('inativo'))}</span>
+      </div>
+      ${footballData.provider ? renderSportsProviderForm(footballData) : empty(t('sportsProviders.empty'))}
     </section>
+  `;
+}
+
+function renderSportsProviderForm(provider) {
+  return `
+    <form class="form-card" data-crud-form="provedorEsportivo">
+      <input name="provider" type="hidden" value="${escapeHtml(provider.provider)}">
+      <div class="row-card">
+        <div>
+          <strong>${escapeHtml(provider.displayName || provider.provider)}</strong>
+          <p class="muted">${escapeHtml(t('sportsProviders.tokenStatus', { token: provider.apiTokenMasked || t('sportsProviders.tokenNotConfigured') }))}</p>
+        </div>
+        <span class="pill">${escapeHtml(provider.enabled ? t('sportsProviders.active') : t('sportsProviders.inactive'))}</span>
+      </div>
+      <label>${escapeHtml(t('sportsProviders.baseUrl'))}
+        <input name="baseUrl" type="url" required value="${escapeHtml(provider.baseUrl || '')}">
+      </label>
+      <label>${escapeHtml(t('sportsProviders.syncInterval'))}
+        <input name="syncIntervalSeconds" type="number" min="60" step="1" required value="${escapeHtml(provider.syncIntervalSeconds || 300)}">
+      </label>
+      <label>${escapeHtml(t('sportsProviders.newToken'))}
+        <input name="apiToken" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('sportsProviders.tokenPlaceholder'))}">
+      </label>
+      <p class="muted">${escapeHtml(t('sportsProviders.lastSync', { date: provider.lastSyncAt ? dateTime(provider.lastSyncAt) : t('sportsProviders.neverSynced') }))}</p>
+      <div class="form-actions">
+        <button type="submit">${escapeHtml(t('sportsProviders.save'))}</button>
+        <button class="secondary" type="button" data-provider-toggle="${escapeHtml(provider.provider)}" data-enabled="${provider.enabled ? 'false' : 'true'}">
+          ${escapeHtml(provider.enabled ? t('sportsProviders.disable') : t('sportsProviders.enable'))}
+        </button>
+      </div>
+      ${scopedMessage('provedorEsportivo')}
+    </form>
   `;
 }
 
@@ -1379,6 +1422,23 @@ async function submitCrud(kind, form) {
 
   if (PROFILE_FORM_KINDS.has(kind)) {
     clearFormMessage(kind);
+  }
+
+  if (kind === 'provedorEsportivo') {
+    clearFormMessage(kind);
+    const provider = data.provider;
+    delete data.provider;
+    if (data.syncIntervalSeconds !== undefined) {
+      data.syncIntervalSeconds = Math.max(60, Number(data.syncIntervalSeconds || 60));
+    }
+    if (!data.apiToken) delete data.apiToken;
+    await api(`/provedores-esportivos/${provider}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    state.formMessages.provedorEsportivo = { text: t('sportsProviders.saved'), tone: 'success' };
+    await navigate(state.route);
+    return;
   }
 
   if (kind === 'configuracoesGerais') {
@@ -1529,6 +1589,25 @@ content.addEventListener('click', (event) => {
     return;
   }
 
+  const providerToggle = event.target.closest('[data-provider-toggle]');
+  if (providerToggle) {
+    const provider = providerToggle.dataset.providerToggle;
+    const enabled = providerToggle.dataset.enabled === 'true';
+    api(`/provedores-esportivos/${provider}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ enabled })
+    })
+      .then(() => {
+        state.formMessages.provedorEsportivo = {
+          text: enabled ? t('sportsProviders.enabled') : t('sportsProviders.disabled'),
+          tone: 'success'
+        };
+        return navigate(state.route);
+      })
+      .catch((error) => setFormMessage('provedorEsportivo', error.message, 'error'));
+    return;
+  }
+
   const moveRuleButton = event.target.closest('[data-move-rule]');
   if (moveRuleButton) {
     moveRulePriority(moveRuleButton.dataset.id, moveRuleButton.dataset.moveRule).catch((error) => {
@@ -1549,7 +1628,7 @@ content.addEventListener('submit', (event) => {
   if (!form) return;
   event.preventDefault();
   submitCrud(form.dataset.crudForm, form).catch((error) => {
-    if (RULE_FORM_KINDS.has(form.dataset.crudForm) || PROFILE_FORM_KINDS.has(form.dataset.crudForm)) {
+    if (RULE_FORM_KINDS.has(form.dataset.crudForm) || PROFILE_FORM_KINDS.has(form.dataset.crudForm) || form.dataset.crudForm === 'provedorEsportivo') {
       setFormMessage(form.dataset.crudForm, error.message, 'error');
       return;
     }

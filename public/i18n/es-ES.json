@@ -79,7 +79,7 @@
     "partidas": "Resultados y partidos registrados.",
     "boloes": "Gestión general de porras.",
     "usuarios": "Propietarios y administradores.",
-    "configuracoes": "Preferencias generales de la plataforma.",
+    "configuracoes": "Configuraciones generales y proveedores deportivos.",
     "perfil": "Actualiza tus datos de acceso."
   },
   "topbar": {
@@ -355,5 +355,25 @@
     "recordUpdated": "Registro actualizado.",
     "recordSavedSuccess": "Registro guardado con éxito.",
     "recordUpdatedSuccess": "Registro actualizado con éxito."
+  },
+  "sportsProviders": {
+    "title": "Proveedores deportivos",
+    "empty": "Ning?n proveedor deportivo configurado.",
+    "baseUrl": "URL base",
+    "syncInterval": "Intervalo de sincronizaci?n (segundos)",
+    "newToken": "Nuevo token de API",
+    "tokenPlaceholder": "Complete solo para cambiar el token",
+    "tokenStatus": "Token: {token}",
+    "tokenNotConfigured": "no configurado",
+    "lastSync": "?ltima sincronizaci?n: {date}",
+    "neverSynced": "nunca sincronizado",
+    "save": "Guardar proveedor",
+    "enable": "Activar",
+    "disable": "Desactivar",
+    "active": "activo",
+    "inactive": "inactivo",
+    "saved": "Proveedor guardado correctamente.",
+    "enabled": "Proveedor activado.",
+    "disabled": "Proveedor desactivado."
   }
 }
