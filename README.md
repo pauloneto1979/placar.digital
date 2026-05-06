@@ -67,6 +67,8 @@ O frontend publicado usa app unificado:
 - seleção de bolão: `/app/selecao-bolao.html`
 - app principal: `/app/app.html`
 
+O tema visual é centralizado em `public/theme.css` e cobre login, seleção de bolão, home, ranking, apostas, partidas e telas administrativas. A abordagem atual é mobile-first, com botões maiores, cards consistentes, formulários responsivos, estados vazios padronizados e mensagens de erro/sucesso no mesmo padrão visual.
+
 O ranking do app foi atualizado para uma visualização mais competitiva e responsiva:
 
 - top 3 com medalhas
@@ -404,6 +406,7 @@ Health checks úteis:
 - O backend e o frontend publicados estão prontos para piloto controlado.
 - Partidas, palpites e listas de times exibem escudo ou bandeira quando configurados, com fallback visual para sigla/iniciais.
 - O ranking mantém a mesma regra de cálculo de pontos e usa apenas melhorias visuais e de leitura no frontend.
+- O upgrade visual global não altera regras de negócio, endpoints, autenticação, pontuação ou banco de dados.
 - A integração InfinitePay está preparada, mas depende da `INFINITEPAY_HANDLE` real no `.env`.
 - O servidor atualmente roda `Node 18.19.1`, enquanto o projeto declara `>=20` em `package.json`.
 - Isso não impediu a operação atual, mas é um risco técnico de compatibilidade futura. A recomendação é migrar o runtime do servidor para `Node 20 LTS` antes de expandir o uso além do piloto.
