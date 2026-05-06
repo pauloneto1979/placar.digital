@@ -154,10 +154,20 @@
   "ranking": {
     "full": "Ranking completo",
     "empty": "Ranking vazio.",
+    "position": "Posição",
+    "bettor": "Apostador",
+    "summary": "Desempenho",
+    "points": "Pontos",
     "exact": "Exatos",
     "results": "Resultados",
     "goalDiff": "Dif. gols",
-    "pointsAbbr": "pts"
+    "pointsAbbr": "pts",
+    "leader": "Líder",
+    "gapToLeader": "{points} pts do líder",
+    "noHistory": "Sem histórico",
+    "previousPosition": "Posição anterior #{position}",
+    "you": "Você",
+    "unknownBettor": "Apostador"
   },
   "bets": {
     "onlyBettors": "Apostas ficam disponíveis apenas para apostadores.",

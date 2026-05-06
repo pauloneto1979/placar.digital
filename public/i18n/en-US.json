@@ -154,10 +154,20 @@
   "ranking": {
     "full": "Full ranking",
     "empty": "Empty ranking.",
+    "position": "Position",
+    "bettor": "Bettor",
+    "summary": "Performance",
+    "points": "Points",
     "exact": "Exact",
     "results": "Results",
     "goalDiff": "Goal diff.",
-    "pointsAbbr": "pts"
+    "pointsAbbr": "pts",
+    "leader": "Leader",
+    "gapToLeader": "{points} pts behind the leader",
+    "noHistory": "No history",
+    "previousPosition": "Previous position #{position}",
+    "you": "You",
+    "unknownBettor": "Bettor"
   },
   "bets": {
     "onlyBettors": "Predictions are available only for bettors.",

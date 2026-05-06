@@ -277,10 +277,78 @@ function clearForm(kind) {
 }
 
 function getRankMedal(position) {
-  if (position === 1) return '1';
-  if (position === 2) return '2';
-  if (position === 3) return '3';
+  if (position === 1) return '🥇';
+  if (position === 2) return '🥈';
+  if (position === 3) return '🥉';
   return String(position || '-');
+}
+
+function getParticipantName(item) {
+  return item.participante || item.nome || t('ranking.unknownBettor');
+}
+
+function participantInitials(item) {
+  const name = getParticipantName(item);
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || 'PD';
+}
+
+function renderParticipantAvatar(item) {
+  const imageUrl = item.fotoUrl || item.foto_url || item.avatarUrl || item.avatar_url || '';
+  const name = getParticipantName(item);
+  const initials = participantInitials(item);
+  return `
+    <span class="participant-avatar">
+      ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(name)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">` : ''}
+      <span class="participant-avatar__fallback" ${imageUrl ? 'hidden' : ''}>${escapeHtml(initials)}</span>
+    </span>
+  `;
+}
+
+function metricValue(value) {
+  return value ?? 0;
+}
+
+function renderRankingMetric(label, value) {
+  return `
+    <span class="ranking-metric">
+      <span class="ranking-metric__label">${escapeHtml(label)}</span>
+      <strong>${escapeHtml(metricValue(value))}</strong>
+    </span>
+  `;
+}
+
+function renderRankingHistory(item) {
+  const previousPosition = item.posicaoAnterior ?? item.posicao_anterior ?? null;
+  if (previousPosition === null || previousPosition === undefined || previousPosition === '') {
+    return `<span class="ranking-history ranking-history--empty">${escapeHtml(t('ranking.noHistory'))}</span>`;
+  }
+  return `<span class="ranking-history">${escapeHtml(t('ranking.previousPosition', { position: previousPosition }))}</span>`;
+}
+
+function renderRankingGap(item, leaderPoints) {
+  const currentPoints = Number(item.pontosAtuais ?? item.pontos_atuais ?? 0);
+  const gap = Math.max(0, Number(leaderPoints || 0) - currentPoints);
+  if (!gap) {
+    return `<span class="ranking-gap ranking-gap--leader">${escapeHtml(t('ranking.leader'))}</span>`;
+  }
+  return `<span class="ranking-gap">${escapeHtml(t('ranking.gapToLeader', { points: gap }))}</span>`;
+}
+
+function renderRankingHeader() {
+  return `
+    <div class="ranking-header" aria-hidden="true">
+      <span>${escapeHtml(t('ranking.position'))}</span>
+      <span>${escapeHtml(t('ranking.bettor'))}</span>
+      <span>${escapeHtml(t('ranking.summary'))}</span>
+      <span>${escapeHtml(t('ranking.points'))}</span>
+    </div>
+  `;
 }
 
 async function loadBaseData() {
@@ -323,6 +391,9 @@ async function renderHome() {
   ]);
   const meuRanking = ranking.find((item) => item.participanteId === currentParticipanteId()) || {};
   const ultimoResultado = minhas.find((item) => item.placarOficial);
+  const leaderPoints = ranking.length ? Number(ranking[0].pontosAtuais ?? ranking[0].pontos_atuais ?? 0) : 0;
+  const ultimoMandante = ultimoResultado?.mandante?.nome || ultimoResultado?.mandante || '';
+  const ultimoVisitante = ultimoResultado?.visitante?.nome || ultimoResultado?.visitante || '';
 
   content.innerHTML = `
     <section class="grid three">
@@ -339,7 +410,7 @@ async function renderHome() {
       <article class="card">
         <div class="card-title"><h2>${escapeHtml(t('home.lastResult'))}</h2></div>
         ${ultimoResultado ? `
-          <strong>${escapeHtml(ultimoResultado.mandante)} ${ultimoResultado.placarOficial.mandante} x ${ultimoResultado.placarOficial.visitante} ${escapeHtml(ultimoResultado.visitante)}</strong>
+          <strong>${escapeHtml(ultimoMandante)} ${ultimoResultado.placarOficial.mandante} x ${ultimoResultado.placarOficial.visitante} ${escapeHtml(ultimoVisitante)}</strong>
           <p class="muted">${escapeHtml(t('home.yourBet', { bet: ultimoResultado.meuPalpite ? `${ultimoResultado.meuPalpite.mandante} x ${ultimoResultado.meuPalpite.visitante}` : t('common.noBet') }))}</p>
         ` : empty(t('home.noRecentResult'))}
       </article>
@@ -347,7 +418,7 @@ async function renderHome() {
     <section class="grid two">
       <article class="card">
         <div class="card-title"><h2>${escapeHtml(t('home.top3'))}</h2><button class="secondary" data-route="ranking" type="button">${escapeHtml(t('home.viewFull'))}</button></div>
-        <div class="list">${ranking.slice(0, 3).map(renderRankingRow).join('') || empty(t('home.rankingEmpty'))}</div>
+        <div class="list ranking-list">${ranking.slice(0, 3).map((item) => renderRankingRow(item, { leaderPoints, compact: true })).join('') || empty(t('home.rankingEmpty'))}</div>
       </article>
       <article class="card">
         <div class="card-title"><h2>${escapeHtml(t('home.nextGames'))}</h2><button class="secondary" data-route="${isApostador() ? 'apostas' : 'jogos'}" type="button">${escapeHtml(isApostador() ? t('home.bet') : t('home.viewGames'))}</button></div>
@@ -442,16 +513,55 @@ function renderGameCard(game) {
   `;
 }
 
-function renderRankingRow(item) {
+function renderRankingRow(item, context = {}) {
   const me = item.participanteId === currentParticipanteId();
+  const position = item.posicao || '-';
+  const exact = item.acertosExatos ?? item.acertos_placar_exato;
+  const results = item.acertosResultado ?? item.acertos_resultado;
+  const goals = item.diferencaGolsTotal ?? item.diferenca_gols_total;
+  const showExact = exact !== null && exact !== undefined;
+  const showResults = results !== null && results !== undefined;
+  const showGoalDiff = goals !== null && goals !== undefined;
+  const leaderPoints = context.leaderPoints ?? item.pontosAtuais ?? 0;
+  const compact = Boolean(context.compact);
+  const rowClass = [
+    'ranking-row',
+    me ? 'me' : '',
+    position === 1 ? 'ranking-row--gold' : '',
+    position === 2 ? 'ranking-row--silver' : '',
+    position === 3 ? 'ranking-row--bronze' : '',
+    compact ? 'ranking-row--compact' : ''
+  ].filter(Boolean).join(' ');
+  const metrics = [
+    showExact ? renderRankingMetric(t('ranking.exact'), exact) : '',
+    showResults ? renderRankingMetric(t('ranking.results'), results) : '',
+    showGoalDiff ? renderRankingMetric(t('ranking.goalDiff'), goals) : ''
+  ].filter(Boolean).join('');
   return `
-    <article class="ranking-row ${me ? 'me' : ''}">
-      <div class="medal">${getRankMedal(item.posicao)}</div>
-      <div>
-        <strong>${escapeHtml(item.participante)}</strong>
-        <p class="muted">${escapeHtml(t('ranking.exact'))} ${item.acertosExatos || 0} · ${escapeHtml(t('ranking.results'))} ${item.acertosResultado || 0} · ${escapeHtml(t('ranking.goalDiff'))} ${item.diferencaGolsTotal || 0}</p>
+    <article class="${rowClass}">
+      <div class="ranking-position">
+        <span class="medal">${getRankMedal(position)}</span>
+        <span class="ranking-position__number">#${escapeHtml(position)}</span>
       </div>
-      <div class="score">${escapeHtml(item.pontosAtuais || 0)} ${escapeHtml(t('ranking.pointsAbbr'))}</div>
+      <div class="ranking-identity">
+        ${renderParticipantAvatar(item)}
+        <div class="ranking-identity__text">
+          <strong>${escapeHtml(getParticipantName(item))}</strong>
+          <div class="ranking-meta">
+            ${renderRankingHistory(item)}
+            ${me ? `<span class="ranking-tag">${escapeHtml(t('ranking.you'))}</span>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="ranking-summary">
+        <div class="ranking-metrics">${metrics}</div>
+        <div class="ranking-subtext">
+          ${renderRankingGap(item, leaderPoints)}
+        </div>
+      </div>
+      <div class="score-block">
+        <div class="score">${escapeHtml(item.pontosAtuais || 0)} ${escapeHtml(t('ranking.pointsAbbr'))}</div>
+      </div>
     </article>
   `;
 }
@@ -498,7 +608,14 @@ function renderBetCard(aposta) {
 
 async function renderRanking() {
   const ranking = await api(`/ranking/boloes/${state.activeBolaoId}/atual`);
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>${escapeHtml(t('ranking.full'))}</h2></div><div class="list">${ranking.map(renderRankingRow).join('') || empty(t('ranking.empty'))}</div></section>`;
+  const leaderPoints = ranking.length ? Number(ranking[0].pontosAtuais ?? ranking[0].pontos_atuais ?? 0) : 0;
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>${escapeHtml(t('ranking.full'))}</h2></div>
+      ${ranking.length ? renderRankingHeader() : ''}
+      <div class="list ranking-list">${ranking.map((item) => renderRankingRow(item, { leaderPoints })).join('') || empty(t('ranking.empty'))}</div>
+    </section>
+  `;
 }
 
 async function renderJogos() {
