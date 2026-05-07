@@ -778,6 +778,72 @@ label {
   text-align: center;
 }
 
+.external-linking-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+.external-linking-grid article {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.external-linking-grid h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.external-link-card {
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.052);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  display: grid;
+  gap: 10px;
+  justify-content: stretch;
+  min-height: 0;
+  padding: 14px;
+  text-align: left;
+  white-space: normal;
+  width: 100%;
+}
+
+.external-link-card:hover {
+  background: rgba(33, 212, 253, 0.08);
+  border-color: rgba(33, 212, 253, 0.26);
+  box-shadow: var(--shadow-soft);
+}
+
+.external-link-card.selected {
+  border-color: rgba(200, 255, 46, 0.72);
+  box-shadow: 0 0 0 3px rgba(200, 255, 46, 0.12);
+}
+
+.external-link-card.linked {
+  background: rgba(71, 245, 154, 0.075);
+  border-color: rgba(71, 245, 154, 0.26);
+}
+
+.external-link-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+}
+
+.external-link-card:disabled:hover {
+  box-shadow: none;
+}
+
+.external-link-card__meta,
+.external-linking-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .bet-inputs {
   align-items: center;
   display: flex;
@@ -1097,6 +1163,10 @@ label {
 
   .dashboard-kpis {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .external-linking-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .row-card {

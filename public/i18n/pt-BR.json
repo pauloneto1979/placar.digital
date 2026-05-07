@@ -375,5 +375,32 @@
     "saved": "Provedor salvo com sucesso.",
     "enabled": "Provedor ativado.",
     "disabled": "Provedor desativado."
+  },
+  "externalMatches": {
+    "title": "Vincula\u00e7\u00e3o de partidas externas",
+    "dateFrom": "Data inicial",
+    "dateTo": "Data final",
+    "competition": "Competi\u00e7\u00e3o",
+    "competitionPlaceholder": "Ex.: PL, BSA, CL",
+    "status": "Status",
+    "search": "Buscar partidas externas",
+    "localMatches": "Partidas locais",
+    "externalMatches": "Partidas football-data.org",
+    "noExternalResults": "Nenhuma partida externa carregada. Use os filtros e clique em buscar.",
+    "linkedId": "football-data #{id}",
+    "notLinked": "sem v\u00ednculo externo",
+    "noCompetition": "sem competi\u00e7\u00e3o",
+    "externalId": "ID externo {id}",
+    "alreadyLinked": "j\u00e1 vinculada",
+    "link": "Vincular",
+    "unlink": "Remover v\u00ednculo",
+    "searchLoaded": "{count} partida(s) externa(s) carregada(s).",
+    "selectBoth": "Selecione uma partida local e uma partida externa.",
+    "duplicateBlocked": "Essa partida externa j\u00e1 est\u00e1 vinculada a outra partida local.",
+    "confirmLink": "Vincular \"{local}\" com \"{external}\"?",
+    "linked": "Partida vinculada com sucesso.",
+    "selectLinkedLocal": "Selecione uma partida local que j\u00e1 tenha v\u00ednculo externo.",
+    "confirmUnlink": "Remover o v\u00ednculo externo de \"{local}\"?",
+    "unlinked": "V\u00ednculo externo removido com sucesso."
   }
 }

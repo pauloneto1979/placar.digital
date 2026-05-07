@@ -6,7 +6,13 @@
   activeBolaoNome: localStorage.getItem('placar.activeBolaoNome') || '',
   route: 'home',
   data: {},
-  formMessages: {}
+  formMessages: {},
+  externalMatchLink: {
+    localId: '',
+    externalId: '',
+    filters: {},
+    externalMatches: []
+  }
 };
 
 const content = document.querySelector('#content');
@@ -570,10 +576,10 @@ function teamMeta(team) {
   }
 
   return {
-    nome: team.nome || '',
-    sigla: team.sigla || '',
-    codigoFifa: team.codigoFifa || team.codigo_fifa || '',
-    escudoUrl: team.escudoUrl || team.escudo_url || '',
+    nome: team.nome || team.name || team.shortName || '',
+    sigla: team.sigla || team.tla || '',
+    codigoFifa: team.codigoFifa || team.codigo_fifa || team.tla || '',
+    escudoUrl: team.escudoUrl || team.escudo_url || team.crest || '',
     bandeiraUrl: team.bandeiraUrl || team.bandeira_url || ''
   };
 }
@@ -1284,10 +1290,14 @@ async function renderRegrasAdmin() {
 }
 
 async function renderConfiguracoesOwner() {
-  const [config, provedores] = await Promise.all([
+  const [config, provedores, partidas, times] = await Promise.all([
     isOwner() ? api('/proprietario/configuracoes-gerais').catch(() => ({})) : Promise.resolve(null),
-    api('/provedores-esportivos').catch(() => [])
+    api('/provedores-esportivos').catch(() => []),
+    state.activeBolaoId ? api(`/partidas/boloes/${state.activeBolaoId}`).catch(() => []) : Promise.resolve([]),
+    state.activeBolaoId ? api(`/times/boloes/${state.activeBolaoId}`).catch(() => []) : Promise.resolve([])
   ]);
+  state.data.partidas = partidas;
+  state.data.times = times;
   const footballData = provedores.find((item) => item.provider === 'football-data') || provedores[0] || {};
   content.innerHTML = `
     ${isOwner() ? `<section class="card">
@@ -1311,6 +1321,13 @@ async function renderConfiguracoesOwner() {
         <span class="pill">${escapeHtml(footballData.enabled ? statusLabel('ativo') : statusLabel('inativo'))}</span>
       </div>
       ${footballData.provider ? renderSportsProviderForm(footballData) : empty(t('sportsProviders.empty'))}
+    </section>
+    <section class="card">
+      <div class="card-title">
+        <h2>${escapeHtml(t('externalMatches.title'))}</h2>
+        <span class="pill">${escapeHtml(state.activeBolaoNome || t('common.pool'))}</span>
+      </div>
+      ${state.activeBolaoId ? renderExternalMatchLinking(partidas, times) : empty(t('messages.noActivePool'))}
     </section>
   `;
 }
@@ -1345,6 +1362,143 @@ function renderSportsProviderForm(provider) {
       ${scopedMessage('provedorEsportivo')}
     </form>
   `;
+}
+
+function renderLocalMatchLinkRow(row, times) {
+  const mandante = findById(times, row.timeMandanteId) || { nome: row.timeMandanteId };
+  const visitante = findById(times, row.timeVisitanteId) || { nome: row.timeVisitanteId };
+  const selected = state.externalMatchLink.localId === row.id;
+  const linked = Boolean(row.footballDataMatchId);
+  const score = row.placarMandante !== null && row.placarMandante !== undefined && row.placarVisitante !== null && row.placarVisitante !== undefined
+    ? `${row.placarMandante} ${t('common.scoreSeparator')} ${row.placarVisitante}`
+    : t('common.scoreSeparator');
+  return `
+    <button class="external-link-card ${selected ? 'selected' : ''} ${linked ? 'linked' : ''}" type="button" data-select-local-match="${escapeHtml(row.id)}">
+      <span class="match-inline">${renderTeamName(mandante, mandante.nome, 'sm')}<span class="score score--inline">${escapeHtml(score)}</span>${renderTeamName(visitante, visitante.nome, 'sm')}</span>
+      <span class="muted">${escapeHtml(`${dateTime(row.dataHora)} - ${row.estadio || t('games.noStadium')}`)}</span>
+      <span class="external-link-card__meta">
+        <span class="pill">${escapeHtml(statusLabel(row.status))}</span>
+        <span class="pill">${escapeHtml(row.footballDataMatchId ? t('externalMatches.linkedId', { id: row.footballDataMatchId }) : t('externalMatches.notLinked'))}</span>
+      </span>
+    </button>
+  `;
+}
+
+function renderExternalMatchRow(row, usedExternalIds) {
+  const selected = String(state.externalMatchLink.externalId || '') === String(row.externalMatchId || '');
+  const duplicate = usedExternalIds.has(String(row.externalMatchId));
+  const score = row.placar?.fullTime?.home !== null && row.placar?.fullTime?.home !== undefined && row.placar?.fullTime?.away !== null && row.placar?.fullTime?.away !== undefined
+    ? `${row.placar.fullTime.home} ${t('common.scoreSeparator')} ${row.placar.fullTime.away}`
+    : t('common.scoreSeparator');
+  const competition = row.competition?.name || row.competition?.code || t('externalMatches.noCompetition');
+  return `
+    <button class="external-link-card ${selected ? 'selected' : ''} ${duplicate ? 'linked' : ''}" type="button" data-select-external-match="${escapeHtml(row.externalMatchId)}" ${duplicate ? 'disabled' : ''}>
+      <span class="match-inline">${renderTeamName(row.mandante, row.mandante?.name, 'sm')}<span class="score score--inline">${escapeHtml(score)}</span>${renderTeamName(row.visitante, row.visitante?.name, 'sm')}</span>
+      <span class="muted">${escapeHtml(`${competition} - ${dateTime(row.utcDate)} - ${statusLabel(row.status)}`)}</span>
+      <span class="external-link-card__meta">
+        <span class="pill">${escapeHtml(t('externalMatches.externalId', { id: row.externalMatchId }))}</span>
+        ${duplicate ? `<span class="pill">${escapeHtml(t('externalMatches.alreadyLinked'))}</span>` : ''}
+      </span>
+    </button>
+  `;
+}
+
+function renderExternalMatchLinking(partidas, times) {
+  const filters = state.externalMatchLink.filters || {};
+  const externalMatches = state.externalMatchLink.externalMatches || [];
+  const usedExternalIds = new Set(partidas.map((partida) => String(partida.footballDataMatchId || '')).filter(Boolean));
+  return `
+    <form class="form-card" data-external-match-search>
+      <label>${escapeHtml(t('externalMatches.dateFrom'))}<input name="dateFrom" type="date" value="${escapeHtml(filters.dateFrom || '')}"></label>
+      <label>${escapeHtml(t('externalMatches.dateTo'))}<input name="dateTo" type="date" value="${escapeHtml(filters.dateTo || '')}"></label>
+      <label>${escapeHtml(t('externalMatches.competition'))}<input name="competition" placeholder="${escapeHtml(t('externalMatches.competitionPlaceholder'))}" value="${escapeHtml(filters.competition || '')}"></label>
+      <label>${escapeHtml(t('externalMatches.status'))}
+        <select name="status">
+          <option value="">${escapeHtml(t('common.select'))}</option>
+          ${['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'SUSPENDED', 'CANCELLED'].map((status) => `<option value="${status}" ${filters.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+        </select>
+      </label>
+      <div class="form-actions"><button type="submit">${escapeHtml(t('externalMatches.search'))}</button></div>
+      ${scopedMessage('externalMatchLink')}
+    </form>
+    <div class="external-linking-grid">
+      <article>
+        <h3>${escapeHtml(t('externalMatches.localMatches'))}</h3>
+        <div class="list">${partidas.map((row) => renderLocalMatchLinkRow(row, times)).join('') || empty(t('admin.noMatches'))}</div>
+      </article>
+      <article>
+        <h3>${escapeHtml(t('externalMatches.externalMatches'))}</h3>
+        <div class="list">${externalMatches.map((row) => renderExternalMatchRow(row, usedExternalIds)).join('') || empty(t('externalMatches.noExternalResults'))}</div>
+      </article>
+    </div>
+    <div class="form-actions external-linking-actions">
+      <button type="button" data-link-external-match ${state.externalMatchLink.localId && state.externalMatchLink.externalId ? '' : 'disabled'}>${escapeHtml(t('externalMatches.link'))}</button>
+      <button class="secondary" type="button" data-unlink-external-match ${state.externalMatchLink.localId && findById(partidas, state.externalMatchLink.localId)?.footballDataMatchId ? '' : 'disabled'}>${escapeHtml(t('externalMatches.unlink'))}</button>
+    </div>
+  `;
+}
+
+function localMatchName(partida) {
+  const times = state.data.times || [];
+  const mandante = findById(times, partida?.timeMandanteId)?.nome || t('games.homeTeam');
+  const visitante = findById(times, partida?.timeVisitanteId)?.nome || t('games.awayTeam');
+  return `${mandante} ${t('common.scoreSeparator')} ${visitante}`;
+}
+
+function externalMatchName(partida) {
+  if (!partida) return '';
+  return `${partida.mandante?.name || t('games.homeTeam')} ${t('common.scoreSeparator')} ${partida.visitante?.name || t('games.awayTeam')}`;
+}
+
+async function searchExternalMatches(form) {
+  clearFormMessage('externalMatchLink');
+  const data = formPayload(form);
+  state.externalMatchLink.filters = data;
+  const params = new URLSearchParams();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+  const result = await api(`/provedores-esportivos/football-data/partidas${params.toString() ? `?${params}` : ''}`);
+  state.externalMatchLink.externalMatches = result.partidas || [];
+  state.formMessages.externalMatchLink = { text: t('externalMatches.searchLoaded', { count: state.externalMatchLink.externalMatches.length }), tone: 'success' };
+  await navigate('configuracoes');
+}
+
+async function linkSelectedExternalMatch() {
+  const local = findById(state.data.partidas || [], state.externalMatchLink.localId);
+  const external = (state.externalMatchLink.externalMatches || []).find((row) => String(row.externalMatchId || '') === String(state.externalMatchLink.externalId || ''));
+  if (!local || !external) {
+    setFormMessage('externalMatchLink', t('externalMatches.selectBoth'), 'error');
+    return;
+  }
+  const used = (state.data.partidas || []).find((partida) => String(partida.footballDataMatchId || '') === String(external.externalMatchId) && partida.id !== local.id);
+  if (used) {
+    setFormMessage('externalMatchLink', t('externalMatches.duplicateBlocked'), 'error');
+    return;
+  }
+  if (!window.confirm(t('externalMatches.confirmLink', { local: localMatchName(local), external: externalMatchName(external) }))) return;
+  const externalMatchId = Number.isNaN(Number(external.externalMatchId)) ? external.externalMatchId : Number(external.externalMatchId);
+  await api(`/partidas/${local.id}/vinculo-externo`, {
+    method: 'PATCH',
+    body: JSON.stringify({ provider: 'football-data', externalMatchId })
+  });
+  state.externalMatchLink.localId = local.id;
+  state.externalMatchLink.externalId = '';
+  state.formMessages.externalMatchLink = { text: t('externalMatches.linked'), tone: 'success' };
+  await navigate('configuracoes');
+}
+
+async function unlinkSelectedExternalMatch() {
+  const local = findById(state.data.partidas || [], state.externalMatchLink.localId);
+  if (!local || !local.footballDataMatchId) {
+    setFormMessage('externalMatchLink', t('externalMatches.selectLinkedLocal'), 'error');
+    return;
+  }
+  if (!window.confirm(t('externalMatches.confirmUnlink', { local: localMatchName(local) }))) return;
+  await api(`/partidas/${local.id}/vinculo-externo`, { method: 'DELETE' });
+  state.externalMatchLink.externalId = '';
+  state.formMessages.externalMatchLink = { text: t('externalMatches.unlinked'), tone: 'success' };
+  await navigate('configuracoes');
 }
 
 async function moveRulePriority(regraId, direction) {
@@ -1608,6 +1762,34 @@ content.addEventListener('click', (event) => {
     return;
   }
 
+  const localMatchButton = event.target.closest('[data-select-local-match]');
+  if (localMatchButton) {
+    state.externalMatchLink.localId = localMatchButton.dataset.selectLocalMatch;
+    clearFormMessage('externalMatchLink');
+    navigate(state.route);
+    return;
+  }
+
+  const externalMatchButton = event.target.closest('[data-select-external-match]');
+  if (externalMatchButton && !externalMatchButton.disabled) {
+    state.externalMatchLink.externalId = externalMatchButton.dataset.selectExternalMatch;
+    clearFormMessage('externalMatchLink');
+    navigate(state.route);
+    return;
+  }
+
+  const linkExternalButton = event.target.closest('[data-link-external-match]');
+  if (linkExternalButton) {
+    linkSelectedExternalMatch().catch((error) => setFormMessage('externalMatchLink', error.message, 'error'));
+    return;
+  }
+
+  const unlinkExternalButton = event.target.closest('[data-unlink-external-match]');
+  if (unlinkExternalButton) {
+    unlinkSelectedExternalMatch().catch((error) => setFormMessage('externalMatchLink', error.message, 'error'));
+    return;
+  }
+
   const moveRuleButton = event.target.closest('[data-move-rule]');
   if (moveRuleButton) {
     moveRulePriority(moveRuleButton.dataset.id, moveRuleButton.dataset.moveRule).catch((error) => {
@@ -1624,6 +1806,15 @@ content.addEventListener('click', (event) => {
 });
 
 content.addEventListener('submit', (event) => {
+  const externalMatchSearchForm = event.target.closest('[data-external-match-search]');
+  if (externalMatchSearchForm) {
+    event.preventDefault();
+    searchExternalMatches(externalMatchSearchForm).catch((error) => {
+      setFormMessage('externalMatchLink', error.message, 'error');
+    });
+    return;
+  }
+
   const form = event.target.closest('[data-crud-form]');
   if (!form) return;
   event.preventDefault();

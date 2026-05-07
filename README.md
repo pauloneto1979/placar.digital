@@ -1,37 +1,37 @@
-# placar.digital
+﻿# placar.digital
 
-Plataforma de bolão esportivo multi-bolões, preparada para operação SaaS com três perfis distintos:
+Plataforma de bolÃ£o esportivo multi-bolÃµes, preparada para operaÃ§Ã£o SaaS com trÃªs perfis distintos:
 
 - `proprietario`
 - `administrador`
 - `apostador`
 
-O projeto já está com backend, banco, autenticação, app web unificado, ranking, pagamentos e base de notificações funcionando. Este README descreve o estado atual para operação e piloto controlado.
+O projeto jÃ¡ estÃ¡ com backend, banco, autenticaÃ§Ã£o, app web unificado, ranking, pagamentos e base de notificaÃ§Ãµes funcionando. Este README descreve o estado atual para operaÃ§Ã£o e piloto controlado.
 
-## Visão Geral
+## VisÃ£o Geral
 
 - Backend: Node.js + Express
 - Banco: PostgreSQL
-- Frontend: app unificado estático servido em `/app`
+- Frontend: app unificado estÃ¡tico servido em `/app`
 - Processo publicado: `pm2` com nome `placar-digital`
-- Repositório: `https://github.com/pauloneto1979/placar.digital.git`
+- RepositÃ³rio: `https://github.com/pauloneto1979/placar.digital.git`
 - Servidor informado: `192.168.0.119`
 
 ## Perfis E Acesso
 
-### Proprietário
+### ProprietÃ¡rio
 
 Pode acessar:
 
-- gestão de bolões
-- gestão de usuários do sistema
-- vínculo de administradores aos bolões
-- configurações gerais da plataforma
-- visão operacional de qualquer bolão
+- gestÃ£o de bolÃµes
+- gestÃ£o de usuÃ¡rios do sistema
+- vÃ­nculo de administradores aos bolÃµes
+- configuraÃ§Ãµes gerais da plataforma
+- visÃ£o operacional de qualquer bolÃ£o
 
 ### Administrador
 
-Pode acessar apenas bolões em que esteja vinculado na tabela `boloes_usuarios`.
+Pode acessar apenas bolÃµes em que esteja vinculado na tabela `boloes_usuarios`.
 
 Pode operar:
 
@@ -40,14 +40,14 @@ Pode operar:
 - fases
 - times
 - partidas
-- configurações do bolão
-- regras de pontuação
-- critérios de desempate
-- distribuição de prêmios
+- configuraÃ§Ãµes do bolÃ£o
+- regras de pontuaÃ§Ã£o
+- critÃ©rios de desempate
+- distribuiÃ§Ã£o de prÃªmios
 
 ### Apostador
 
-Pode acessar apenas o bolão selecionado no token e apenas com `participanteId` válido.
+Pode acessar apenas o bolÃ£o selecionado no token e apenas com `participanteId` vÃ¡lido.
 
 Pode usar:
 
@@ -55,8 +55,8 @@ Pode usar:
 - jogos
 - apostas
 - ranking
-- regras do bolão
-- notificações
+- regras do bolÃ£o
+- notificaÃ§Ãµes
 - meu perfil
 
 ## App Web
@@ -64,30 +64,30 @@ Pode usar:
 O frontend publicado usa app unificado:
 
 - login: `/app/login.html`
-- seleção de bolão: `/app/selecao-bolao.html`
+- seleÃ§Ã£o de bolÃ£o: `/app/selecao-bolao.html`
 - app principal: `/app/app.html`
 
-O tema visual é centralizado em `public/theme.css` e cobre login, seleção de bolão, home, ranking, apostas, partidas e telas administrativas. A abordagem atual é mobile-first, com botões maiores, cards consistentes, formulários responsivos, estados vazios padronizados e mensagens de erro/sucesso no mesmo padrão visual.
+O tema visual Ã© centralizado em `public/theme.css` e cobre login, seleÃ§Ã£o de bolÃ£o, home, ranking, apostas, partidas e telas administrativas. A abordagem atual Ã© mobile-first, com botÃµes maiores, cards consistentes, formulÃ¡rios responsivos, estados vazios padronizados e mensagens de erro/sucesso no mesmo padrÃ£o visual.
 
-A barra superior e os controles auxiliares usam o mesmo padrão visual do app: seletor de idioma em formato de pílula com ícone de globo, e ações de perfil/saída com botões de ícone acessíveis.
+A barra superior e os controles auxiliares usam o mesmo padrÃ£o visual do app: seletor de idioma em formato de pÃ­lula com Ã­cone de globo, e aÃ§Ãµes de perfil/saÃ­da com botÃµes de Ã­cone acessÃ­veis.
 
-A Home/Placar do apostador funciona como dashboard premium do bolão ativo:
+A Home/Placar do apostador funciona como dashboard premium do bolÃ£o ativo:
 
-- posição atual, pontuação, diferença para o líder e palpites pendentes
-- próximo jogo com brasões/bandeiras, data, status do palpite e contador regressivo
-- próximos jogos do bolão com status visual do palpite
-- últimos resultados quando houver placar informado
+- posiÃ§Ã£o atual, pontuaÃ§Ã£o, diferenÃ§a para o lÃ­der e palpites pendentes
+- prÃ³ximo jogo com brasÃµes/bandeiras, data, status do palpite e contador regressivo
+- prÃ³ximos jogos do bolÃ£o com status visual do palpite
+- Ãºltimos resultados quando houver placar informado
 - top 3 do ranking reaproveitando o ranking atual
 
-O ranking do app foi atualizado para uma visualização mais competitiva e responsiva:
+O ranking do app foi atualizado para uma visualizaÃ§Ã£o mais competitiva e responsiva:
 
 - top 3 com medalhas
 - destaque visual para o apostador logado
-- diferença de pontos para o líder
+- diferenÃ§a de pontos para o lÃ­der
 - avatar fallback por iniciais
 - layout em cards no mobile e lista ampla no desktop
 
-As páginas antigas:
+As pÃ¡ginas antigas:
 
 - `/app/proprietario.html`
 - `/app/administrador.html`
@@ -117,11 +117,11 @@ Payload:
 Comportamento:
 
 - `proprietario`: entra direto
-- `administrador` com 1 bolão: entra direto
-- `apostador` com 1 bolão: entra direto
-- `administrador` ou `apostador` com mais de 1 bolão: recebe `selectionToken` e segue para seleção de bolão
+- `administrador` com 1 bolÃ£o: entra direto
+- `apostador` com 1 bolÃ£o: entra direto
+- `administrador` ou `apostador` com mais de 1 bolÃ£o: recebe `selectionToken` e segue para seleÃ§Ã£o de bolÃ£o
 
-### 2. Seleção De Bolão
+### 2. SeleÃ§Ã£o De BolÃ£o
 
 Endpoint:
 
@@ -138,7 +138,7 @@ Payload:
 }
 ```
 
-### 3. Troca De Bolão No App
+### 3. Troca De BolÃ£o No App
 
 Endpoint:
 
@@ -156,7 +156,7 @@ Payload:
 
 ## Meu Perfil
 
-O app principal possui manutenção do próprio usuário logado.
+O app principal possui manutenÃ§Ã£o do prÃ³prio usuÃ¡rio logado.
 
 Endpoints:
 
@@ -167,10 +167,10 @@ Endpoints:
 
 Regras:
 
-- o usuário altera apenas os próprios dados
-- email é somente leitura
+- o usuÃ¡rio altera apenas os prÃ³prios dados
+- email Ã© somente leitura
 - troca de senha exige senha atual
-- perfil e vínculos com bolão não são alterados por essa tela
+- perfil e vÃ­nculos com bolÃ£o nÃ£o sÃ£o alterados por essa tela
 
 ## Credenciais Do Apostador
 
@@ -178,27 +178,27 @@ Modelo adotado:
 
 - `participantes.usuario_id` referencia `usuarios.id`
 
-Isso mantém a separação entre:
+Isso mantÃ©m a separaÃ§Ã£o entre:
 
-- usuário de login
-- participante dentro do bolão
+- usuÃ¡rio de login
+- participante dentro do bolÃ£o
 
 Regras:
 
-- o mesmo usuário apostador pode participar de múltiplos bolões
-- administrador e proprietário não viram participante automaticamente
-- permissões administrativas continuam sendo validadas por `boloes_usuarios`
+- o mesmo usuÃ¡rio apostador pode participar de mÃºltiplos bolÃµes
+- administrador e proprietÃ¡rio nÃ£o viram participante automaticamente
+- permissÃµes administrativas continuam sendo validadas por `boloes_usuarios`
 
-## Configurações Do Bolão E Prioridade
+## ConfiguraÃ§Ãµes Do BolÃ£o E Prioridade
 
-As regras de pontuação são configuráveis por bolão.
+As regras de pontuaÃ§Ã£o sÃ£o configurÃ¡veis por bolÃ£o.
 
 Regra correta de prioridade:
 
 - `1 = mais importante`
-- a pontuação não é cumulativa
-- quando mais de uma regra se aplica, vence a menor prioridade numérica
-- em empate de prioridade, vence a maior pontuação
+- a pontuaÃ§Ã£o nÃ£o Ã© cumulativa
+- quando mais de uma regra se aplica, vence a menor prioridade numÃ©rica
+- em empate de prioridade, vence a maior pontuaÃ§Ã£o
 
 Exemplo:
 
@@ -214,9 +214,9 @@ Exemplo:
 
 ## InfinitePay
 
-A integração com InfinitePay Checkout já está preparada no backend.
+A integraÃ§Ã£o com InfinitePay Checkout jÃ¡ estÃ¡ preparada no backend.
 
-Variáveis esperadas no `.env`:
+VariÃ¡veis esperadas no `.env`:
 
 ```env
 INFINITEPAY_API_URL=https://api.checkout.infinitepay.io
@@ -229,7 +229,7 @@ Fluxo atual:
 - gerar link InfinitePay
 - receber webhook
 - marcar pagamento como `pago`
-- gerar notificação `PAGAMENTO_CONFIRMADO`
+- gerar notificaÃ§Ã£o `PAGAMENTO_CONFIRMADO`
 
 Endpoint de webhook:
 
@@ -239,7 +239,7 @@ POST /api/v1/pagamentos/webhooks/infinitepay
 
 ## Provedores De Dados Esportivos
 
-O backend agora possui uma camada interna para configuração de provedores esportivos externos, permitindo trocar o provedor ativo sem alterar as regras de negócio do bolão.
+O backend agora possui uma camada interna para configuraÃ§Ã£o de provedores esportivos externos, permitindo trocar o provedor ativo sem alterar as regras de negÃ³cio do bolÃ£o.
 
 Tabela usada:
 
@@ -258,7 +258,7 @@ Provedor suportado no momento:
 
 - `football-data`
 
-Arquitetura já preparada para expansão futura:
+Arquitetura jÃ¡ preparada para expansÃ£o futura:
 
 - `api-football`
 - `rapidapi`
@@ -267,10 +267,10 @@ Arquitetura já preparada para expansão futura:
 Regras atuais:
 
 - o `api_token` fica somente no backend
-- o token não deve ser exposto no frontend
-- o token não deve ser escrito em logs
-- se o provedor estiver desabilitado, o job de sincronização não deve executar
-- quando a sincronização estiver desabilitada ou inválida, a factory registra apenas um aviso controlado, sem vazar segredos
+- o token nÃ£o deve ser exposto no frontend
+- o token nÃ£o deve ser escrito em logs
+- se o provedor estiver desabilitado, o job de sincronizaÃ§Ã£o nÃ£o deve executar
+- quando a sincronizaÃ§Ã£o estiver desabilitada ou invÃ¡lida, a factory registra apenas um aviso controlado, sem vazar segredos
 
 Migration adicionada:
 
@@ -293,11 +293,11 @@ set enabled = false
 where provider = 'football-data';
 ```
 
-O provider também pode ser configurado pelo painel web:
+O provider tambÃ©m pode ser configurado pelo painel web:
 
-- menu `Configurações`
-- seção `Provedores esportivos`
-- disponível para `proprietario` e `administrador`
+- menu `ConfiguraÃ§Ãµes`
+- seÃ§Ã£o `Provedores esportivos`
+- disponÃ­vel para `proprietario` e `administrador`
 - exibe apenas token mascarado, nunca o token completo
 - permite alterar `base_url`, `sync_interval_seconds`, `api_token` e ativar/desativar o provider
 
@@ -308,7 +308,7 @@ Endpoints administrativos:
 - `PATCH /api/v1/provedores-esportivos/:provider/status`
 - `GET /api/v1/provedores-esportivos/football-data/partidas`
 
-Esses endpoints são protegidos por autenticação e aceitam apenas `proprietario` ou `administrador`. As respostas são sanitizadas e nunca retornam `api_token` completo.
+Esses endpoints sÃ£o protegidos por autenticaÃ§Ã£o e aceitam apenas `proprietario` ou `administrador`. As respostas sÃ£o sanitizadas e nunca retornam `api_token` completo.
 
 Busca de partidas externas football-data.org:
 
@@ -393,10 +393,20 @@ Regras de vinculo:
 - `externalMatchId` deve ser numerico
 - o mesmo `externalMatchId` nao pode estar vinculado a outra partida local
 - a busca e os vinculos nunca retornam nem registram `api_token`
-- vincular/desvincular nao altera placar nem dispara recálculo
-- o recálculo continua ocorrendo apenas quando a sincronização externa atualizar resultado confirmado com mudança relevante
+- vincular/desvincular nao altera placar nem dispara recÃ¡lculo
+- o recÃ¡lculo continua ocorrendo apenas quando a sincronizaÃ§Ã£o externa atualizar resultado confirmado com mudanÃ§a relevante
 
-Módulo interno criado:
+Tela administrativa:
+
+- no app unificado, acesse `Configuracoes > Vinculacao de partidas externas`
+- selecione o bolao ativo no topo antes de vincular partidas
+- a tela lista as partidas locais do bolao e destaca as que ja possuem `football_data_match_id`
+- use os filtros `dateFrom`, `dateTo`, `competition` e `status` para buscar partidas da football-data.org
+- selecione uma partida local e uma partida externa, confirme a operacao e clique em `Vincular`
+- para desfazer, selecione uma partida local ja vinculada e clique em `Remover vinculo`
+- quando uma partida externa ja estiver vinculada a outra partida local, a opcao fica bloqueada visualmente sempre que a informacao estiver carregada no bolao atual
+
+Modulo interno criado:
 
 - `src/modules/provedores_esportivos/provedores_esportivos.repository.js`
 - `src/modules/provedores_esportivos/provedores_esportivos.service.js`
@@ -404,28 +414,28 @@ Módulo interno criado:
 - `src/modules/provedores_esportivos/football-data-sync.service.js`
 - `src/modules/provedores_esportivos/sports-data-sync.job.js`
 
-A factory interna resolve o provedor ativo para jobs futuros de sincronização e também permite marcar `last_sync_at` após uma execução bem-sucedida.
+A factory interna resolve o provedor ativo para jobs futuros de sincronizaÃ§Ã£o e tambÃ©m permite marcar `last_sync_at` apÃ³s uma execuÃ§Ã£o bem-sucedida.
 
-### Sincronização Football-Data.org
+### SincronizaÃ§Ã£o Football-Data.org
 
-O job interno de dados esportivos é iniciado junto com o servidor e acorda a cada 1 minuto.
+O job interno de dados esportivos Ã© iniciado junto com o servidor e acorda a cada 1 minuto.
 
-Regras da sincronização atual:
+Regras da sincronizaÃ§Ã£o atual:
 
 - executa apenas quando o provider ativo for `football-data`
 - exige `enabled = true`
 - exige `api_token` preenchido
 - usa `base_url` da tabela `provedores_dados_esportivos`
-- respeita `sync_interval_seconds`, com mínimo efetivo de 60 segundos
-- faz no máximo 1 chamada HTTP por execução
+- respeita `sync_interval_seconds`, com mÃ­nimo efetivo de 60 segundos
+- faz no mÃ¡ximo 1 chamada HTTP por execuÃ§Ã£o
 - consulta `GET {base_url}/matches`
 - envia o header `X-Auth-Token`
-- não registra o token em logs
+- nÃ£o registra o token em logs
 - trata HTTP `429` como rate limit com aviso controlado
-- atualiza `last_sync_at` apenas quando a consulta ao provider é bem-sucedida
-- protege contra execução simultânea no mesmo processo
+- atualiza `last_sync_at` apenas quando a consulta ao provider Ã© bem-sucedida
+- protege contra execuÃ§Ã£o simultÃ¢nea no mesmo processo
 
-A sincronização não cria partidas automaticamente. Ela atualiza somente partidas já cadastradas e vinculadas pelo campo:
+A sincronizaÃ§Ã£o nÃ£o cria partidas automaticamente. Ela atualiza somente partidas jÃ¡ cadastradas e vinculadas pelo campo:
 
 - `partidas.football_data_match_id`
 
@@ -433,9 +443,9 @@ Quando um jogo externo chega como `FINISHED` e possui placar completo em `score.
 
 - atualiza o placar da partida vinculada
 - marca `resultado_confirmado = true`
-- reaproveita o fluxo atual de resultado para auditoria, recálculo de pontuação, ranking e notificações
+- reaproveita o fluxo atual de resultado para auditoria, recÃ¡lculo de pontuaÃ§Ã£o, ranking e notificaÃ§Ãµes
 
-Se não houver mudança relevante em status, data/hora ou placar, nada é salvo e nenhum recálculo é disparado.
+Se nÃ£o houver mudanÃ§a relevante em status, data/hora ou placar, nada Ã© salvo e nenhum recÃ¡lculo Ã© disparado.
 
 ## Principais Endpoints
 
@@ -449,7 +459,7 @@ Se não houver mudança relevante em status, data/hora ou placar, nada é salvo 
 - `PUT /api/v1/auth/meu-perfil`
 - `PUT /api/v1/auth/minha-senha`
 
-### Proprietário
+### ProprietÃ¡rio
 
 - `GET|POST /api/v1/proprietario/boloes`
 - `PUT /api/v1/proprietario/boloes/:id`
@@ -493,7 +503,7 @@ Campos de time atualmente suportados:
 - `pais`
 - `status`
 
-### Configurações Do Bolão
+### ConfiguraÃ§Ãµes Do BolÃ£o
 
 - `GET|POST /api/v1/configuracoes-bolao/:bolaoId/configuracao`
 - `PUT /api/v1/configuracoes-bolao/:bolaoId/configuracao/:configuracaoId`
@@ -525,7 +535,7 @@ Campos de time atualmente suportados:
 
 As migrations ficam em `db/migrations`.
 
-Ordem atual de aplicação:
+Ordem atual de aplicaÃ§Ã£o:
 
 ```bash
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/001_initial_schema.sql
@@ -553,7 +563,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Variáveis mínimas:
+VariÃ¡veis mÃ­nimas:
 
 - `DATABASE_URL`
 - `AUTH_TOKEN_SECRET`
@@ -564,7 +574,7 @@ Variáveis mínimas:
 
 ## Deploy E PM2
 
-Diretório atual no servidor:
+DiretÃ³rio atual no servidor:
 
 ```bash
 /home/administre/placar.digital
@@ -582,58 +592,59 @@ pm2 restart placar-digital
 pm2 status placar-digital
 ```
 
-Health checks úteis:
+Health checks Ãºteis:
 
 - `GET /api/v1/health`
 - `GET /app/login.html`
 - `GET /app/app.html`
 
-## Roteiro Básico De Operação
+## Roteiro BÃ¡sico De OperaÃ§Ã£o
 
-### Proprietário
+### ProprietÃ¡rio
 
-1. Criar bolão
+1. Criar bolÃ£o
 2. Criar administrador
-3. Vincular administrador ao bolão
-4. Ajustar configurações gerais
+3. Vincular administrador ao bolÃ£o
+4. Ajustar configuraÃ§Ãµes gerais
 
 ### Administrador
 
 1. Criar participantes
 2. Confirmar ou gerar credenciais do apostador
 3. Configurar fases, times e partidas
-   os times agora podem receber `escudo_url`, `bandeira_url` e `codigo_fifa/sigla` para exibição visual no app
-4. Configurar regras do bolão
+   os times agora podem receber `escudo_url`, `bandeira_url` e `codigo_fifa/sigla` para exibiÃ§Ã£o visual no app
+4. Configurar regras do bolÃ£o
 5. Acompanhar pagamentos
-6. Lançar resultados
+6. LanÃ§ar resultados
 
 ### Apostador
 
 1. Fazer login
-2. Selecionar bolão, se houver mais de um
+2. Selecionar bolÃ£o, se houver mais de um
 3. Consultar regras, jogos e ranking
 4. Registrar ou alterar apostas dentro do prazo
-5. Acompanhar notificações e perfil
+5. Acompanhar notificaÃ§Ãµes e perfil
 
-## Observações Operacionais
+## ObservaÃ§Ãµes Operacionais
 
-- O backend e o frontend publicados estão prontos para piloto controlado.
+- O backend e o frontend publicados estÃ£o prontos para piloto controlado.
 - Partidas, palpites e listas de times exibem escudo ou bandeira quando configurados, com fallback visual para sigla/iniciais.
-- O dashboard premium da Home usa endpoints existentes e respeita sempre o bolão selecionado.
-- O ranking mantém a mesma regra de cálculo de pontos e usa apenas melhorias visuais e de leitura no frontend.
-- A leitura de ranking (`GET /api/v1/ranking/boloes/:bolaoId/atual`) não recalcula nem grava dados. O ranking é atualizado pelos fluxos de resultado confirmado ou pelos endpoints POST de recálculo.
-- Ao editar uma partida, o recálculo automático ocorre apenas quando há mudança relevante no resultado: placar, status ou confirmação do resultado. Alterações em dados operacionais como data, estádio ou outros campos não relacionados ao resultado não geram novo recálculo, auditoria ou notificação.
-- A rotina Football-Data.org atualiza somente partidas vinculadas por `football_data_match_id` e dispara o recálculo apenas quando o resultado externo muda a partida de forma relevante.
-- O upgrade visual global não altera regras de negócio, endpoints, autenticação, pontuação ou banco de dados.
-- A integração InfinitePay está preparada, mas depende da `INFINITEPAY_HANDLE` real no `.env`.
-- Provedores esportivos externos são configurados no banco pela tabela `provedores_dados_esportivos`. O provedor ativo é resolvido por factory interna, e a leitura da configuração não expõe `api_token`.
+- O dashboard premium da Home usa endpoints existentes e respeita sempre o bolÃ£o selecionado.
+- O ranking mantÃ©m a mesma regra de cÃ¡lculo de pontos e usa apenas melhorias visuais e de leitura no frontend.
+- A leitura de ranking (`GET /api/v1/ranking/boloes/:bolaoId/atual`) nÃ£o recalcula nem grava dados. O ranking Ã© atualizado pelos fluxos de resultado confirmado ou pelos endpoints POST de recÃ¡lculo.
+- Ao editar uma partida, o recÃ¡lculo automÃ¡tico ocorre apenas quando hÃ¡ mudanÃ§a relevante no resultado: placar, status ou confirmaÃ§Ã£o do resultado. AlteraÃ§Ãµes em dados operacionais como data, estÃ¡dio ou outros campos nÃ£o relacionados ao resultado nÃ£o geram novo recÃ¡lculo, auditoria ou notificaÃ§Ã£o.
+- A rotina Football-Data.org atualiza somente partidas vinculadas por `football_data_match_id` e dispara o recÃ¡lculo apenas quando o resultado externo muda a partida de forma relevante.
+- O upgrade visual global nÃ£o altera regras de negÃ³cio, endpoints, autenticaÃ§Ã£o, pontuaÃ§Ã£o ou banco de dados.
+- A integraÃ§Ã£o InfinitePay estÃ¡ preparada, mas depende da `INFINITEPAY_HANDLE` real no `.env`.
+- Provedores esportivos externos sÃ£o configurados no banco pela tabela `provedores_dados_esportivos`. O provedor ativo Ã© resolvido por factory interna, e a leitura da configuraÃ§Ã£o nÃ£o expÃµe `api_token`.
 - O servidor atualmente roda `Node 18.19.1`, enquanto o projeto declara `>=20` em `package.json`.
-- Isso não impediu a operação atual, mas é um risco técnico de compatibilidade futura. A recomendação é migrar o runtime do servidor para `Node 20 LTS` antes de expandir o uso além do piloto.
+- Isso nÃ£o impediu a operaÃ§Ã£o atual, mas Ã© um risco tÃ©cnico de compatibilidade futura. A recomendaÃ§Ã£o Ã© migrar o runtime do servidor para `Node 20 LTS` antes de expandir o uso alÃ©m do piloto.
 
-## Organização
+## OrganizaÃ§Ã£o
 
 - arquitetura: `docs/architecture.md`
 - migrations: `db/migrations`
-- módulos de domínio: `src/modules`
+- mÃ³dulos de domÃ­nio: `src/modules`
 - provedores esportivos: `src/modules/provedores_esportivos`
 - app unificado: `public/app.html`, `public/app.js`, `public/theme.css`
+

@@ -375,5 +375,32 @@
     "saved": "Provider saved successfully.",
     "enabled": "Provider enabled.",
     "disabled": "Provider disabled."
+  },
+  "externalMatches": {
+    "title": "External match linking",
+    "dateFrom": "Start date",
+    "dateTo": "End date",
+    "competition": "Competition",
+    "competitionPlaceholder": "E.g. PL, BSA, CL",
+    "status": "Status",
+    "search": "Search external matches",
+    "localMatches": "Local matches",
+    "externalMatches": "football-data.org matches",
+    "noExternalResults": "No external matches loaded. Use the filters and click search.",
+    "linkedId": "football-data #{id}",
+    "notLinked": "no external link",
+    "noCompetition": "no competition",
+    "externalId": "External ID {id}",
+    "alreadyLinked": "already linked",
+    "link": "Link",
+    "unlink": "Remove link",
+    "searchLoaded": "{count} external match(es) loaded.",
+    "selectBoth": "Select one local match and one external match.",
+    "duplicateBlocked": "This external match is already linked to another local match.",
+    "confirmLink": "Link \"{local}\" with \"{external}\"?",
+    "linked": "Match linked successfully.",
+    "selectLinkedLocal": "Select a local match that already has an external link.",
+    "confirmUnlink": "Remove the external link from \"{local}\"?",
+    "unlinked": "External link removed successfully."
   }
 }
