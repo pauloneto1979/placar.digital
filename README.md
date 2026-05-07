@@ -403,15 +403,8 @@ Tela administrativa:
 - a importacao cria automaticamente times ausentes quando houver correspondencia segura e cria a partida local ja vinculada por `football_data_match_id`
 - partidas externas ja importadas no bolao carregado aparecem destacadas e bloqueadas na lista de importacao
 - se o `football_data_match_id` ja existir em outra partida local, a importacao ignora o item e retorna no resumo como duplicidade
-- a tela antiga `Configuracoes > Vinculacao de partidas externas` permanece disponivel para vincular/desvincular partidas locais existentes
-
-- no app unificado, acesse `Configuracoes > Vinculacao de partidas externas`
-- selecione o bolao ativo no topo antes de vincular partidas
-- a tela lista as partidas locais do bolao e destaca as que ja possuem `football_data_match_id`
-- use os filtros `dateFrom`, `dateTo`, `competition` e `status` para buscar partidas da football-data.org
-- selecione uma partida local e uma partida externa, confirme a operacao e clique em `Vincular`
-- para desfazer, selecione uma partida local ja vinculada e clique em `Remover vinculo`
-- quando uma partida externa ja estiver vinculada a outra partida local, a opcao fica bloqueada visualmente sempre que a informacao estiver carregada no bolao atual
+- a tela antiga `Configuracoes > Vinculacao de partidas externas` foi removida do frontend; os endpoints antigos permanecem disponiveis para compatibilidade tecnica
+- `Configuracoes` no app unificado fica visivel apenas para `proprietario`
 
 Endpoint de importacao:
 

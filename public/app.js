@@ -19,7 +19,8 @@
     matches: [],
     selectedIds: [],
     summary: null
-  }
+  },
+  providerTokens: {}
 };
 
 const content = document.querySelector('#content');
@@ -91,7 +92,7 @@ const routes = [
   { id: 'partidas', labelKey: 'nav.partidas', subtitleKey: 'subtitles.partidas', admin: true },
   { id: 'boloes', labelKey: 'nav.boloes', subtitleKey: 'subtitles.boloes', owner: true },
   { id: 'usuarios', labelKey: 'nav.usuarios', subtitleKey: 'subtitles.usuarios', owner: true },
-  { id: 'configuracoes', labelKey: 'nav.configuracoes', subtitleKey: 'subtitles.configuracoes', admin: true },
+  { id: 'configuracoes', labelKey: 'nav.configuracoes', subtitleKey: 'subtitles.configuracoes', owner: true },
   { id: 'perfil', labelKey: 'nav.perfil', subtitleKey: 'subtitles.perfil', hidden: true }
 ];
 
@@ -273,6 +274,15 @@ function staticOptionList(options, selected = '') {
       ${escapeHtml(option.labelKey ? t(option.labelKey, {}, option.label || option.value) : (option.label || option.value))}
     </option>
   `).join('');
+}
+
+const ICONS = {
+  save: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm1 2v5h10V5H6Zm2 12h8v-5H8v5Zm6-11h-2v3h2V6Z"/></svg></span>',
+  plus: '<span class="button-icon button-icon--add" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg></span>'
+};
+
+function withIcon(name, label) {
+  return `${ICONS[name] || ''}<span>${escapeHtml(label)}</span>`;
 }
 
 function optionLabel(options, value, fallback = '') {
@@ -679,6 +689,8 @@ function renderExternalImportPanel(localMatches) {
   const selectedIds = new Set((state.externalMatchImport.selectedIds || []).map(String));
   const importedIds = new Set((localMatches || []).map((row) => String(row.footballDataMatchId || '')).filter(Boolean));
   const summary = state.externalMatchImport.summary;
+  const selectableMatches = externalMatches.filter((row) => !importedIds.has(String(row.externalMatchId || row.id || '')));
+  const allSelected = selectableMatches.length > 0 && selectableMatches.every((row) => selectedIds.has(String(row.externalMatchId || row.id || '')));
   return `
     <section class="card external-import-panel">
       <div class="card-title">
@@ -713,7 +725,12 @@ function renderExternalImportPanel(localMatches) {
       <div class="list external-import-list">
         ${externalMatches.map((row) => renderExternalImportRow(row, importedIds, selectedIds)).join('') || empty(t('externalMatches.noExternalResults'))}
       </div>
-      <div class="form-actions">
+      <div class="form-actions external-import-toolbar">
+        <label class="checkbox-pill">
+          <input type="checkbox" data-toggle-all-import-matches ${allSelected ? 'checked' : ''} ${selectableMatches.length ? '' : 'disabled'}>
+          <span>${escapeHtml(t('externalMatches.selectAll'))}</span>
+        </label>
+        <span class="pill">${escapeHtml(t('externalMatches.selectedCount', { count: selectedIds.size }))}</span>
         <button type="button" data-import-external-matches ${selectedIds.size ? '' : 'disabled'}>${escapeHtml(t('externalMatches.importSelected'))}</button>
       </div>
     </section>
@@ -725,14 +742,18 @@ function renderExternalImportRow(row, importedIds, selectedIds) {
   const imported = importedIds.has(id);
   const selected = selectedIds.has(id);
   return `
-    <button class="external-link-card ${selected ? 'selected' : ''} ${imported ? 'linked' : ''}" type="button" data-toggle-import-match="${escapeHtml(id)}" ${imported ? 'disabled' : ''}>
+    <article class="external-link-card external-import-card ${selected ? 'selected' : ''} ${imported ? 'linked' : ''}" data-toggle-import-match="${escapeHtml(id)}" ${imported ? 'aria-disabled="true"' : ''}>
+      <label class="external-import-check">
+        <input type="checkbox" data-toggle-import-match="${escapeHtml(id)}" ${selected ? 'checked' : ''} ${imported ? 'disabled' : ''}>
+        <span>${escapeHtml(imported ? t('externalMatches.alreadyImported') : t('externalMatches.selectMatch'))}</span>
+      </label>
       <span class="match-inline">${renderTeamName(row.mandante, row.mandante?.name, 'sm')}<span class="score score--inline">${escapeHtml(externalScore(row))}</span>${renderTeamName(row.visitante, row.visitante?.name, 'sm')}</span>
       <span class="muted">${escapeHtml(`${competitionName(row)} - ${dateTime(row.utcDate)} - ${statusLabel(row.status)}`)}</span>
       <span class="external-link-card__meta">
         <span class="pill">${escapeHtml(t('externalMatches.externalId', { id }))}</span>
         ${imported ? `<span class="pill">${escapeHtml(t('externalMatches.alreadyImported'))}</span>` : ''}
       </span>
-    </button>
+    </article>
   `;
 }
 
@@ -747,9 +768,11 @@ function renderRankingRow(item, context = {}) {
   const showGoalDiff = goals !== null && goals !== undefined;
   const leaderPoints = context.leaderPoints ?? item.pontosAtuais ?? 0;
   const compact = Boolean(context.compact);
+  const prize = Number(item.valorPremioPrevisto ?? item.premioPrevisto ?? item.premio_previsto ?? 0);
   const rowClass = [
     'ranking-row',
     me ? 'me' : '',
+    prize > 0 ? 'ranking-row--prized' : '',
     position === 1 ? 'ranking-row--gold' : '',
     position === 2 ? 'ranking-row--silver' : '',
     position === 3 ? 'ranking-row--bronze' : '',
@@ -780,6 +803,7 @@ function renderRankingRow(item, context = {}) {
         <div class="ranking-metrics">${metrics}</div>
         <div class="ranking-subtext">
           ${renderRankingGap(item, leaderPoints)}
+          ${prize > 0 ? `<span class="ranking-prize">${escapeHtml(t('ranking.prizeEstimated', { value: currency(prize) }))}</span>` : ''}
         </div>
       </div>
       <div class="score-block">
@@ -969,7 +993,7 @@ async function renderMeuPerfil() {
         <form class="form-grid" data-crud-form="meuPerfil">
           <label>${escapeHtml(t('profile.name'))} <input name="nome" value="${escapeHtml(perfil.nome || '')}" required></label>
           <label>${escapeHtml(t('profile.email'))} <input name="email" type="email" value="${escapeHtml(perfil.email || '')}" readonly></label>
-          <div class="form-actions"><button type="submit">${escapeHtml(t('profile.saveData'))}</button></div>
+          <div class="form-actions"><button type="submit">${withIcon('save', t('profile.saveData'))}</button></div>
           ${scopedMessage('meuPerfil')}
         </form>
       </article>
@@ -979,7 +1003,7 @@ async function renderMeuPerfil() {
           <label>${escapeHtml(t('profile.currentPassword'))} <input name="senhaAtual" type="password" required></label>
           <label>${escapeHtml(t('profile.newPassword'))} <input name="novaSenha" type="password" required></label>
           <label>${escapeHtml(t('profile.confirmPassword'))} <input name="confirmarNovaSenha" type="password" required></label>
-          <div class="form-actions"><button type="submit">${escapeHtml(t('profile.updatePassword'))}</button></div>
+          <div class="form-actions"><button type="submit">${withIcon('save', t('profile.updatePassword'))}</button></div>
           ${scopedMessage('minhaSenha')}
         </form>
       </article>
@@ -1007,7 +1031,7 @@ async function renderBoloesOwner() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${escapeHtml(t('owner.savePool'))}</button>
+          <button type="submit">${withIcon('save', t('owner.savePool'))}</button>
           <button class="ghost" type="button" data-reset-form="boloes">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
@@ -1040,7 +1064,7 @@ async function renderUsuariosOwner() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${escapeHtml(t('owner.saveUser'))}</button>
+          <button type="submit">${withIcon('save', t('owner.saveUser'))}</button>
           <button class="ghost" type="button" data-reset-form="usuarios">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
@@ -1070,7 +1094,7 @@ async function renderParticipantesAdmin() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${escapeHtml(t('admin.saveParticipant'))}</button>
+          <button type="submit">${withIcon('save', t('admin.saveParticipant'))}</button>
           <button class="ghost" type="button" data-reset-form="participantes">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
@@ -1141,7 +1165,7 @@ async function renderPagamentosAdmin() {
         <label>${escapeHtml(t('admin.paymentDate'))} <input name="dataPagamento" type="datetime-local"></label>
         <label>${escapeHtml(t('admin.observation'))} <input name="observacao"></label>
         <div class="form-actions">
-          <button type="submit">${escapeHtml(t('admin.savePayment'))}</button>
+          <button type="submit">${withIcon('save', t('admin.savePayment'))}</button>
           <button class="ghost" type="button" data-reset-form="pagamentos">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
@@ -1178,7 +1202,7 @@ async function renderFasesAdmin() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${escapeHtml(t('admin.savePhase'))}</button>
+          <button type="submit">${withIcon('save', t('admin.savePhase'))}</button>
           <button class="ghost" type="button" data-reset-form="fases">${escapeHtml(t('common.newFemale'))}</button>
         </div>
       </form>
@@ -1221,7 +1245,7 @@ async function renderTimesAdmin() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${escapeHtml(t('admin.saveTeam'))}</button>
+          <button type="submit">${withIcon('save', t('admin.saveTeam'))}</button>
           <button class="ghost" type="button" data-reset-form="times">${escapeHtml(t('common.new'))}</button>
         </div>
       </form>
@@ -1287,7 +1311,7 @@ async function renderPartidasAdmin() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${escapeHtml(t('admin.saveMatch'))}</button>
+          <button type="submit">${withIcon('save', t('admin.saveMatch'))}</button>
           <button class="ghost" type="button" data-reset-form="partidas">${escapeHtml(t('common.newFemale'))}</button>
         </div>
       </form>
@@ -1328,7 +1352,7 @@ async function renderRegrasAdmin() {
             <option value="false" ${configuracao.ativo === false ? 'selected' : ''}>${escapeHtml(t('common.no'))}</option>
           </select>
         </label>
-        <div class="form-actions"><button type="submit">${escapeHtml(t('rules.saveConfig'))}</button></div>
+        <div class="form-actions"><button type="submit">${withIcon('save', t('rules.saveConfig'))}</button></div>
         ${scopedMessage('bolaoConfig')}
       </form>
     </section>
@@ -1349,7 +1373,7 @@ async function renderRegrasAdmin() {
           <label>${escapeHtml(t('rules.priority'))} <input name="prioridade" type="number" min="1" value="1" required></label>
           <p class="help-text">${escapeHtml(t('rules.priorityHelp'))}</p>
           <label>${escapeHtml(t('rules.active'))} <select name="ativo"><option value="true">${escapeHtml(t('common.yes'))}</option><option value="false">${escapeHtml(t('common.no'))}</option></select></label>
-          <div class="form-actions"><button type="submit">${escapeHtml(t('rules.saveRule'))}</button><button class="ghost" type="button" data-reset-form="regrasPontuacao">${escapeHtml(t('common.newFemale'))}</button></div>
+          <div class="form-actions"><button type="submit">${withIcon('save', t('rules.saveRule'))}</button><button class="ghost" type="button" data-reset-form="regrasPontuacao">${escapeHtml(t('common.newFemale'))}</button></div>
           ${scopedMessage('regrasPontuacao')}
         </form>
       </article>
@@ -1367,7 +1391,7 @@ async function renderRegrasAdmin() {
           <label>${escapeHtml(t('rules.description'))} <input name="descricao" required></label>
           <label>${escapeHtml(t('admin.orderLabel'))} <input name="ordem" type="number" min="1" value="1" required></label>
           <label>${escapeHtml(t('rules.active'))} <select name="ativo"><option value="true">${escapeHtml(t('common.yes'))}</option><option value="false">${escapeHtml(t('common.no'))}</option></select></label>
-          <div class="form-actions"><button type="submit">${escapeHtml(t('rules.saveTiebreaker'))}</button><button class="ghost" type="button" data-reset-form="criteriosDesempate">${escapeHtml(t('common.new'))}</button></div>
+          <div class="form-actions"><button type="submit">${withIcon('save', t('rules.saveTiebreaker'))}</button><button class="ghost" type="button" data-reset-form="criteriosDesempate">${escapeHtml(t('common.new'))}</button></div>
           ${scopedMessage('criteriosDesempate')}
         </form>
       </article>
@@ -1380,7 +1404,7 @@ async function renderRegrasAdmin() {
           <label>${escapeHtml(t('rules.percent'))} <input name="percentual" type="number" min="0" max="100" step="0.01" required></label>
           <label>${escapeHtml(t('rules.description'))} <input name="descricao"></label>
           <label>${escapeHtml(t('rules.active'))} <select name="ativo"><option value="true">${escapeHtml(t('common.yes'))}</option><option value="false">${escapeHtml(t('common.no'))}</option></select></label>
-          <div class="form-actions"><button type="submit">${escapeHtml(t('rules.savePrize'))}</button><button class="ghost" type="button" data-reset-form="distribuicaoPremios">${escapeHtml(t('common.new'))}</button></div>
+          <div class="form-actions"><button type="submit">${withIcon('save', t('rules.savePrize'))}</button><button class="ghost" type="button" data-reset-form="distribuicaoPremios">${escapeHtml(t('common.new'))}</button></div>
           ${scopedMessage('distribuicaoPremios')}
         </form>
       </article>
@@ -1395,14 +1419,10 @@ async function renderRegrasAdmin() {
 }
 
 async function renderConfiguracoesOwner() {
-  const [config, provedores, partidas, times] = await Promise.all([
+  const [config, provedores] = await Promise.all([
     isOwner() ? api('/proprietario/configuracoes-gerais').catch(() => ({})) : Promise.resolve(null),
-    api('/provedores-esportivos').catch(() => []),
-    state.activeBolaoId ? api(`/partidas/boloes/${state.activeBolaoId}`).catch(() => []) : Promise.resolve([]),
-    state.activeBolaoId ? api(`/times/boloes/${state.activeBolaoId}`).catch(() => []) : Promise.resolve([])
+    api('/provedores-esportivos').catch(() => [])
   ]);
-  state.data.partidas = partidas;
-  state.data.times = times;
   const footballData = provedores.find((item) => item.provider === 'football-data') || provedores[0] || {};
   content.innerHTML = `
     ${isOwner() ? `<section class="card">
@@ -1417,7 +1437,7 @@ async function renderConfiguracoesOwner() {
           </select>
         </label>
         <label>${escapeHtml(t('owner.paymentGateway'))} <input name="gatewayPagamento" value="${escapeHtml(config.gatewayPagamento || '')}"></label>
-        <div class="form-actions"><button type="submit">${escapeHtml(t('owner.saveSettings'))}</button></div>
+        <div class="form-actions"><button type="submit">${withIcon('save', t('owner.saveSettings'))}</button></div>
       </form>
     </section>` : ''}
     <section class="card">
@@ -1427,26 +1447,30 @@ async function renderConfiguracoesOwner() {
       </div>
       ${footballData.provider ? renderSportsProviderForm(footballData) : empty(t('sportsProviders.empty'))}
     </section>
-    <section class="card">
-      <div class="card-title">
-        <h2>${escapeHtml(t('externalMatches.title'))}</h2>
-        <span class="pill">${escapeHtml(state.activeBolaoNome || t('common.pool'))}</span>
-      </div>
-      ${state.activeBolaoId ? renderExternalMatchLinking(partidas, times) : empty(t('messages.noActivePool'))}
-    </section>
   `;
 }
 
 function renderSportsProviderForm(provider) {
+  const tokenState = state.providerTokens[provider.provider] || {};
+  const tokenVisible = Boolean(tokenState.visible && tokenState.token);
+  const tokenLabel = tokenVisible ? tokenState.token : (provider.apiTokenMasked || t('sportsProviders.tokenNotConfigured'));
   return `
     <form class="form-card" data-crud-form="provedorEsportivo">
       <input name="provider" type="hidden" value="${escapeHtml(provider.provider)}">
       <div class="row-card">
         <div>
           <strong>${escapeHtml(provider.displayName || provider.provider)}</strong>
-          <p class="muted">${escapeHtml(t('sportsProviders.tokenStatus', { token: provider.apiTokenMasked || t('sportsProviders.tokenNotConfigured') }))}</p>
+          <p class="muted token-line">${escapeHtml(t('sportsProviders.tokenStatus', { token: tokenLabel }))}</p>
         </div>
-        <span class="pill">${escapeHtml(provider.enabled ? t('sportsProviders.active') : t('sportsProviders.inactive'))}</span>
+        <div class="actions">
+          <span class="pill">${escapeHtml(provider.enabled ? t('sportsProviders.active') : t('sportsProviders.inactive'))}</span>
+          <button class="secondary" type="button" data-provider-token-toggle="${escapeHtml(provider.provider)}">
+            ${escapeHtml(tokenVisible ? t('sportsProviders.hideToken') : t('sportsProviders.showToken'))}
+          </button>
+          <button class="secondary" type="button" data-provider-token-copy="${escapeHtml(provider.provider)}" ${tokenState.token ? '' : 'disabled'}>
+            ${escapeHtml(t('sportsProviders.copyToken'))}
+          </button>
+        </div>
       </div>
       <label>${escapeHtml(t('sportsProviders.baseUrl'))}
         <input name="baseUrl" type="url" required value="${escapeHtml(provider.baseUrl || '')}">
@@ -1459,7 +1483,7 @@ function renderSportsProviderForm(provider) {
       </label>
       <p class="muted">${escapeHtml(t('sportsProviders.lastSync', { date: provider.lastSyncAt ? dateTime(provider.lastSyncAt) : t('sportsProviders.neverSynced') }))}</p>
       <div class="form-actions">
-        <button type="submit">${escapeHtml(t('sportsProviders.save'))}</button>
+        <button type="submit">${withIcon('save', t('sportsProviders.save'))}</button>
         <button class="secondary" type="button" data-provider-toggle="${escapeHtml(provider.provider)}" data-enabled="${provider.enabled ? 'false' : 'true'}">
           ${escapeHtml(provider.enabled ? t('sportsProviders.disable') : t('sportsProviders.enable'))}
         </button>
@@ -1695,12 +1719,22 @@ async function navigate(routeId) {
   const route = routes.find((item) => item.id === routeId && routeAllowed(item));
   state.route = route ? route.id : 'home';
   renderChrome();
-  content.innerHTML = `<section class="card"><div class="empty">${escapeHtml(t('common.loading'))}</div></section>`;
+  content.innerHTML = loadingMarkup();
   try {
     await renderers[state.route]();
   } catch (error) {
     content.innerHTML = `<section class="card">${empty(error.message)}</section>`;
   }
+}
+
+function loadingMarkup() {
+  return `
+    <section class="card app-loading" aria-live="polite" aria-label="${escapeHtml(t('common.loading'))}">
+      <img src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
+      <strong>Placar.digital</strong>
+      <span class="loading-spinner" aria-hidden="true"></span>
+    </section>
+  `;
 }
 
 async function switchBolao(bolaoId) {
@@ -1740,6 +1774,7 @@ async function submitCrud(kind, form) {
       method: 'PUT',
       body: JSON.stringify(data)
     });
+    delete state.providerTokens[provider];
     state.formMessages.provedorEsportivo = { text: t('sportsProviders.saved'), tone: 'success' };
     await navigate(state.route);
     return;
@@ -1858,6 +1893,30 @@ function editCrud(kind, id) {
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function toggleExternalImportSelection(id) {
+  const selected = new Set((state.externalMatchImport.selectedIds || []).map(String));
+  if (selected.has(id)) {
+    selected.delete(id);
+  } else {
+    selected.add(id);
+  }
+  state.externalMatchImport.selectedIds = [...selected];
+  clearFormMessage('externalMatchImport');
+  navigate(state.route);
+}
+
+function toggleAllExternalImportSelection() {
+  const importedIds = new Set((state.data.partidas || []).map((row) => String(row.footballDataMatchId || '')).filter(Boolean));
+  const selectable = (state.externalMatchImport.matches || [])
+    .map((row) => String(row.externalMatchId || row.id || ''))
+    .filter((id) => id && !importedIds.has(id));
+  const selected = new Set((state.externalMatchImport.selectedIds || []).map(String));
+  const allSelected = selectable.length > 0 && selectable.every((id) => selected.has(id));
+  state.externalMatchImport.selectedIds = allSelected ? [] : selectable;
+  clearFormMessage('externalMatchImport');
+  navigate(state.route);
+}
+
 async function init() {
   if (!state.token) {
     redirectLogin();
@@ -1912,6 +1971,35 @@ content.addEventListener('click', (event) => {
     return;
   }
 
+  const tokenToggle = event.target.closest('[data-provider-token-toggle]');
+  if (tokenToggle) {
+    const provider = tokenToggle.dataset.providerTokenToggle;
+    const current = state.providerTokens[provider] || {};
+    if (current.visible) {
+      state.providerTokens[provider] = { ...current, visible: false };
+      navigate(state.route);
+      return;
+    }
+    api(`/provedores-esportivos/${provider}/token`)
+      .then((result) => {
+        state.providerTokens[provider] = { token: result.apiToken || '', visible: true };
+        return navigate(state.route);
+      })
+      .catch((error) => setFormMessage('provedorEsportivo', error.message, 'error'));
+    return;
+  }
+
+  const tokenCopy = event.target.closest('[data-provider-token-copy]');
+  if (tokenCopy) {
+    const provider = tokenCopy.dataset.providerTokenCopy;
+    const token = state.providerTokens[provider]?.token || '';
+    if (!token) return;
+    navigator.clipboard?.writeText(token)
+      .then(() => setFormMessage('provedorEsportivo', t('sportsProviders.tokenCopied'), 'success'))
+      .catch(() => setFormMessage('provedorEsportivo', t('sportsProviders.copyTokenError'), 'error'));
+    return;
+  }
+
   const externalImportToggle = event.target.closest('[data-toggle-external-import]');
   if (externalImportToggle) {
     state.externalMatchImport.open = !state.externalMatchImport.open;
@@ -1921,17 +2009,16 @@ content.addEventListener('click', (event) => {
   }
 
   const importMatchToggle = event.target.closest('[data-toggle-import-match]');
-  if (importMatchToggle && !importMatchToggle.disabled) {
-    const id = String(importMatchToggle.dataset.toggleImportMatch || '');
-    const selected = new Set((state.externalMatchImport.selectedIds || []).map(String));
-    if (selected.has(id)) {
-      selected.delete(id);
-    } else {
-      selected.add(id);
-    }
-    state.externalMatchImport.selectedIds = [...selected];
-    clearFormMessage('externalMatchImport');
-    navigate(state.route);
+  if (importMatchToggle && !importMatchToggle.disabled && importMatchToggle.getAttribute('aria-disabled') !== 'true') {
+    if (event.target.matches('input[data-toggle-import-match]')) return;
+    toggleExternalImportSelection(String(importMatchToggle.dataset.toggleImportMatch || ''));
+    return;
+  }
+
+  const toggleAllImport = event.target.closest('[data-toggle-all-import-matches]');
+  if (toggleAllImport) {
+    if (event.target.matches('input[data-toggle-all-import-matches]')) return;
+    toggleAllExternalImportSelection();
     return;
   }
 
@@ -1981,6 +2068,19 @@ content.addEventListener('click', (event) => {
   if (resetButton) {
     clearForm(resetButton.dataset.resetForm);
     clearFormMessage(resetButton.dataset.resetForm);
+  }
+});
+
+content.addEventListener('change', (event) => {
+  const importMatchCheckbox = event.target.closest('input[data-toggle-import-match]');
+  if (importMatchCheckbox && !importMatchCheckbox.disabled) {
+    toggleExternalImportSelection(String(importMatchCheckbox.dataset.toggleImportMatch || ''));
+    return;
+  }
+
+  const toggleAllImportCheckbox = event.target.closest('input[data-toggle-all-import-matches]');
+  if (toggleAllImportCheckbox && !toggleAllImportCheckbox.disabled) {
+    toggleAllExternalImportSelection();
   }
 });
 

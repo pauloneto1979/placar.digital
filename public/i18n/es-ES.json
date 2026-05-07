@@ -195,7 +195,8 @@
     "noHistory": "Sin historial",
     "previousPosition": "Posición anterior #{position}",
     "you": "Tú",
-    "unknownBettor": "Apostador"
+    "unknownBettor": "Apostador",
+    "prizeEstimated": "Premio estimado {value}"
   },
   "bets": {
     "onlyBettors": "Las apuestas están disponibles solo para apostadores.",
@@ -374,7 +375,12 @@
     "inactive": "inactivo",
     "saved": "Proveedor guardado correctamente.",
     "enabled": "Proveedor activado.",
-    "disabled": "Proveedor desactivado."
+    "disabled": "Proveedor desactivado.",
+    "showToken": "Mostrar token",
+    "hideToken": "Ocultar token",
+    "copyToken": "Copiar token",
+    "tokenCopied": "Token copiado.",
+    "copyTokenError": "No fue posible copiar el token."
   },
   "externalMatches": {
     "title": "Vinculaci\u00f3n de partidos externos",
@@ -399,6 +405,9 @@
     "link": "Vincular",
     "unlink": "Quitar v\u00ednculo",
     "importSelected": "Importar seleccionados",
+    "selectAll": "Seleccionar todos",
+    "selectedCount": "{count} seleccionado(s)",
+    "selectMatch": "Seleccionar partido",
     "searchLoaded": "{count} partido(s) externo(s) cargado(s).",
     "selectAtLeastOne": "Selecciona al menos un partido externo para importar.",
     "imported": "Importaci\u00f3n concluida.",

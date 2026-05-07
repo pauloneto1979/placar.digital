@@ -195,7 +195,8 @@
     "noHistory": "No history",
     "previousPosition": "Previous position #{position}",
     "you": "You",
-    "unknownBettor": "Bettor"
+    "unknownBettor": "Bettor",
+    "prizeEstimated": "Estimated prize {value}"
   },
   "bets": {
     "onlyBettors": "Predictions are available only for bettors.",
@@ -374,7 +375,12 @@
     "inactive": "inactive",
     "saved": "Provider saved successfully.",
     "enabled": "Provider enabled.",
-    "disabled": "Provider disabled."
+    "disabled": "Provider disabled.",
+    "showToken": "Show token",
+    "hideToken": "Hide token",
+    "copyToken": "Copy token",
+    "tokenCopied": "Token copied.",
+    "copyTokenError": "Could not copy the token."
   },
   "externalMatches": {
     "title": "External match linking",
@@ -399,6 +405,9 @@
     "link": "Link",
     "unlink": "Remove link",
     "importSelected": "Import selected",
+    "selectAll": "Select all",
+    "selectedCount": "{count} selected",
+    "selectMatch": "Select match",
     "searchLoaded": "{count} external match(es) loaded.",
     "selectAtLeastOne": "Select at least one external match to import.",
     "imported": "Import completed.",

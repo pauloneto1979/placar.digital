@@ -106,6 +106,18 @@ function createProvedoresEsportivosService(repository, footballDataClientService
       return mergeWithDefinition(config);
     },
 
+    async getTokenCompleto(provider) {
+      ensureKnownProvider(provider);
+      const config = await repository.findByProvider(provider, { includeSecret: true });
+      if (!config) {
+        throw new HttpError(404, 'sports_provider_not_configured', 'Provedor esportivo nao configurado.');
+      }
+      return {
+        provider,
+        apiToken: config.apiToken || ''
+      };
+    },
+
     async getConfiguracaoAtiva() {
       const enabledItems = await repository.listEnabled();
       if (!enabledItems.length) return null;

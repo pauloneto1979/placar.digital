@@ -16,6 +16,14 @@ function createProvedoresEsportivosController(service) {
       }
     },
 
+    async getToken(req, res, next) {
+      try {
+        res.json(await service.getTokenCompleto(req.params.provider));
+      } catch (error) {
+        next(error);
+      }
+    },
+
     async updateStatus(req, res, next) {
       try {
         res.json(await service.updateStatus(req.params.provider, req.body));

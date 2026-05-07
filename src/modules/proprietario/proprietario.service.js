@@ -152,6 +152,7 @@ function createProprietarioService(repository) {
     async createBolao(payload, auth, context) {
       const data = await buildBolaoPayload(payload, auth);
       const bolao = await repository.createBolao(data);
+      await repository.createDefaultBolaoRules(bolao.id);
       await audit(auth, context, {
         bolaoId: bolao.id,
         entidade: 'boloes',

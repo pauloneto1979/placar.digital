@@ -106,6 +106,49 @@ async function createBolao(data) {
   return mapBolao(result.rows[0]);
 }
 
+async function createDefaultBolaoRules(bolaoId) {
+  await query(
+    `
+      insert into configuracoes_principais_bolao (
+        bolao_id,
+        minutos_antecedencia_aposta,
+        tipo_distribuicao_premio,
+        observacoes_regras,
+        ativo
+      ) values ($1, 0, 'percentual', 'Regras padrao criadas automaticamente.', true)
+      on conflict do nothing
+    `,
+    [bolaoId]
+  );
+
+  const regras = [
+    ['PLACAR_EXATO', 'Placar exato', 'placar_exato', 10, 1],
+    ['RESULTADO_CORRETO', 'Resultado correto', 'resultado', 5, 2],
+    ['PLACAR_INVERTIDO', 'Placar invertido', 'resultado', 2, 3]
+  ];
+
+  for (const regra of regras) {
+    await query(
+      `
+        insert into regras_pontuacao (
+          bolao_id,
+          nome,
+          codigo,
+          descricao,
+          tipo,
+          pontos,
+          prioridade,
+          criterios,
+          ativo,
+          ordem
+        ) values ($1,$2,$3,$4,$5,$6,$7,$8,true,$7)
+        on conflict (bolao_id, codigo) do nothing
+      `,
+      [bolaoId, regra[1], regra[0], regra[1], regra[2], regra[3], regra[4], JSON.stringify({ naoCumulativa: true })]
+    );
+  }
+}
+
 async function updateBolao(id, data) {
   const result = await query(
     `
@@ -348,6 +391,7 @@ module.exports = {
   findBolaoById,
   findBolaoBySlug,
   createBolao,
+  createDefaultBolaoRules,
   updateBolao,
   fecharBolao,
   listUsuarios,

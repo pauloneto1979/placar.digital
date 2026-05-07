@@ -17,10 +17,15 @@ const controller = createProvedoresEsportivosController(
 );
 
 provedoresEsportivosRoutes.use(authMiddleware);
-provedoresEsportivosRoutes.use(requirePerfilGlobal(['proprietario', 'administrador']));
 
+provedoresEsportivosRoutes.get(
+  '/football-data/partidas',
+  requirePerfilGlobal(['proprietario', 'administrador']),
+  controller.listFootballDataPartidas
+);
+provedoresEsportivosRoutes.use(requirePerfilGlobal(['proprietario']));
 provedoresEsportivosRoutes.get('/', controller.list);
-provedoresEsportivosRoutes.get('/football-data/partidas', controller.listFootballDataPartidas);
+provedoresEsportivosRoutes.get('/:provider/token', controller.getToken);
 provedoresEsportivosRoutes.put('/:provider', controller.update);
 provedoresEsportivosRoutes.patch('/:provider/status', controller.updateStatus);
 
