@@ -270,14 +270,14 @@ function optionList(rows, valueKey = 'id', labelKey = 'nome', selected = '') {
 function staticOptionList(options, selected = '') {
   return options.map((option) => `
     <option value="${escapeHtml(option.value)}" ${option.value === selected ? 'selected' : ''}>
-      ${escapeHtml(t(option.labelKey, {}, option.label || option.value))}
+      ${escapeHtml(option.labelKey ? t(option.labelKey, {}, option.label || option.value) : (option.label || option.value))}
     </option>
   `).join('');
 }
 
 function optionLabel(options, value, fallback = '') {
   const option = options.find((item) => item.value === value);
-  if (option) return t(option.labelKey, {}, option.label || option.value);
+  if (option) return option.labelKey ? t(option.labelKey, {}, option.label || option.value) : (option.label || option.value);
   return fallback || value || '';
 }
 
