@@ -2,20 +2,6 @@
 
 Plataforma de bolÃ£o esportivo multi-bolÃµes, preparada para operaÃ§Ã£o SaaS com trÃªs perfis distintos:
 
-## Produção VPS
-
-O projeto inclui uma camada operacional para produção em VPS Ubuntu 24 com Node.js LTS, PostgreSQL, Nginx, PM2, Let's Encrypt e Cloudflare:
-
-- `ecosystem.config.js`: processo PM2 `placar-digital` com logs em `/var/log/placar.digital`.
-- `.env.production.example`: variáveis obrigatórias e seguras para produção.
-- `scripts/run-migrations.js`: runner de migrations versionadas com tabela `schema_migrations`.
-- `ops/nginx/placar.digital.conf`: reverse proxy Nginx com gzip, cache de assets, headers e HTTP -> HTTPS.
-- `ops/logrotate/placar.digital`: rotação de logs do app e Nginx.
-- `ops/scripts/*.sh`: setup inicial, deploy, restart, backup, restore e atualização.
-- `docs/PRODUCTION.md`: guia completo com DNS, Cloudflare, SSL, deploy, backup, restore, troubleshooting e checklists.
-
-Guia recomendado: [`docs/PRODUCTION.md`](docs/PRODUCTION.md).
-
 - `proprietario`
 - `administrador`
 - `apostador`

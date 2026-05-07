@@ -8,17 +8,11 @@
     "start": "node app.js",
     "dev": "node --watch app.js",
     "check": "node --check app.js",
-    "migrate": "node scripts/run-migrations.js",
-    "production:deploy": "bash ops/scripts/deploy.sh",
     "test:e2e:flow": "node scripts/e2e-placar-flow.mjs"
   },
   "dependencies": {
-    "compression": "^1.8.1",
-    "cors": "^2.8.6",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "express-rate-limit": "^8.5.1",
-    "helmet": "^8.1.0",
     "pg": "^8.13.1"
   },
   "engines": {

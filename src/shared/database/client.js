@@ -1,15 +1,7 @@
 const { Pool } = require('pg');
 const { env } = require('../../config/env');
 
-const pool = env.databaseUrl ? new Pool({
-  connectionString: env.databaseUrl,
-  max: env.dbPoolMax,
-  idleTimeoutMillis: env.dbIdleTimeoutMs,
-  connectionTimeoutMillis: env.dbConnectionTimeoutMs,
-  statement_timeout: env.dbStatementTimeoutMs,
-  ssl: env.dbSsl ? { rejectUnauthorized: false } : undefined,
-  application_name: env.appName
-}) : null;
+const pool = env.databaseUrl ? new Pool({ connectionString: env.databaseUrl }) : null;
 
 function getPool() {
   if (!pool) {
