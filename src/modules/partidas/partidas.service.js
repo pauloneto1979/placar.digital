@@ -19,6 +19,55 @@ function externalMatchId(value) {
   return text;
 }
 
+function mapExternalStatus(status) {
+  const value = clean(status).toUpperCase();
+  if (['FINISHED'].includes(value)) return 'finalizada';
+  if (['LIVE', 'IN_PLAY', 'PAUSED'].includes(value)) return 'em_andamento';
+  if (['CANCELLED', 'POSTPONED', 'SUSPENDED', 'AWARDED'].includes(value)) return 'cancelada';
+  return 'agendada';
+}
+
+function normalizeExternalTeam(team = {}) {
+  const nome = clean(team.name || team.nome || team.shortName);
+  if (!nome) {
+    throw new HttpError(400, 'invalid_external_team', 'Partida externa sem nome de time.');
+  }
+  return {
+    nome,
+    sigla: clean(team.tla || team.sigla).slice(0, 12),
+    codigoFifa: clean(team.tla || team.codigoFifa || team.codigo_fifa).slice(0, 12),
+    footballDataTeamId: team.id || team.footballDataTeamId || team.football_data_team_id || null,
+    escudoUrl: clean(team.crest || team.escudoUrl || team.escudo_url),
+    bandeiraUrl: clean(team.bandeiraUrl || team.bandeira_url),
+    pais: clean(team.pais)
+  };
+}
+
+function normalizeExternalMatch(match, bolaoId) {
+  const matchId = externalMatchId(match.externalMatchId || match.id || match.external_match_id);
+  const dataHora = match.utcDate || match.dataHora || match.data_hora || match.inicio_at;
+  if (!dataHora || Number.isNaN(Date.parse(dataHora))) {
+    throw new HttpError(400, 'invalid_external_match_datetime', `Partida externa ${matchId} sem data valida.`);
+  }
+
+  const fullTime = match.placar?.fullTime || match.score?.fullTime || {};
+  const placarMandante = intOrNull(fullTime.home ?? fullTime.mandante ?? match.placarMandante);
+  const placarVisitante = intOrNull(fullTime.away ?? fullTime.visitante ?? match.placarVisitante);
+  const status = mapExternalStatus(match.status);
+  return {
+    bolaoId,
+    footballDataMatchId: matchId,
+    mandante: normalizeExternalTeam(match.mandante || match.homeTeam),
+    visitante: normalizeExternalTeam(match.visitante || match.awayTeam),
+    dataHora,
+    estadio: clean(match.estadio || match.venue),
+    placarMandante,
+    placarVisitante,
+    status,
+    resultadoConfirmado: status === 'finalizada' && placarMandante !== null && placarVisitante !== null
+  };
+}
+
 function payload(body, bolaoId) {
   const faseId = body.faseId || body.fase_id || null;
   const timeMandanteId = body.timeMandanteId || body.time_mandante_id;
@@ -59,7 +108,8 @@ function deveRecalcularResultado(before, after) {
   return after.resultadoConfirmado && resultadoMudou(before, after);
 }
 
-function createPartidasService(repository) {
+function createPartidasService(repository, options = {}) {
+  const footballDataClientService = options.footballDataClientService || null;
   async function validate(data) {
     if (data.faseId && !(await repository.faseBelongsToBolao(data.faseId, data.bolaoId))) {
       throw new HttpError(422, 'invalid_match_phase', 'Fase nao pertence ao bolao.');
@@ -183,6 +233,36 @@ function createPartidasService(repository) {
         userAgent: context.userAgent
       });
       return updated;
+    },
+    async importarPartidasExternas(body, auth) {
+      const bolaoId = clean(body.bolaoId || body.bolao_id || auth?.bolaoId);
+      await ensureCanAdminBolao(auth, bolaoId);
+      const provider = clean(body.provider);
+      if (provider !== 'football-data') {
+        throw new HttpError(400, 'invalid_external_provider', 'Provider deve ser football-data.');
+      }
+
+      if (!Array.isArray(body.matches) || !body.matches.length) {
+        throw new HttpError(400, 'empty_external_matches', 'Informe ao menos uma partida externa.');
+      }
+      if (footballDataClientService?.validarConfiguracao) {
+        await footballDataClientService.validarConfiguracao();
+      }
+
+      const normalized = [];
+      for (const item of body.matches) {
+        let match = item;
+        const hasDetails = item && (item.mandante || item.homeTeam) && (item.visitante || item.awayTeam) && (item.utcDate || item.dataHora);
+        if (!hasDetails) {
+          if (!footballDataClientService) {
+            throw new HttpError(500, 'football_data_client_not_configured', 'Cliente football-data nao configurado.');
+          }
+          match = await footballDataClientService.buscarPartidaPorId(item.externalMatchId || item.id || item.external_match_id);
+        }
+        normalized.push(normalizeExternalMatch(match, bolaoId));
+      }
+
+      return repository.importExternalMatches(normalized);
     }
   };
 }

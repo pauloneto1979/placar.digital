@@ -167,8 +167,57 @@ function createFootballDataClientService(factory, repository, options = {}) {
     }
   }
 
+  async function buscarPartidaPorId(matchId) {
+    const id = clean(matchId === undefined || matchId === null ? '' : String(matchId));
+    if (!/^\d+$/.test(id)) {
+      throw new HttpError(400, 'invalid_football_data_match_id', 'ID externo da partida invalido.');
+    }
+
+    const config = await getActiveFootballDataConfig();
+    const baseUrl = String(config.baseUrl || '').replace(/\/$/, '');
+    const url = `${baseUrl}/matches/${id}`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetchImpl(url, {
+        method: 'GET',
+        headers: {
+          'X-Auth-Token': config.apiToken
+        },
+        signal: controller.signal
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        throw new HttpError(502, 'football_data_invalid_token', 'Token football-data invalido ou sem permissao.');
+      }
+      if (response.status === 404) {
+        throw new HttpError(404, 'football_data_match_not_found', 'Partida externa nao encontrada.');
+      }
+      if (response.status === 429) {
+        throw new HttpError(429, 'football_data_rate_limit', 'Limite de requisicoes da football-data atingido.');
+      }
+      if (!response.ok) {
+        throw new HttpError(502, 'football_data_provider_error', `football-data retornou HTTP ${response.status}.`);
+      }
+
+      const body = await response.json().catch(() => ({}));
+      return mapMatch(body);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new HttpError(504, 'football_data_timeout', 'Timeout ao consultar football-data.');
+      }
+      if (error instanceof HttpError) throw error;
+      throw new HttpError(502, 'football_data_network_error', 'Erro de rede ao consultar football-data.');
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   return {
-    listarPartidas
+    validarConfiguracao: getActiveFootballDataConfig,
+    listarPartidas,
+    buscarPartidaPorId
   };
 }
 

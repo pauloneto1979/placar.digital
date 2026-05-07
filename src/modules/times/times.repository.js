@@ -6,6 +6,7 @@ function map(row) {
     nome: row.nome,
     sigla: row.sigla,
     codigoFifa: row.codigo_fifa,
+    footballDataTeamId: row.football_data_team_id,
     escudoUrl: row.escudo_url,
     bandeiraUrl: row.bandeira_url,
     pais: row.pais,

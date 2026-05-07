@@ -6,7 +6,8 @@ function createPartidasController(service) {
     async update(req, res, next) { try { res.json(await service.update(req.params.bolaoId, req.params.id, req.body, req.auth, req.context)); } catch (e) { next(e); } },
     async informarResultado(req, res, next) { try { res.json(await service.informarResultado(req.params.bolaoId, req.params.id, req.body, req.auth, req.context)); } catch (e) { next(e); } },
     async vincularPartidaExterna(req, res, next) { try { res.json(await service.vincularPartidaExterna(req.params.id, req.body, req.auth, req.context)); } catch (e) { next(e); } },
-    async removerVinculoExterno(req, res, next) { try { res.json(await service.removerVinculoExterno(req.params.id, req.auth, req.context)); } catch (e) { next(e); } }
+    async removerVinculoExterno(req, res, next) { try { res.json(await service.removerVinculoExterno(req.params.id, req.auth, req.context)); } catch (e) { next(e); } },
+    async importarPartidasExternas(req, res, next) { try { res.status(201).json(await service.importarPartidasExternas(req.body, req.auth, req.context)); } catch (e) { next(e); } }
   };
 }
 module.exports = { createPartidasController };

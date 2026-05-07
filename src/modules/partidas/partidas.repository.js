@@ -1,4 +1,4 @@
-const { query } = require('../../shared/database/client');
+const { query, transaction } = require('../../shared/database/client');
 
 function map(row) {
   return {
@@ -79,6 +79,152 @@ async function updateExternalLink(id, footballDataMatchId) {
   );
   return result.rows[0] ? map(result.rows[0]) : null;
 }
+async function importExternalMatches(items) {
+  return transaction(async (client) => {
+    const createdMatches = [];
+    const skippedMatches = [];
+    const warnings = [];
+    const createdTeams = [];
+
+    async function findTeam(team) {
+      const externalId = team.footballDataTeamId ? String(team.footballDataTeamId) : null;
+      const nome = team.nome || '';
+      const sigla = team.sigla || '';
+      const codigoFifa = team.codigoFifa || sigla || '';
+      const result = await client.query(
+        `
+          select *
+          from times
+          where ($1::text is not null and football_data_team_id = $1)
+             or ($2::text <> '' and lower(nome) = lower($2))
+             or ($3::text <> '' and lower(coalesce(sigla, '')) = lower($3))
+             or ($4::text <> '' and lower(coalesce(codigo_fifa, '')) = lower($4))
+          order by
+            case
+              when $1::text is not null and football_data_team_id = $1 then 1
+              when $4::text <> '' and lower(coalesce(codigo_fifa, '')) = lower($4) then 2
+              when $3::text <> '' and lower(coalesce(sigla, '')) = lower($3) then 3
+              else 4
+            end
+          limit 2
+        `,
+        [externalId, nome, sigla, codigoFifa]
+      );
+
+      if (result.rowCount > 1) {
+        warnings.push({
+          code: 'team_match_ambiguous',
+          message: `Possivel duplicidade para o time ${nome}. Nenhum time foi criado automaticamente.`,
+          team: nome
+        });
+        return null;
+      }
+
+      return result.rows[0] || null;
+    }
+
+    async function ensureTeam(team) {
+      const existing = await findTeam(team);
+      if (existing) return existing;
+
+      const result = await client.query(
+        `
+          insert into times (nome, sigla, codigo_fifa, football_data_team_id, escudo_url, bandeira_url, pais, ativo)
+          values ($1,$2,$3,$4,$5,$6,$7,true)
+          returning *
+        `,
+        [
+          team.nome,
+          team.sigla || null,
+          team.codigoFifa || team.sigla || null,
+          team.footballDataTeamId ? String(team.footballDataTeamId) : null,
+          team.escudoUrl || null,
+          team.bandeiraUrl || null,
+          team.pais || null
+        ]
+      );
+      createdTeams.push({
+        id: result.rows[0].id,
+        nome: result.rows[0].nome,
+        footballDataTeamId: result.rows[0].football_data_team_id
+      });
+      return result.rows[0];
+    }
+
+    for (const item of items) {
+      const exists = await client.query(
+        'select * from partidas where football_data_match_id = $1 limit 1',
+        [String(item.footballDataMatchId)]
+      );
+
+      if (exists.rowCount > 0) {
+        skippedMatches.push({
+          externalMatchId: String(item.footballDataMatchId),
+          reason: 'duplicate',
+          partidaId: exists.rows[0].id
+        });
+        continue;
+      }
+
+      const mandante = await ensureTeam(item.mandante);
+      const visitante = await ensureTeam(item.visitante);
+
+      if (!mandante || !visitante) {
+        skippedMatches.push({
+          externalMatchId: String(item.footballDataMatchId),
+          reason: 'team_ambiguous'
+        });
+        continue;
+      }
+
+      if (mandante.id === visitante.id) {
+        skippedMatches.push({
+          externalMatchId: String(item.footballDataMatchId),
+          reason: 'same_team'
+        });
+        warnings.push({
+          code: 'same_team',
+          message: `Mandante e visitante foram resolvidos para o mesmo time na partida ${item.footballDataMatchId}.`
+        });
+        continue;
+      }
+
+      const result = await client.query(
+        `
+          insert into partidas (
+            bolao_id, fase_id, time_mandante_id, time_visitante_id, inicio_at, estadio,
+            placar_mandante, placar_visitante, status, ativo, resultado_confirmado, football_data_match_id
+          )
+          values ($1,null,$2,$3,$4,$5,$6,$7,$8,true,$9,$10)
+          returning *
+        `,
+        [
+          item.bolaoId,
+          mandante.id,
+          visitante.id,
+          item.dataHora,
+          item.estadio || null,
+          item.placarMandante,
+          item.placarVisitante,
+          item.status,
+          item.resultadoConfirmado,
+          String(item.footballDataMatchId)
+        ]
+      );
+      createdMatches.push(map(result.rows[0]));
+    }
+
+    return {
+      partidasCriadas: createdMatches.length,
+      partidasIgnoradas: skippedMatches.length,
+      timesCriados: createdTeams.length,
+      partidas: createdMatches,
+      ignoradas: skippedMatches,
+      times: createdTeams,
+      avisos: warnings
+    };
+  });
+}
 async function createAuditLog(data) {
   await query(
     `
@@ -88,4 +234,4 @@ async function createAuditLog(data) {
     [data.usuarioId, data.bolaoId, data.entidade, data.entidadeId, data.acao, JSON.stringify(data.dadosAnteriores), JSON.stringify(data.dadosNovos), data.ip || null, data.userAgent || null]
   );
 }
-module.exports = { listByBolao, findById, listByFootballDataMatchIds, findByFootballDataMatchId, faseBelongsToBolao, timeAtivo, create, update, updateExternalLink, createAuditLog };
+module.exports = { listByBolao, findById, listByFootballDataMatchIds, findByFootballDataMatchId, faseBelongsToBolao, timeAtivo, create, update, updateExternalLink, importExternalMatches, createAuditLog };

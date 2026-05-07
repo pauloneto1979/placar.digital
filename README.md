@@ -398,6 +398,13 @@ Regras de vinculo:
 
 Tela administrativa:
 
+- fluxo principal: menu `Partidas`, botao `Buscar partidas externas`
+- o administrador/proprietario informa filtros, seleciona uma ou mais partidas da football-data.org e clica em `Importar selecionadas`
+- a importacao cria automaticamente times ausentes quando houver correspondencia segura e cria a partida local ja vinculada por `football_data_match_id`
+- partidas externas ja importadas no bolao carregado aparecem destacadas e bloqueadas na lista de importacao
+- se o `football_data_match_id` ja existir em outra partida local, a importacao ignora o item e retorna no resumo como duplicidade
+- a tela antiga `Configuracoes > Vinculacao de partidas externas` permanece disponivel para vincular/desvincular partidas locais existentes
+
 - no app unificado, acesse `Configuracoes > Vinculacao de partidas externas`
 - selecione o bolao ativo no topo antes de vincular partidas
 - a tela lista as partidas locais do bolao e destaca as que ja possuem `football_data_match_id`
@@ -405,6 +412,43 @@ Tela administrativa:
 - selecione uma partida local e uma partida externa, confirme a operacao e clique em `Vincular`
 - para desfazer, selecione uma partida local ja vinculada e clique em `Remover vinculo`
 - quando uma partida externa ja estiver vinculada a outra partida local, a opcao fica bloqueada visualmente sempre que a informacao estiver carregada no bolao atual
+
+Endpoint de importacao:
+
+```http
+POST /api/v1/partidas/importar-externas
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "bolaoId": "uuid-do-bolao",
+  "provider": "football-data",
+  "matches": [
+    {
+      "externalMatchId": 123456
+    }
+  ]
+}
+```
+
+O frontend envia os dados das partidas retornadas pela busca para reduzir chamadas ao provider. Se a importacao receber apenas `externalMatchId`, o backend tenta buscar os detalhes diretamente na football-data.org usando o provider ativo.
+
+Codigos de competicao suportados no dropdown:
+
+- `WC` - FIFA World Cup
+- `CL` - UEFA Champions League
+- `BL1` - Bundesliga
+- `DED` - Eredivisie
+- `BSA` - Campeonato Brasileiro Serie A
+- `PD` - Primera Division
+- `FL1` - Ligue 1
+- `ELC` - Championship
+- `PPL` - Primeira Liga
+- `EC` - European Championship
+- `SA` - Serie A
+- `PL` - Premier League
+
+Ao selecionar `Todas as competicoes`, o frontend nao envia `competition` para a API.
 
 Modulo interno criado:
 
@@ -490,6 +534,7 @@ Se nÃ£o houver mudanÃ§a relevante em status, data/hora ou placar, nada Ã© 
 - `PATCH /api/v1/times/boloes/:bolaoId/:id/status`
 - `GET|POST /api/v1/partidas/boloes/:bolaoId`
 - `PUT /api/v1/partidas/boloes/:bolaoId/:id`
+- `POST /api/v1/partidas/importar-externas`
 - `PATCH /api/v1/partidas/:id/vinculo-externo`
 - `DELETE /api/v1/partidas/:id/vinculo-externo`
 
@@ -498,6 +543,7 @@ Campos de time atualmente suportados:
 - `nome`
 - `sigla`
 - `codigoFifa`
+- `footballDataTeamId`
 - `escudoUrl`
 - `bandeiraUrl`
 - `pais`
@@ -553,6 +599,7 @@ psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migratio
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/013_times_media_fields.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/014_sports_data_providers.sql
 psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/015_partidas_football_data_match_id.sql
+psql "postgres://USUARIO:SENHA@192.168.0.119:5432/placar_digital" -f db/migrations/016_times_football_data_team_id.sql
 ```
 
 ## Setup Local
