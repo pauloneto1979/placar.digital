@@ -353,7 +353,7 @@
     "shieldUpload": "Enviar brasão",
     "shieldUploadHelp": "PNG, JPG, WEBP ou SVG até 512 KB. A URL do brasão será preenchida automaticamente.",
     "shieldPreview": "Prévia do brasão",
-    "invalidShieldUpload": "Envie uma imagem válida de até 512 KB.",
+    "invalidShieldUpload": "Imagem inválida. Use PNG, JPG, WEBP ou SVG até 512 KB.",
     "badgeUrl": "URL do brasão",
     "removeShieldUpload": "Remover upload do brasão"
   },
@@ -438,6 +438,9 @@
     "confirmUnlink": "Remover o vínculo externo de \"{local}\"?",
     "unlinked": "Vínculo externo removido com sucesso.",
     "clearFilters": "Limpar filtros",
-    "searchError": "Não foi possível buscar as partidas. Verifique os filtros informados."
+    "searchError": "Não foi possível buscar as partidas. Verifique os filtros informados.",
+    "invalidDateFrom": "Data inicial inválida.",
+    "invalidDateTo": "Data final inválida.",
+    "invalidDateRange": "A data final não pode ser menor que a data inicial."
   }
 }

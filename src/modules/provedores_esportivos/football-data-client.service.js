@@ -104,6 +104,32 @@ function buildQuery(query) {
   return params.toString();
 }
 
+function safeProviderLog(url, query, status, message = '') {
+  const parsed = new URL(url);
+  console.warn('[football-data] Falha ao consultar partidas.', {
+    url: `${parsed.origin}${parsed.pathname}`,
+    params: Object.fromEntries(parsed.searchParams.entries()),
+    filtros: {
+      dateFrom: query.dateFrom || null,
+      dateTo: query.dateTo || null,
+      competition: query.competition || query.competitions || null,
+      status: query.status || null
+    },
+    status,
+    message
+  });
+}
+
+function providerErrorMessage(bodyText) {
+  if (!bodyText) return '';
+  try {
+    const body = JSON.parse(bodyText);
+    return body.message || body.error || body.detail || '';
+  } catch {
+    return bodyText.slice(0, 240);
+  }
+}
+
 function createFootballDataClientService(factory, repository, options = {}) {
   const fetchImpl = options.fetch || fetch;
   const timeoutMs = options.timeoutMs || 15000;
@@ -145,21 +171,32 @@ function createFootballDataClientService(factory, repository, options = {}) {
         signal: controller.signal
       });
 
+      const bodyText = await response.text().catch(() => '');
+      const providerMessage = providerErrorMessage(bodyText);
+
       if (response.status === 401 || response.status === 403) {
+        safeProviderLog(url, query, response.status, providerMessage);
         throw new HttpError(502, 'football_data_invalid_token', 'Token football-data invalido ou sem permissao.');
       }
       if (response.status === 429) {
+        safeProviderLog(url, query, response.status, providerMessage);
         throw new HttpError(429, 'football_data_rate_limit', 'Limite de requisicoes da football-data atingido.');
       }
       if (response.status === 400) {
-        throw new HttpError(400, 'football_data_invalid_filters', 'Nao foi possivel buscar as partidas. Verifique os filtros informados.');
+        safeProviderLog(url, query, response.status, providerMessage);
+        throw new HttpError(400, 'football_data_invalid_filters', providerMessage || 'Nao foi possivel buscar as partidas. Verifique os filtros informados.');
       }
       if (!response.ok) {
-        console.warn(`[football-data] Consulta de partidas retornou HTTP ${response.status}.`);
+        safeProviderLog(url, query, response.status, providerMessage);
         throw new HttpError(502, 'football_data_provider_error', 'football-data retornou erro ao consultar partidas.');
       }
 
-      const body = await response.json().catch(() => ({}));
+      let body = {};
+      try {
+        body = bodyText ? JSON.parse(bodyText) : {};
+      } catch {
+        body = {};
+      }
       return {
         count: Array.isArray(body.matches) ? body.matches.length : 0,
         filters: {

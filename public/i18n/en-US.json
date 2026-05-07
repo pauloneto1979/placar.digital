@@ -353,7 +353,7 @@
     "shieldUpload": "Upload badge",
     "shieldUploadHelp": "PNG, JPG, WEBP, or SVG up to 512 KB. The badge URL will be filled automatically.",
     "shieldPreview": "Badge preview",
-    "invalidShieldUpload": "Upload a valid image up to 512 KB.",
+    "invalidShieldUpload": "Invalid image. Use PNG, JPG, WEBP or SVG up to 512 KB.",
     "badgeUrl": "Badge URL",
     "removeShieldUpload": "Remove badge upload"
   },
@@ -438,6 +438,9 @@
     "confirmUnlink": "Remove the external link from \"{local}\"?",
     "unlinked": "External link removed successfully.",
     "clearFilters": "Clear filters",
-    "searchError": "Could not fetch matches. Check the filters entered."
+    "searchError": "Could not fetch matches. Check the filters entered.",
+    "invalidDateFrom": "Invalid start date.",
+    "invalidDateTo": "Invalid end date.",
+    "invalidDateRange": "The end date cannot be earlier than the start date."
   }
 }

@@ -414,7 +414,8 @@ function readTeamShieldFile(input) {
   const file = input.files?.[0];
   const form = input.closest('[data-crud-form="times"]');
   if (!file || !form) return;
-  if (!file.type.startsWith('image/') || file.size > 512 * 1024) {
+  const allowedTypes = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
+  if (!allowedTypes.has(file.type) || file.size > 512 * 1024) {
     input.value = '';
     setFormMessage('times', t('admin.invalidShieldUpload'), 'error');
     return;
@@ -799,7 +800,7 @@ function renderExternalImportPanel(localMatches) {
         </label>
         <div class="form-actions">
           <button type="submit">${escapeHtml(t('externalMatches.search'))}</button>
-          ${iconOnlyButton('plugOff', t('externalMatches.clearFilters'), 'data-clear-external-import-filters')}
+          <button class="ghost" type="button" data-clear-external-import-filters>${escapeHtml(t('externalMatches.clearFilters'))}</button>
         </div>
         ${scopedMessage('externalMatchImport')}
       </form>
@@ -846,6 +847,18 @@ function renderExternalImportRow(row, importedIds, selectedIds) {
       </span>
     </article>
   `;
+}
+
+function validateExternalMatchFilters(data) {
+  if (data.dateFrom && !/^\d{4}-\d{2}-\d{2}$/.test(data.dateFrom)) {
+    throw new Error(t('externalMatches.invalidDateFrom'));
+  }
+  if (data.dateTo && !/^\d{4}-\d{2}-\d{2}$/.test(data.dateTo)) {
+    throw new Error(t('externalMatches.invalidDateTo'));
+  }
+  if (data.dateFrom && data.dateTo && data.dateTo < data.dateFrom) {
+    throw new Error(t('externalMatches.invalidDateRange'));
+  }
 }
 
 function renderRankingRow(item, context = {}) {
@@ -1175,7 +1188,7 @@ async function renderParticipantesAdmin() {
         <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
         <label>${escapeHtml(t('auth.email'))} <input name="email" type="email" required></label>
         <label>${escapeHtml(t('admin.phone'))} <input name="telefone"></label>
-        <label>${escapeHtml(t('admin.initialPassword'))} <input name="senhaInicial" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('admin.requiredForNewCredential'))}"><span class="help-text">${escapeHtml(t('security.bettorPasswordHelp'))}</span></label>
+        <label>${escapeHtml(t('admin.initialPassword'))} <input name="senhaInicial" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('admin.requiredForNewCredential'))}"></label>
         <label>${escapeHtml(t('admin.confirmInitialPassword'))} <input name="confirmarSenhaInicial" type="password" autocomplete="new-password"></label>
         <label>${escapeHtml(t('owner.status'))}
           <select name="status">
@@ -1328,13 +1341,11 @@ async function renderTimesAdmin() {
         <label>${escapeHtml(t('admin.abbreviation'))} <input name="sigla"></label>
         <label>${escapeHtml(t('admin.fifaCode'))} <input name="codigoFifa"></label>
         <label>${escapeHtml(t('admin.badgeUrl'))} <input name="escudoUrl" type="text" inputmode="url" data-team-shield-url></label>
-        <label class="upload-card">
+        <label class="upload-card" title="${escapeHtml(t('admin.shieldUpload'))}">
           <span class="upload-card__icon">${ICONS.upload}</span>
-          <span class="upload-card__title">${escapeHtml(t('admin.shieldUpload'))}</span>
           <span class="team-avatar team-avatar--preview" data-team-shield-preview><span class="team-avatar__fallback">PD</span></span>
           <input name="escudoUpload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-team-shield-upload>
-          <span class="help-text">${escapeHtml(t('admin.shieldUploadHelp'))}</span>
-          <button class="ghost icon-action" type="button" data-team-shield-remove aria-label="${escapeHtml(t('admin.removeShieldUpload'))}" title="${escapeHtml(t('admin.removeShieldUpload'))}">${iconOnly('plugOff', t('admin.removeShieldUpload'))}</button>
+          <button class="ghost upload-remove" type="button" data-team-shield-remove aria-label="${escapeHtml(t('admin.removeShieldUpload'))}" title="${escapeHtml(t('admin.removeShieldUpload'))}">×</button>
         </label>
         <label class="flag-field">${escapeHtml(t('admin.flagUrl'))} <input name="bandeiraUrl" type="url"></label>
         <label>${escapeHtml(t('admin.country'))} <input name="pais"></label>
@@ -1559,10 +1570,6 @@ function renderSportsProviderForm(provider) {
   return `
     <form class="form-card sports-provider-form" data-crud-form="provedorEsportivo">
       <input name="provider" type="hidden" value="${escapeHtml(provider.provider)}">
-      <div class="provider-summary">
-        <strong>${escapeHtml(provider.displayName || provider.provider)}</strong>
-        <span class="pill">${escapeHtml(provider.enabled ? t('sportsProviders.active') : t('sportsProviders.inactive'))}</span>
-      </div>
       <label>${escapeHtml(t('sportsProviders.baseUrl'))}
         <input name="baseUrl" type="url" required value="${escapeHtml(provider.baseUrl || '')}">
       </label>
@@ -1681,6 +1688,7 @@ function externalMatchName(partida) {
 async function searchExternalMatches(form) {
   clearFormMessage('externalMatchLink');
   const data = formPayload(form);
+  validateExternalMatchFilters(data);
   state.externalMatchLink.filters = data;
   const params = new URLSearchParams();
   Object.entries(data).forEach(([key, value]) => {
@@ -1695,6 +1703,7 @@ async function searchExternalMatches(form) {
 async function searchExternalMatchesForImport(form) {
   clearFormMessage('externalMatchImport');
   const data = formPayload(form);
+  validateExternalMatchFilters(data);
   state.externalMatchImport.filters = data;
   state.externalMatchImport.selectedIds = [];
   state.externalMatchImport.summary = null;
@@ -2281,7 +2290,7 @@ content.addEventListener('submit', (event) => {
   if (externalMatchImportSearchForm) {
     event.preventDefault();
     searchExternalMatchesForImport(externalMatchImportSearchForm).catch((error) => {
-      setFormMessage('externalMatchImport', t('externalMatches.searchError'), 'error');
+      setFormMessage('externalMatchImport', error.message || t('externalMatches.searchError'), 'error');
     });
     return;
   }
