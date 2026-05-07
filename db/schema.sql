@@ -15,3 +15,4 @@
 \i db/migrations/013_times_media_fields.sql
 \i db/migrations/014_sports_data_providers.sql
 \i db/migrations/015_partidas_football_data_match_id.sql
+\i db/migrations/016_times_football_data_team_id.sql
