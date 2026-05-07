@@ -7,6 +7,8 @@ const partidasRoutes = Router();
 const controller = createPartidasController(createPartidasService(partidasRepository));
 partidasRoutes.use(authMiddleware);
 partidasRoutes.get('/', controller.status);
+partidasRoutes.patch('/:id/vinculo-externo', controller.vincularPartidaExterna);
+partidasRoutes.delete('/:id/vinculo-externo', controller.removerVinculoExterno);
 partidasRoutes.get('/boloes/:bolaoId', controller.list);
 partidasRoutes.post('/boloes/:bolaoId', controller.create);
 partidasRoutes.put('/boloes/:bolaoId/:id', controller.update);

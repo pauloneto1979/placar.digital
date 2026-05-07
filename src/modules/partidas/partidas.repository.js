@@ -36,6 +36,13 @@ async function listByFootballDataMatchIds(matchIds) {
   );
   return result.rows.map(map);
 }
+async function findByFootballDataMatchId(matchId) {
+  const result = await query(
+    'select * from partidas where football_data_match_id = $1 limit 1',
+    [String(matchId)]
+  );
+  return result.rows[0] ? map(result.rows[0]) : null;
+}
 async function faseBelongsToBolao(faseId, bolaoId) {
   const result = await query('select 1 from fases where id=$1 and bolao_id=$2 and ativo=true limit 1', [faseId, bolaoId]);
   return result.rowCount > 0;
@@ -65,6 +72,13 @@ async function update(id, data) {
   );
   return result.rows[0] ? map(result.rows[0]) : null;
 }
+async function updateExternalLink(id, footballDataMatchId) {
+  const result = await query(
+    'update partidas set football_data_match_id=$2 where id=$1 returning *',
+    [id, footballDataMatchId ? String(footballDataMatchId) : null]
+  );
+  return result.rows[0] ? map(result.rows[0]) : null;
+}
 async function createAuditLog(data) {
   await query(
     `
@@ -74,4 +88,4 @@ async function createAuditLog(data) {
     [data.usuarioId, data.bolaoId, data.entidade, data.entidadeId, data.acao, JSON.stringify(data.dadosAnteriores), JSON.stringify(data.dadosNovos), data.ip || null, data.userAgent || null]
   );
 }
-module.exports = { listByBolao, findById, listByFootballDataMatchIds, faseBelongsToBolao, timeAtivo, create, update, createAuditLog };
+module.exports = { listByBolao, findById, listByFootballDataMatchIds, findByFootballDataMatchId, faseBelongsToBolao, timeAtivo, create, update, updateExternalLink, createAuditLog };

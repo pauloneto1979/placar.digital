@@ -85,7 +85,7 @@ function buildUpdatePayload(payload) {
   return data;
 }
 
-function createProvedoresEsportivosService(repository) {
+function createProvedoresEsportivosService(repository, footballDataClientService = null) {
   return {
     getStatus() {
       return {
@@ -133,6 +133,13 @@ function createProvedoresEsportivosService(repository) {
         throw new HttpError(404, 'sports_provider_not_configured', 'Provedor esportivo nao configurado.');
       }
       return mergeWithDefinition(updated);
+    },
+
+    async listFootballDataPartidas(query) {
+      if (!footballDataClientService) {
+        throw new HttpError(500, 'football_data_client_not_configured', 'Cliente football-data nao configurado.');
+      }
+      return footballDataClientService.listarPartidas(query);
     },
 
     listSupportedProviders

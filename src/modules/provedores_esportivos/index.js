@@ -2,6 +2,7 @@ const provedoresEsportivosRepository = require('./provedores_esportivos.reposito
 const { createProvedoresEsportivosService } = require('./provedores_esportivos.service');
 const { createSportsDataProviderFactory } = require('./provider-factory');
 const { createFootballDataSyncService } = require('./football-data-sync.service');
+const { createFootballDataClientService } = require('./football-data-client.service');
 const { startSportsDataSyncJob } = require('./sports-data-sync.job');
 const { provedoresEsportivosRoutes } = require('./provedores_esportivos.routes');
 
@@ -18,5 +19,6 @@ module.exports = {
   createFootballDataSyncService,
   footballDataSyncService,
   startSportsDataSyncJob,
+  createFootballDataClientService,
   provedoresEsportivosRoutes
 };

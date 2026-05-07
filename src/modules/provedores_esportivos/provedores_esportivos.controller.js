@@ -22,6 +22,14 @@ function createProvedoresEsportivosController(service) {
       } catch (error) {
         next(error);
       }
+    },
+
+    async listFootballDataPartidas(req, res, next) {
+      try {
+        res.json(await service.listFootballDataPartidas(req.query));
+      } catch (error) {
+        next(error);
+      }
     }
   };
 }

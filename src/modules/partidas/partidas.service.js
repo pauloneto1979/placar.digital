@@ -11,6 +11,13 @@ const rankingService = createRankingService(rankingRepository);
 
 function clean(v) { return typeof v === 'string' ? v.trim() : ''; }
 function intOrNull(v) { return v === undefined || v === null || v === '' ? null : Number(v); }
+function externalMatchId(value) {
+  const text = clean(value === undefined || value === null ? '' : String(value));
+  if (!text || !/^\d+$/.test(text)) {
+    throw new HttpError(400, 'invalid_external_match_id', 'externalMatchId deve ser numerico.');
+  }
+  return text;
+}
 
 function payload(body, bolaoId) {
   const faseId = body.faseId || body.fase_id || null;
@@ -131,6 +138,51 @@ function createPartidasService(repository) {
       const after = await repository.update(before.id, afterData);
       const result = await aplicarAlteracaoResultado(before, after, { usuarioId: null }, context);
       return { partida: after, ...result };
+    },
+    async vincularPartidaExterna(id, body, auth, context = {}) {
+      const partida = await repository.findById(id);
+      if (!partida) throw new HttpError(404, 'match_not_found', 'Partida nao encontrada.');
+      await ensureCanAdminBolao(auth, partida.bolaoId);
+      const provider = clean(body.provider);
+      if (provider !== 'football-data') {
+        throw new HttpError(400, 'invalid_external_provider', 'Provider deve ser football-data.');
+      }
+      const matchId = externalMatchId(body.externalMatchId || body.external_match_id);
+      const linked = await repository.findByFootballDataMatchId(matchId);
+      if (linked && linked.id !== partida.id) {
+        throw new HttpError(409, 'external_match_already_linked', 'Partida externa ja vinculada a outra partida local.');
+      }
+      const updated = await repository.updateExternalLink(partida.id, matchId);
+      await repository.createAuditLog({
+        usuarioId: auth.usuarioId,
+        bolaoId: partida.bolaoId,
+        entidade: 'partida',
+        entidadeId: partida.id,
+        acao: 'partida.vinculo_externo.atualizado',
+        dadosAnteriores: { footballDataMatchId: partida.footballDataMatchId },
+        dadosNovos: { provider, footballDataMatchId: matchId },
+        ip: context.ip,
+        userAgent: context.userAgent
+      });
+      return updated;
+    },
+    async removerVinculoExterno(id, auth, context = {}) {
+      const partida = await repository.findById(id);
+      if (!partida) throw new HttpError(404, 'match_not_found', 'Partida nao encontrada.');
+      await ensureCanAdminBolao(auth, partida.bolaoId);
+      const updated = await repository.updateExternalLink(partida.id, null);
+      await repository.createAuditLog({
+        usuarioId: auth.usuarioId,
+        bolaoId: partida.bolaoId,
+        entidade: 'partida',
+        entidadeId: partida.id,
+        acao: 'partida.vinculo_externo.removido',
+        dadosAnteriores: { footballDataMatchId: partida.footballDataMatchId },
+        dadosNovos: { footballDataMatchId: null },
+        ip: context.ip,
+        userAgent: context.userAgent
+      });
+      return updated;
     }
   };
 }

@@ -306,8 +306,95 @@ Endpoints administrativos:
 - `GET /api/v1/provedores-esportivos`
 - `PUT /api/v1/provedores-esportivos/:provider`
 - `PATCH /api/v1/provedores-esportivos/:provider/status`
+- `GET /api/v1/provedores-esportivos/football-data/partidas`
 
 Esses endpoints são protegidos por autenticação e aceitam apenas `proprietario` ou `administrador`. As respostas são sanitizadas e nunca retornam `api_token` completo.
+
+Busca de partidas externas football-data.org:
+
+```http
+GET /api/v1/provedores-esportivos/football-data/partidas?dateFrom=2026-06-01&dateTo=2026-06-07&competition=PL&status=SCHEDULED
+Authorization: Bearer TOKEN
+```
+
+Filtros opcionais:
+
+- `dateFrom`: data no formato `YYYY-MM-DD`
+- `dateTo`: data no formato `YYYY-MM-DD`
+- `competition`: codigo/id aceito pela football-data.org, enviado ao provider como `competitions`
+- `status`: `SCHEDULED`, `LIVE`, `IN_PLAY`, `PAUSED`, `FINISHED`, `POSTPONED`, `SUSPENDED` ou `CANCELLED`
+
+Resposta resumida:
+
+```json
+{
+  "count": 1,
+  "filters": {
+    "dateFrom": "2026-06-01",
+    "dateTo": "2026-06-07",
+    "competition": "PL",
+    "status": "SCHEDULED"
+  },
+  "partidas": [
+    {
+      "externalMatchId": "123456",
+      "competition": {
+        "id": 2021,
+        "name": "Premier League",
+        "code": "PL"
+      },
+      "status": "SCHEDULED",
+      "utcDate": "2026-06-01T19:00:00Z",
+      "mandante": {
+        "name": "Home Team"
+      },
+      "visitante": {
+        "name": "Away Team"
+      },
+      "placar": {
+        "fullTime": {
+          "home": null,
+          "away": null
+        }
+      },
+      "faseRodada": {
+        "stage": "REGULAR_SEASON",
+        "matchday": 1
+      }
+    }
+  ]
+}
+```
+
+Vinculo de partida local com partida externa:
+
+```http
+PATCH /api/v1/partidas/:id/vinculo-externo
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "provider": "football-data",
+  "externalMatchId": 123456
+}
+```
+
+Remover vinculo externo:
+
+```http
+DELETE /api/v1/partidas/:id/vinculo-externo
+Authorization: Bearer TOKEN
+```
+
+Regras de vinculo:
+
+- somente `proprietario` ou `administrador` autorizado no bolao da partida local pode vincular/desvincular
+- a partida local precisa existir
+- `externalMatchId` deve ser numerico
+- o mesmo `externalMatchId` nao pode estar vinculado a outra partida local
+- a busca e os vinculos nunca retornam nem registram `api_token`
+- vincular/desvincular nao altera placar nem dispara recálculo
+- o recálculo continua ocorrendo apenas quando a sincronização externa atualizar resultado confirmado com mudança relevante
 
 Módulo interno criado:
 
@@ -393,6 +480,8 @@ Se não houver mudança relevante em status, data/hora ou placar, nada é salvo 
 - `PATCH /api/v1/times/boloes/:bolaoId/:id/status`
 - `GET|POST /api/v1/partidas/boloes/:bolaoId`
 - `PUT /api/v1/partidas/boloes/:bolaoId/:id`
+- `PATCH /api/v1/partidas/:id/vinculo-externo`
+- `DELETE /api/v1/partidas/:id/vinculo-externo`
 
 Campos de time atualmente suportados:
 
