@@ -1154,7 +1154,7 @@ async function renderUsuariosOwner() {
         <input name="id" type="hidden">
         <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
         <label>${escapeHtml(t('auth.email'))} <input name="email" type="email" required></label>
-        <label>${escapeHtml(t('owner.password'))} <input name="senha" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"><span class="help-text">${escapeHtml(t('security.systemPasswordHelp'))}</span></label>
+        <label>${escapeHtml(t('owner.password'))} <input name="senha" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"></label>
         <label>${escapeHtml(t('owner.profile'))}
           <select name="perfil">
             <option value="administrador">${escapeHtml(t('roles.administrador'))}</option>
@@ -1565,7 +1565,6 @@ async function renderConfiguracoesOwner() {
 function renderSportsProviderForm(provider) {
   const tokenState = state.providerTokens[provider.provider] || {};
   const tokenVisible = Boolean(tokenState.visible && tokenState.token);
-  const tokenLabel = tokenVisible ? tokenState.token : (provider.apiTokenMasked || t('sportsProviders.tokenNotConfigured'));
   const tokenFieldValue = tokenVisible ? tokenState.token : (provider.apiTokenMasked || '');
   return `
     <form class="form-card sports-provider-form" data-crud-form="provedorEsportivo">
@@ -1577,12 +1576,13 @@ function renderSportsProviderForm(provider) {
         <input name="syncIntervalSeconds" type="number" min="60" step="1" required value="${escapeHtml(provider.syncIntervalSeconds || 300)}">
       </label>
       <label class="token-field">${escapeHtml(t('sportsProviders.newToken'))}
-        <span class="token-input-group">
-          <input name="apiToken" type="${tokenVisible ? 'text' : 'password'}" autocomplete="new-password" value="${escapeHtml(tokenFieldValue)}" data-token-mask="${escapeHtml(provider.apiTokenMasked || '')}" placeholder="${escapeHtml(t('sportsProviders.tokenPlaceholder'))}">
+        <span class="token-control-row">
+          <span class="token-input-group">
+            <input name="apiToken" type="${tokenVisible ? 'text' : 'password'}" autocomplete="new-password" value="${escapeHtml(tokenFieldValue)}" data-token-mask="${escapeHtml(provider.apiTokenMasked || '')}" placeholder="${escapeHtml(t('sportsProviders.tokenPlaceholder'))}">
+          </span>
           ${iconOnlyButton('eye', tokenVisible ? t('sportsProviders.hideToken') : t('sportsProviders.showToken'), `data-provider-token-toggle="${escapeHtml(provider.provider)}"`)}
           ${iconOnlyButton('copy', t('sportsProviders.copyToken'), `data-provider-token-copy="${escapeHtml(provider.provider)}" ${provider.apiTokenConfigured || tokenState.token ? '' : 'disabled'}`)}
         </span>
-        <span class="help-text token-line">${escapeHtml(t('sportsProviders.tokenStatus', { token: tokenLabel }))}</span>
       </label>
       <div class="provider-meta">
         <span>${escapeHtml(t('sportsProviders.lastSync', { date: provider.lastSyncAt ? dateTime(provider.lastSyncAt) : t('sportsProviders.neverSynced') }))}</span>
