@@ -13,7 +13,7 @@ function syncLocaleControl() {
   const locale = i18n.getLocale();
   localeSelect.value = locale;
   if (localeCurrentLabel) {
-    localeCurrentLabel.textContent = t(`common.localeNames.${locale}`, {}, locale);
+    localeCurrentLabel.textContent = ({ 'pt-BR': 'PT', 'en-US': 'EN', 'es-ES': 'ES' })[locale] || locale;
   }
 }
 

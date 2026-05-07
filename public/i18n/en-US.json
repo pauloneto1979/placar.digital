@@ -309,6 +309,8 @@
     "phone": "Phone",
     "initialPassword": "Initial password",
     "optional": "Optional",
+    "requiredForNewCredential": "Required for a new credential",
+    "confirmInitialPassword": "Confirm initial password",
     "saveParticipant": "Save participant",
     "noParticipants": "No participant registered.",
     "payments": "Payments",
@@ -347,7 +349,11 @@
     "homeScore": "Home score",
     "awayScore": "Away score",
     "saveMatch": "Save match",
-    "noMatches": "No match registered."
+    "noMatches": "No match registered.",
+    "shieldUpload": "Upload badge",
+    "shieldUploadHelp": "PNG, JPG, WEBP, or SVG up to 512 KB. The badge URL will be filled automatically.",
+    "shieldPreview": "Badge preview",
+    "invalidShieldUpload": "Upload a valid image up to 512 KB."
   },
   "messages": {
     "noActivePool": "No active pool found for this session.",
@@ -357,12 +363,21 @@
     "recordSavedSuccess": "Record saved successfully.",
     "recordUpdatedSuccess": "Record updated successfully."
   },
+  "security": {
+    "systemPasswordHelp": "Minimum 8 characters, with uppercase, lowercase, and a number.",
+    "systemPasswordPolicy": "The password must have at least 8 characters, with at least 1 uppercase letter, 1 lowercase letter, and 1 number.",
+    "systemPasswordRequired": "Enter the user's password.",
+    "bettorPasswordHelp": "Required for a new bettor credential.",
+    "bettorPasswordRequired": "Enter the bettor password.",
+    "passwordRequired": "Enter the password.",
+    "passwordConfirmationMismatch": "Password confirmation does not match."
+  },
   "sportsProviders": {
     "title": "Sports data providers",
     "empty": "No sports data provider configured.",
     "baseUrl": "Base URL",
     "syncInterval": "Sync interval (seconds)",
-    "newToken": "New API token",
+    "newToken": "API token",
     "tokenPlaceholder": "Fill only to change the token",
     "tokenStatus": "Token: {token}",
     "tokenNotConfigured": "not configured",

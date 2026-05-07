@@ -70,6 +70,20 @@ async function createUsuarioApostador(data) {
   return mapUsuario(result.rows[0]);
 }
 
+async function updateUsuarioApostadorPassword(id, senhaHash) {
+  const result = await query(
+    `
+      update usuarios
+      set senha_hash = $2
+      where id = $1 and perfil_global = 'apostador'
+      returning id, nome, email, perfil_global, ativo
+    `,
+    [id, senhaHash]
+  );
+
+  return result.rows[0] ? mapUsuario(result.rows[0]) : null;
+}
+
 async function create(data) {
   const result = await query(
     `
@@ -109,6 +123,7 @@ module.exports = {
   findByEmail,
   findUsuarioByEmail,
   createUsuarioApostador,
+  updateUsuarioApostadorPassword,
   create,
   update,
   updateStatus

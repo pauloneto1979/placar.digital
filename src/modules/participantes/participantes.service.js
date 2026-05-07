@@ -1,7 +1,7 @@
 const { HttpError } = require('../../shared/errors/http-error');
 const { ensureCanAdminBolao } = require('../../shared/permissions/bolao-access');
 const { hashPassword } = require('../../shared/utils/password');
-const crypto = require('crypto');
+const { assertBettorPassword } = require('../../shared/utils/password-policy');
 
 const STATUS = ['convidado', 'ativo', 'bloqueado', 'removido'];
 
@@ -24,12 +24,17 @@ function payload(body, bolaoId) {
   if (!STATUS.includes(status)) throw new HttpError(400, 'invalid_participant_status', 'Status invalido.');
 
   const senhaInicial = clean(body.senhaInicial || body.senha_inicial || body.senha || body.password);
+  const confirmarSenhaInicial = clean(body.confirmarSenhaInicial || body.confirmar_senha_inicial || body.confirmarSenha || body.confirmPassword);
+
+  if (senhaInicial && !confirmarSenhaInicial) {
+    throw new HttpError(400, 'missing_bettor_password_confirmation', 'Confirme a senha do apostador.');
+  }
+
+  if (confirmarSenhaInicial && senhaInicial !== confirmarSenhaInicial) {
+    throw new HttpError(400, 'bettor_password_confirmation_mismatch', 'A confirmacao da senha do apostador nao confere.');
+  }
 
   return { bolaoId, nome, email, telefone, status, senhaInicial };
-}
-
-function generateTemporaryPassword() {
-  return crypto.randomBytes(12).toString('base64url');
 }
 
 function createParticipantesService(repository) {
@@ -60,14 +65,21 @@ function createParticipantesService(repository) {
     }
 
     if (existing) {
+      let senhaAtualizada = false;
+      if (data.senhaInicial) {
+        await repository.updateUsuarioApostadorPassword(existing.id, hashPassword(data.senhaInicial));
+        senhaAtualizada = true;
+      }
       return {
         usuario: existing,
         credencialCriada: false,
-        senhaTemporaria: null
+        senhaTemporaria: null,
+        senhaAtualizada
       };
     }
 
-    const senhaTemporaria = data.senhaInicial || generateTemporaryPassword();
+    assertBettorPassword(data.senhaInicial);
+    const senhaTemporaria = data.senhaInicial;
     const usuario = await repository.createUsuarioApostador({
       nome: data.nome,
       email: data.email,
@@ -77,7 +89,7 @@ function createParticipantesService(repository) {
     return {
       usuario,
       credencialCriada: true,
-      senhaTemporaria: data.senhaInicial ? null : senhaTemporaria
+      senhaTemporaria: null
     };
   }
 
@@ -88,7 +100,8 @@ function createParticipantesService(repository) {
         usuarioId: credencial.usuario.id,
         email: credencial.usuario.email,
         criada: credencial.credencialCriada,
-        senhaTemporaria: credencial.senhaTemporaria
+        senhaTemporaria: credencial.senhaTemporaria,
+        senhaAtualizada: Boolean(credencial.senhaAtualizada)
       }
     };
   }

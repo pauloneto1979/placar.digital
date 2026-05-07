@@ -112,7 +112,7 @@ function showMessage(text, tone = 'warning') {
 }
 
 function localeLabel(locale) {
-  return t(`common.localeNames.${locale}`, {}, locale);
+  return ({ 'pt-BR': 'PT', 'en-US': 'EN', 'es-ES': 'ES' })[locale] || locale;
 }
 
 function syncLocaleControl() {
@@ -282,7 +282,19 @@ const ICONS = {
 };
 
 function withIcon(name, label) {
-  return `${ICONS[name] || ''}<span>${escapeHtml(label)}</span>`;
+  return `${ICONS[name] || ''}<span class="button-text">${escapeHtml(label)}</span>`;
+}
+
+function iconOnly(name, label, attrs = '') {
+  return `${ICONS[name] || ''}<span class="sr-only">${escapeHtml(label)}</span>`;
+}
+
+function iconOnlyButton(name, label, attrs = '') {
+  return `<button class="ghost icon-action" type="button" ${attrs} aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${iconOnly(name, label)}</button>`;
+}
+
+function submitIconButton(name, label) {
+  return `<button type="submit" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${withIcon(name, label)}</button>`;
 }
 
 function optionLabel(options, value, fallback = '') {
@@ -333,6 +345,22 @@ function formPayload(form) {
   return data;
 }
 
+function isSystemPasswordValid(password) {
+  return String(password || '').length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password);
+}
+
+function ensureSystemPassword(password) {
+  if (!isSystemPasswordValid(password)) {
+    throw new Error(t('security.systemPasswordPolicy'));
+  }
+}
+
+function ensureRequiredPassword(password, messageKey = 'security.passwordRequired') {
+  if (!String(password || '')) {
+    throw new Error(t(messageKey));
+  }
+}
+
 function setFormValues(form, row) {
   form.reset();
   Object.entries(row).forEach(([key, value]) => {
@@ -351,6 +379,38 @@ function clearForm(kind) {
   if (!form) return;
   form.reset();
   if (form.elements.id) form.elements.id.value = '';
+  if (kind === 'times') updateTeamShieldPreview(form);
+}
+
+function updateTeamShieldPreview(form) {
+  const preview = form?.querySelector('[data-team-shield-preview]');
+  const input = form?.elements?.escudoUrl;
+  if (!preview || !input) return;
+  const value = input.value || '';
+  if (value) {
+    preview.innerHTML = `<img src="${escapeHtml(value)}" alt="${escapeHtml(t('admin.shieldPreview'))}" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><span class="team-avatar__fallback" hidden>PD</span>`;
+    return;
+  }
+  preview.innerHTML = '<span class="team-avatar__fallback">PD</span>';
+}
+
+function readTeamShieldFile(input) {
+  const file = input.files?.[0];
+  const form = input.closest('[data-crud-form="times"]');
+  if (!file || !form) return;
+  if (!file.type.startsWith('image/') || file.size > 512 * 1024) {
+    input.value = '';
+    setFormMessage('times', t('admin.invalidShieldUpload'), 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    form.elements.escudoUrl.value = String(reader.result || '');
+    clearFormMessage('times');
+    updateTeamShieldPreview(form);
+  };
+  reader.onerror = () => setFormMessage('times', t('admin.invalidShieldUpload'), 'error');
+  reader.readAsDataURL(file);
 }
 
 function getRankMedal(position) {
@@ -993,7 +1053,7 @@ async function renderMeuPerfil() {
         <form class="form-grid" data-crud-form="meuPerfil">
           <label>${escapeHtml(t('profile.name'))} <input name="nome" value="${escapeHtml(perfil.nome || '')}" required></label>
           <label>${escapeHtml(t('profile.email'))} <input name="email" type="email" value="${escapeHtml(perfil.email || '')}" readonly></label>
-          <div class="form-actions"><button type="submit">${withIcon('save', t('profile.saveData'))}</button></div>
+          <div class="form-actions">${submitIconButton('save', t('profile.saveData'))}</div>
           ${scopedMessage('meuPerfil')}
         </form>
       </article>
@@ -1003,7 +1063,7 @@ async function renderMeuPerfil() {
           <label>${escapeHtml(t('profile.currentPassword'))} <input name="senhaAtual" type="password" required></label>
           <label>${escapeHtml(t('profile.newPassword'))} <input name="novaSenha" type="password" required></label>
           <label>${escapeHtml(t('profile.confirmPassword'))} <input name="confirmarNovaSenha" type="password" required></label>
-          <div class="form-actions"><button type="submit">${withIcon('save', t('profile.updatePassword'))}</button></div>
+          <div class="form-actions">${submitIconButton('save', t('profile.updatePassword'))}</div>
           ${scopedMessage('minhaSenha')}
         </form>
       </article>
@@ -1031,8 +1091,8 @@ async function renderBoloesOwner() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${withIcon('save', t('owner.savePool'))}</button>
-          <button class="ghost" type="button" data-reset-form="boloes">${escapeHtml(t('common.new'))}</button>
+          ${submitIconButton('save', t('owner.savePool'))}
+          ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="boloes"')}
         </div>
       </form>
     </section>
@@ -1050,7 +1110,7 @@ async function renderUsuariosOwner() {
         <input name="id" type="hidden">
         <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
         <label>${escapeHtml(t('auth.email'))} <input name="email" type="email" required></label>
-        <label>${escapeHtml(t('owner.password'))} <input name="senha" type="password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"></label>
+        <label>${escapeHtml(t('owner.password'))} <input name="senha" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"><span class="help-text">${escapeHtml(t('security.systemPasswordHelp'))}</span></label>
         <label>${escapeHtml(t('owner.profile'))}
           <select name="perfil">
             <option value="administrador">${escapeHtml(t('roles.administrador'))}</option>
@@ -1064,8 +1124,8 @@ async function renderUsuariosOwner() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${withIcon('save', t('owner.saveUser'))}</button>
-          <button class="ghost" type="button" data-reset-form="usuarios">${escapeHtml(t('common.new'))}</button>
+          ${submitIconButton('save', t('owner.saveUser'))}
+          ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="usuarios"')}
         </div>
       </form>
     </section>
@@ -1084,7 +1144,8 @@ async function renderParticipantesAdmin() {
         <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
         <label>${escapeHtml(t('auth.email'))} <input name="email" type="email" required></label>
         <label>${escapeHtml(t('admin.phone'))} <input name="telefone"></label>
-        <label>${escapeHtml(t('admin.initialPassword'))} <input name="senhaInicial" type="password" placeholder="${escapeHtml(t('admin.optional'))}"></label>
+        <label>${escapeHtml(t('admin.initialPassword'))} <input name="senhaInicial" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('admin.requiredForNewCredential'))}"><span class="help-text">${escapeHtml(t('security.bettorPasswordHelp'))}</span></label>
+        <label>${escapeHtml(t('admin.confirmInitialPassword'))} <input name="confirmarSenhaInicial" type="password" autocomplete="new-password"></label>
         <label>${escapeHtml(t('owner.status'))}
           <select name="status">
             <option value="ativo">${escapeHtml(statusLabel('ativo'))}</option>
@@ -1094,8 +1155,8 @@ async function renderParticipantesAdmin() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${withIcon('save', t('admin.saveParticipant'))}</button>
-          <button class="ghost" type="button" data-reset-form="participantes">${escapeHtml(t('common.new'))}</button>
+          ${submitIconButton('save', t('admin.saveParticipant'))}
+          ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="participantes"')}
         </div>
       </form>
     </section>
@@ -1165,8 +1226,8 @@ async function renderPagamentosAdmin() {
         <label>${escapeHtml(t('admin.paymentDate'))} <input name="dataPagamento" type="datetime-local"></label>
         <label>${escapeHtml(t('admin.observation'))} <input name="observacao"></label>
         <div class="form-actions">
-          <button type="submit">${withIcon('save', t('admin.savePayment'))}</button>
-          <button class="ghost" type="button" data-reset-form="pagamentos">${escapeHtml(t('common.new'))}</button>
+          ${submitIconButton('save', t('admin.savePayment'))}
+          ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="pagamentos"')}
         </div>
       </form>
     </section>
@@ -1202,8 +1263,8 @@ async function renderFasesAdmin() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${withIcon('save', t('admin.savePhase'))}</button>
-          <button class="ghost" type="button" data-reset-form="fases">${escapeHtml(t('common.newFemale'))}</button>
+          ${submitIconButton('save', t('admin.savePhase'))}
+          ${iconOnlyButton('plus', t('common.newFemale'), 'data-reset-form="fases"')}
         </div>
       </form>
     </section>
@@ -1235,8 +1296,14 @@ async function renderTimesAdmin() {
         <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
         <label>${escapeHtml(t('admin.abbreviation'))} <input name="sigla"></label>
         <label>${escapeHtml(t('admin.fifaCode'))} <input name="codigoFifa"></label>
-        <label>${escapeHtml(t('admin.shieldUrl'))} <input name="escudoUrl" type="url"></label>
-        <label>${escapeHtml(t('admin.flagUrl'))} <input name="bandeiraUrl" type="url"></label>
+        <label>${escapeHtml(t('admin.shieldUrl'))} <input name="escudoUrl" type="text" inputmode="url" data-team-shield-url></label>
+        <label class="upload-card">
+          <span>${escapeHtml(t('admin.shieldUpload'))}</span>
+          <span class="team-avatar team-avatar--preview" data-team-shield-preview><span class="team-avatar__fallback">PD</span></span>
+          <input name="escudoUpload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-team-shield-upload>
+          <span class="help-text">${escapeHtml(t('admin.shieldUploadHelp'))}</span>
+        </label>
+        <label class="flag-field">${escapeHtml(t('admin.flagUrl'))} <input name="bandeiraUrl" type="url"></label>
         <label>${escapeHtml(t('admin.country'))} <input name="pais"></label>
         <label>${escapeHtml(t('owner.status'))}
           <select name="status">
@@ -1245,9 +1312,10 @@ async function renderTimesAdmin() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${withIcon('save', t('admin.saveTeam'))}</button>
-          <button class="ghost" type="button" data-reset-form="times">${escapeHtml(t('common.new'))}</button>
+          ${submitIconButton('save', t('admin.saveTeam'))}
+          ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="times"')}
         </div>
+        ${scopedMessage('times')}
       </form>
     </section>
     <section class="card"><div class="list">${rows.map(teamRow).join('') || empty(t('admin.noTeams'))}</div></section>
@@ -1311,8 +1379,8 @@ async function renderPartidasAdmin() {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${withIcon('save', t('admin.saveMatch'))}</button>
-          <button class="ghost" type="button" data-reset-form="partidas">${escapeHtml(t('common.newFemale'))}</button>
+          ${submitIconButton('save', t('admin.saveMatch'))}
+          ${iconOnlyButton('plus', t('common.newFemale'), 'data-reset-form="partidas"')}
         </div>
       </form>
     </section>
@@ -1352,7 +1420,7 @@ async function renderRegrasAdmin() {
             <option value="false" ${configuracao.ativo === false ? 'selected' : ''}>${escapeHtml(t('common.no'))}</option>
           </select>
         </label>
-        <div class="form-actions"><button type="submit">${withIcon('save', t('rules.saveConfig'))}</button></div>
+        <div class="form-actions">${submitIconButton('save', t('rules.saveConfig'))}</div>
         ${scopedMessage('bolaoConfig')}
       </form>
     </section>
@@ -1373,7 +1441,7 @@ async function renderRegrasAdmin() {
           <label>${escapeHtml(t('rules.priority'))} <input name="prioridade" type="number" min="1" value="1" required></label>
           <p class="help-text">${escapeHtml(t('rules.priorityHelp'))}</p>
           <label>${escapeHtml(t('rules.active'))} <select name="ativo"><option value="true">${escapeHtml(t('common.yes'))}</option><option value="false">${escapeHtml(t('common.no'))}</option></select></label>
-          <div class="form-actions"><button type="submit">${withIcon('save', t('rules.saveRule'))}</button><button class="ghost" type="button" data-reset-form="regrasPontuacao">${escapeHtml(t('common.newFemale'))}</button></div>
+          <div class="form-actions">${submitIconButton('save', t('rules.saveRule'))}${iconOnlyButton('plus', t('common.newFemale'), 'data-reset-form="regrasPontuacao"')}</div>
           ${scopedMessage('regrasPontuacao')}
         </form>
       </article>
@@ -1391,7 +1459,7 @@ async function renderRegrasAdmin() {
           <label>${escapeHtml(t('rules.description'))} <input name="descricao" required></label>
           <label>${escapeHtml(t('admin.orderLabel'))} <input name="ordem" type="number" min="1" value="1" required></label>
           <label>${escapeHtml(t('rules.active'))} <select name="ativo"><option value="true">${escapeHtml(t('common.yes'))}</option><option value="false">${escapeHtml(t('common.no'))}</option></select></label>
-          <div class="form-actions"><button type="submit">${withIcon('save', t('rules.saveTiebreaker'))}</button><button class="ghost" type="button" data-reset-form="criteriosDesempate">${escapeHtml(t('common.new'))}</button></div>
+          <div class="form-actions">${submitIconButton('save', t('rules.saveTiebreaker'))}${iconOnlyButton('plus', t('common.new'), 'data-reset-form="criteriosDesempate"')}</div>
           ${scopedMessage('criteriosDesempate')}
         </form>
       </article>
@@ -1404,7 +1472,7 @@ async function renderRegrasAdmin() {
           <label>${escapeHtml(t('rules.percent'))} <input name="percentual" type="number" min="0" max="100" step="0.01" required></label>
           <label>${escapeHtml(t('rules.description'))} <input name="descricao"></label>
           <label>${escapeHtml(t('rules.active'))} <select name="ativo"><option value="true">${escapeHtml(t('common.yes'))}</option><option value="false">${escapeHtml(t('common.no'))}</option></select></label>
-          <div class="form-actions"><button type="submit">${withIcon('save', t('rules.savePrize'))}</button><button class="ghost" type="button" data-reset-form="distribuicaoPremios">${escapeHtml(t('common.new'))}</button></div>
+          <div class="form-actions">${submitIconButton('save', t('rules.savePrize'))}${iconOnlyButton('plus', t('common.new'), 'data-reset-form="distribuicaoPremios"')}</div>
           ${scopedMessage('distribuicaoPremios')}
         </form>
       </article>
@@ -1437,7 +1505,7 @@ async function renderConfiguracoesOwner() {
           </select>
         </label>
         <label>${escapeHtml(t('owner.paymentGateway'))} <input name="gatewayPagamento" value="${escapeHtml(config.gatewayPagamento || '')}"></label>
-        <div class="form-actions"><button type="submit">${withIcon('save', t('owner.saveSettings'))}</button></div>
+        <div class="form-actions">${submitIconButton('save', t('owner.saveSettings'))}</div>
       </form>
     </section>` : ''}
     <section class="card">
@@ -1454,6 +1522,7 @@ function renderSportsProviderForm(provider) {
   const tokenState = state.providerTokens[provider.provider] || {};
   const tokenVisible = Boolean(tokenState.visible && tokenState.token);
   const tokenLabel = tokenVisible ? tokenState.token : (provider.apiTokenMasked || t('sportsProviders.tokenNotConfigured'));
+  const tokenFieldValue = tokenVisible ? tokenState.token : (provider.apiTokenMasked || '');
   return `
     <form class="form-card" data-crud-form="provedorEsportivo">
       <input name="provider" type="hidden" value="${escapeHtml(provider.provider)}">
@@ -1479,11 +1548,11 @@ function renderSportsProviderForm(provider) {
         <input name="syncIntervalSeconds" type="number" min="60" step="1" required value="${escapeHtml(provider.syncIntervalSeconds || 300)}">
       </label>
       <label>${escapeHtml(t('sportsProviders.newToken'))}
-        <input name="apiToken" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('sportsProviders.tokenPlaceholder'))}">
+        <input name="apiToken" type="${tokenVisible ? 'text' : 'password'}" autocomplete="new-password" value="${escapeHtml(tokenFieldValue)}" data-token-mask="${escapeHtml(provider.apiTokenMasked || '')}" placeholder="${escapeHtml(t('sportsProviders.tokenPlaceholder'))}">
       </label>
       <p class="muted">${escapeHtml(t('sportsProviders.lastSync', { date: provider.lastSyncAt ? dateTime(provider.lastSyncAt) : t('sportsProviders.neverSynced') }))}</p>
       <div class="form-actions">
-        <button type="submit">${withIcon('save', t('sportsProviders.save'))}</button>
+        ${submitIconButton('save', t('sportsProviders.save'))}
         <button class="secondary" type="button" data-provider-toggle="${escapeHtml(provider.provider)}" data-enabled="${provider.enabled ? 'false' : 'true'}">
           ${escapeHtml(provider.enabled ? t('sportsProviders.disable') : t('sportsProviders.enable'))}
         </button>
@@ -1765,11 +1834,12 @@ async function submitCrud(kind, form) {
   if (kind === 'provedorEsportivo') {
     clearFormMessage(kind);
     const provider = data.provider;
+    const tokenMask = form.elements.apiToken?.dataset.tokenMask || '';
     delete data.provider;
     if (data.syncIntervalSeconds !== undefined) {
       data.syncIntervalSeconds = Math.max(60, Number(data.syncIntervalSeconds || 60));
     }
-    if (!data.apiToken) delete data.apiToken;
+    if (!data.apiToken || data.apiToken === tokenMask) delete data.apiToken;
     await api(`/provedores-esportivos/${provider}`, {
       method: 'PUT',
       body: JSON.stringify(data)
@@ -1808,6 +1878,11 @@ async function submitCrud(kind, form) {
   if (kind === 'minhaSenha') {
     if ((data.novaSenha || '') !== (data.confirmarNovaSenha || '')) {
       throw new Error(t('profile.passwordMismatch'));
+    }
+    if (isApostador()) {
+      ensureRequiredPassword(data.novaSenha, 'security.bettorPasswordRequired');
+    } else {
+      ensureSystemPassword(data.novaSenha);
     }
     await api('/auth/minha-senha', {
       method: 'PUT',
@@ -1867,10 +1942,39 @@ async function submitCrud(kind, form) {
 
   if (!config) return;
 
-  await api(id ? config.update(id) : config.create, {
+  if (kind === 'usuarios') {
+    if (!id) {
+      ensureRequiredPassword(data.senha, 'security.systemPasswordRequired');
+      ensureSystemPassword(data.senha);
+    } else if (data.senha) {
+      ensureSystemPassword(data.senha);
+    }
+  }
+
+  if (kind === 'participantes') {
+    if (!id) {
+      ensureRequiredPassword(data.senhaInicial, 'security.bettorPasswordRequired');
+    }
+    if ((data.senhaInicial || data.confirmarSenhaInicial) && (data.senhaInicial || '') !== (data.confirmarSenhaInicial || '')) {
+      throw new Error(t('security.passwordConfirmationMismatch'));
+    }
+  }
+
+  if (kind === 'times') {
+    delete data.escudoUpload;
+  }
+
+  const saved = await api(id ? config.update(id) : config.create, {
     method: id ? 'PUT' : 'POST',
     body: JSON.stringify(data)
   });
+
+  if (kind === 'boloes' && !id && saved?.id) {
+    await loadBaseData();
+    await switchBolao(saved.id);
+    showMessage(t('messages.recordCreated'));
+    return;
+  }
 
   if (RULE_FORM_KINDS.has(kind)) {
     state.formMessages[kind] = {
@@ -1890,6 +1994,7 @@ function editCrud(kind, id) {
   const form = document.querySelector(`[data-crud-form="${kind}"]`);
   if (!row || !form) return;
   setFormValues(form, row);
+  if (kind === 'times') updateTeamShieldPreview(form);
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -2072,6 +2177,12 @@ content.addEventListener('click', (event) => {
 });
 
 content.addEventListener('change', (event) => {
+  const shieldUpload = event.target.closest('[data-team-shield-upload]');
+  if (shieldUpload) {
+    readTeamShieldFile(shieldUpload);
+    return;
+  }
+
   const importMatchCheckbox = event.target.closest('input[data-toggle-import-match]');
   if (importMatchCheckbox && !importMatchCheckbox.disabled) {
     toggleExternalImportSelection(String(importMatchCheckbox.dataset.toggleImportMatch || ''));
@@ -2144,6 +2255,12 @@ localeSelect.addEventListener('change', () => {
 
 const pendingSaves = new Map();
 content.addEventListener('input', (event) => {
+  const shieldUrlInput = event.target.closest('[data-team-shield-url]');
+  if (shieldUrlInput) {
+    updateTeamShieldPreview(shieldUrlInput.closest('[data-crud-form="times"]'));
+    return;
+  }
+
   const input = event.target.closest('[data-bet-side]');
   if (!input) return;
   const card = input.closest('[data-partida-id]');
@@ -2179,3 +2296,4 @@ content.addEventListener('input', (event) => {
 i18n.ready.then(() => init()).catch((error) => {
   content.innerHTML = `<section class="card">${empty(error.message)}</section>`;
 });
+

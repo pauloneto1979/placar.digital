@@ -1,4 +1,4 @@
-const { query } = require('../../shared/database/client');
+const { query, transaction } = require('../../shared/database/client');
 
 function mapBolao(row) {
   return {
@@ -74,8 +74,8 @@ async function findBolaoBySlug(slug) {
   return result.rows[0] || null;
 }
 
-async function createBolao(data) {
-  const result = await query(
+async function createBolao(data, executor = query) {
+  const result = await executor(
     `
       insert into boloes (
         proprietario_id,
@@ -106,8 +106,8 @@ async function createBolao(data) {
   return mapBolao(result.rows[0]);
 }
 
-async function createDefaultBolaoRules(bolaoId) {
-  await query(
+async function createDefaultBolaoRules(bolaoId, executor = query) {
+  await executor(
     `
       insert into configuracoes_principais_bolao (
         bolao_id,
@@ -128,7 +128,7 @@ async function createDefaultBolaoRules(bolaoId) {
   ];
 
   for (const regra of regras) {
-    await query(
+    await executor(
       `
         insert into regras_pontuacao (
           bolao_id,
@@ -147,6 +147,62 @@ async function createDefaultBolaoRules(bolaoId) {
       [bolaoId, regra[1], regra[0], regra[1], regra[2], regra[3], regra[4], JSON.stringify({ naoCumulativa: true })]
     );
   }
+
+  const criterios = [
+    ['PLACARES_EXATOS', 'Maior numero de placares exatos', 1],
+    ['RESULTADOS_CORRETOS', 'Maior numero de resultados corretos', 2],
+    ['PLACARES_INVERTIDOS', 'Maior numero de placares invertidos', 3],
+    ['MENOR_DIFERENCA_GOLS', 'Menor diferenca total de gols', 4],
+    ['ORDEM_PAGAMENTO', 'Ordem de pagamento', 5],
+    ['ORDEM_ALFABETICA', 'Ordem alfabetica', 6]
+  ];
+
+  for (const criterio of criterios) {
+    await executor(
+      `
+        insert into criterios_desempate (
+          bolao_id,
+          codigo,
+          descricao,
+          ordem,
+          ativo
+        ) values ($1,$2,$3,$4,true)
+        on conflict (bolao_id, codigo) do nothing
+      `,
+      [bolaoId, criterio[0], criterio[1], criterio[2]]
+    );
+  }
+
+  const premios = [
+    [1, 70, '1o lugar'],
+    [2, 20, '2o lugar'],
+    [3, 10, '3o lugar']
+  ];
+
+  for (const premio of premios) {
+    await executor(
+      `
+        insert into distribuicao_premios (
+          bolao_id,
+          posicao,
+          percentual,
+          descricao,
+          ativo
+        ) values ($1,$2,$3,$4,true)
+        on conflict (bolao_id, posicao) do nothing
+      `,
+      [bolaoId, premio[0], premio[1], premio[2]]
+    );
+  }
+}
+
+async function createBolaoWithDefaults(data) {
+  return transaction(async (client) => {
+    const executor = (text, params) => client.query(text, params);
+    const bolao = await createBolao(data, executor);
+    await createDefaultBolaoRules(bolao.id, executor);
+    return bolao;
+  });
 }
 
 async function updateBolao(id, data) {
@@ -242,11 +298,16 @@ async function updateUsuario(id, data) {
   const result = await query(
     `
       update usuarios
-      set nome = $2, email = $3, perfil_global = $4, ativo = $5
+      set
+        nome = $2,
+        email = $3,
+        perfil_global = $4,
+        ativo = $5,
+        senha_hash = coalesce($6, senha_hash)
       where id = $1
       returning id, nome, email, perfil_global, ativo, ultimo_login_at, criado_at, atualizado_at
     `,
-    [id, data.nome, data.email, data.perfil, data.ativo]
+    [id, data.nome, data.email, data.perfil, data.ativo, data.senhaHash || null]
   );
 
   return result.rows[0] ? mapUsuario(result.rows[0]) : null;
@@ -392,6 +453,7 @@ module.exports = {
   findBolaoBySlug,
   createBolao,
   createDefaultBolaoRules,
+  createBolaoWithDefaults,
   updateBolao,
   fecharBolao,
   listUsuarios,

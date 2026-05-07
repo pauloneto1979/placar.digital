@@ -1,6 +1,7 @@
 const { env } = require('../../config/env');
 const { HttpError } = require('../../shared/errors/http-error');
 const { hashPassword, verifyPassword } = require('../../shared/utils/password');
+const { assertSystemPassword, assertBettorPassword } = require('../../shared/utils/password-policy');
 const { sign, verify } = require('../../shared/utils/token');
 
 function sanitizeUser(user) {
@@ -337,8 +338,10 @@ function createAuthService(repository) {
         throw new HttpError(400, 'invalid_current_password', 'Senha atual invalida.');
       }
 
-      if (novaSenha.length < 6) {
-        throw new HttpError(400, 'invalid_new_password', 'A nova senha deve ter pelo menos 6 caracteres.');
+      if (user.perfil_global === 'apostador') {
+        assertBettorPassword(novaSenha);
+      } else {
+        assertSystemPassword(novaSenha);
       }
 
       if (novaSenha !== confirmarNovaSenha) {

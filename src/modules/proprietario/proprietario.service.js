@@ -1,5 +1,6 @@
 const { HttpError } = require('../../shared/errors/http-error');
 const { hashPassword } = require('../../shared/utils/password');
+const { assertSystemPassword } = require('../../shared/utils/password-policy');
 
 const PERFIS_USUARIO_SISTEMA = ['proprietario', 'administrador'];
 const STATUS_BOLOES = ['ativo', 'fechado', 'inativo'];
@@ -151,8 +152,7 @@ function createProprietarioService(repository) {
 
     async createBolao(payload, auth, context) {
       const data = await buildBolaoPayload(payload, auth);
-      const bolao = await repository.createBolao(data);
-      await repository.createDefaultBolaoRules(bolao.id);
+      const bolao = await repository.createBolaoWithDefaults(data);
       await audit(auth, context, {
         bolaoId: bolao.id,
         entidade: 'boloes',
@@ -214,6 +214,7 @@ function createProprietarioService(repository) {
         throw new HttpError(400, 'invalid_user_profile', 'Perfil deve ser proprietario ou administrador.');
       }
 
+      assertSystemPassword(senha);
       await ensureUniqueEmail(email);
 
       const usuario = await repository.createUsuario({
@@ -239,6 +240,7 @@ function createProprietarioService(repository) {
       const nome = normalizeText(payload.nome || existing.nome);
       const email = normalizeEmail(payload.email || existing.email);
       const perfil = payload.perfil || payload.perfil_global || existing.perfil;
+      const senha = payload.senha || payload.password || '';
       const ativo = payload.status ? payload.status === 'ativo' : payload.ativo ?? existing.ativo;
 
       if (!nome || !email) {
@@ -249,13 +251,19 @@ function createProprietarioService(repository) {
         throw new HttpError(400, 'invalid_user_profile', 'Perfil deve ser proprietario ou administrador.');
       }
 
+      let senhaHash = null;
+      if (senha) {
+        assertSystemPassword(senha);
+        senhaHash = hashPassword(senha);
+      }
       await ensureUniqueEmail(email, id);
 
       const usuario = await repository.updateUsuario(id, {
         nome,
         email,
         perfil,
-        ativo
+        ativo,
+        senhaHash
       });
 
       await audit(auth, context, {

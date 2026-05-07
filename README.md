@@ -406,6 +406,13 @@ Tela administrativa:
 - a tela antiga `Configuracoes > Vinculacao de partidas externas` foi removida do frontend; os endpoints antigos permanecem disponiveis para compatibilidade tecnica
 - `Configuracoes` no app unificado fica visivel apenas para `proprietario`
 
+Seguranca operacional:
+
+- usuarios `proprietario` e `administrador` exigem senha com no minimo 8 caracteres, 1 letra maiuscula, 1 letra minuscula e 1 numero
+- apostadores precisam ter senha informada ao criar uma nova credencial; nao ha exigencia de caractere especial
+- o token do provedor football-data fica mascarado por padrao no frontend, so pode ser revelado por `proprietario` e nao e retornado em listagens publicas
+- novo bolao criado pelo modulo proprietario recebe automaticamente configuracao principal, regras de pontuacao, criterios de desempate e distribuicao de premios padrao
+
 Endpoint de importacao:
 
 ```http
