@@ -132,6 +132,10 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(33, 212, 253, 0.14);
 }
 
+input[readonly] {
+  opacity: 0.72;
+}
+
 label {
   color: var(--muted);
   display: grid;
@@ -239,10 +243,17 @@ select option {
 }
 
 .help-text {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(159, 188, 215, 0.14);
+  border-radius: 999px;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
-  margin: -6px 0 4px;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 0 0 4px;
+  padding: 7px 10px;
+  width: fit-content;
 }
 
 .select-grid {
@@ -489,7 +500,10 @@ select option {
 
 .icon-action,
 .form-actions button[type="submit"]:has(.button-icon) {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(159, 188, 215, 0.22);
   border-radius: 999px;
+  color: var(--accent);
   flex: 0 0 var(--tap);
   height: var(--tap);
   min-width: var(--tap);
@@ -499,6 +513,8 @@ select option {
 
 .icon-action:hover,
 .form-actions button[type="submit"]:has(.button-icon):hover {
+  background: rgba(200, 255, 46, 0.1);
+  border-color: rgba(200, 255, 46, 0.34);
   box-shadow: 0 0 0 3px rgba(200, 255, 46, 0.1), 0 12px 26px rgba(33, 212, 253, 0.16);
 }
 
@@ -515,15 +531,15 @@ select option {
 }
 
 .icon-button svg {
-  height: 20px;
-  width: 20px;
+  height: 23px;
+  width: 23px;
 }
 
 .button-icon {
   display: inline-flex;
   flex: 0 0 auto;
-  height: 18px;
-  width: 18px;
+  height: 22px;
+  width: 22px;
 }
 
 .button-icon svg {
@@ -541,6 +557,11 @@ select option {
   justify-content: center;
   padding: 3px;
   width: 22px;
+}
+
+.button-icon--upload {
+  height: 34px;
+  width: 34px;
 }
 
 .hamburger {
@@ -870,23 +891,43 @@ select option {
 }
 
 .upload-card {
-  align-items: start;
+  align-items: center;
   background: rgba(255, 255, 255, 0.035);
   border: 1px dashed rgba(159, 188, 215, 0.28);
   border-radius: var(--radius-sm);
   cursor: pointer;
+  display: grid;
+  justify-items: center;
   padding: 14px;
+  text-align: center;
 }
 
-.upload-card:hover {
+.upload-card:hover,
+.upload-card.drag-over {
   background: rgba(33, 212, 253, 0.055);
   border-color: rgba(33, 212, 253, 0.3);
+  box-shadow: 0 0 0 3px rgba(33, 212, 253, 0.08);
+}
+
+.upload-card__icon {
+  color: var(--accent);
+  display: inline-flex;
+  margin-bottom: 2px;
+}
+
+.upload-card__title {
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 900;
 }
 
 .upload-card input[type="file"] {
-  background: rgba(5, 14, 23, 0.54);
-  border-style: dashed;
-  cursor: pointer;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
 }
 
 .flag-field {
@@ -1027,6 +1068,59 @@ select option {
 .token-line {
   font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
   overflow-wrap: anywhere;
+}
+
+.sports-provider-form {
+  max-width: 760px;
+}
+
+.provider-summary,
+.provider-meta,
+.token-input-group {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.provider-summary {
+  justify-content: space-between;
+}
+
+.provider-meta {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.token-input-group {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+}
+
+.token-input-group input {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+button[data-provider-toggle]:hover {
+  background: rgba(255, 93, 93, 0.11);
+  border-color: rgba(255, 93, 93, 0.34);
+  box-shadow: 0 0 0 3px rgba(255, 93, 93, 0.08), 0 12px 26px rgba(255, 93, 93, 0.12);
+  color: var(--danger);
+}
+
+button[data-team-shield-remove] {
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+button[data-team-shield-remove]:hover {
+  color: var(--danger);
 }
 
 .bet-inputs {

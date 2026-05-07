@@ -349,11 +349,13 @@
     "saveMatch": "Guardar partido",
     "noMatches": "Ningún partido registrado.",
     "requiredForNewCredential": "Obligatoria para nueva credencial",
-    "confirmInitialPassword": "Confirmar contrase?a inicial",
+    "confirmInitialPassword": "Confirmar contraseña inicial",
     "shieldUpload": "Subir escudo",
-    "shieldUploadHelp": "PNG, JPG, WEBP o SVG hasta 512 KB. La URL del escudo se completar? autom?ticamente.",
+    "shieldUploadHelp": "PNG, JPG, WEBP o SVG hasta 512 KB. La URL del escudo se completará automáticamente.",
     "shieldPreview": "Vista previa del escudo",
-    "invalidShieldUpload": "Sube una imagen v?lida de hasta 512 KB."
+    "invalidShieldUpload": "Sube una imagen válida de hasta 512 KB.",
+    "badgeUrl": "URL del escudo",
+    "removeShieldUpload": "Quitar carga del escudo"
   },
   "messages": {
     "noActivePool": "Ninguna porra activa encontrada para esta sesión.",
@@ -365,14 +367,14 @@
   },
   "sportsProviders": {
     "title": "Proveedores deportivos",
-    "empty": "Ning?n proveedor deportivo configurado.",
+    "empty": "Ningún proveedor deportivo configurado.",
     "baseUrl": "URL base",
-    "syncInterval": "Intervalo de sincronizaci?n (segundos)",
+    "syncInterval": "Intervalo de sincronización (segundos)",
     "newToken": "Token de API",
     "tokenPlaceholder": "Complete solo para cambiar el token",
     "tokenStatus": "Token: {token}",
     "tokenNotConfigured": "no configurado",
-    "lastSync": "?ltima sincronizaci?n: {date}",
+    "lastSync": "Última sincronización: {date}",
     "neverSynced": "nunca sincronizado",
     "save": "Guardar proveedor",
     "enable": "Activar",
@@ -386,7 +388,8 @@
     "hideToken": "Ocultar token",
     "copyToken": "Copiar token",
     "tokenCopied": "Token copiado.",
-    "copyTokenError": "No fue posible copiar el token."
+    "copyTokenError": "No fue posible copiar el token.",
+    "providerStatus": "Estado: {status}"
   },
   "externalMatches": {
     "title": "Vinculación de partidos externos",
@@ -424,15 +427,17 @@
     "linked": "Partido vinculado correctamente.",
     "selectLinkedLocal": "Selecciona un partido local que ya tenga un vínculo externo.",
     "confirmUnlink": "¿Quitar el vínculo externo de \"{local}\"?",
-    "unlinked": "Vínculo externo eliminado correctamente."
+    "unlinked": "Vínculo externo eliminado correctamente.",
+    "clearFilters": "Limpiar filtros",
+    "searchError": "No se pudieron buscar los partidos. Verifica los filtros informados."
   },
   "security": {
-    "systemPasswordHelp": "M?nimo 8 caracteres, con may?scula, min?scula y n?mero.",
-    "systemPasswordPolicy": "La contrase?a debe tener al menos 8 caracteres, con al menos 1 letra may?scula, 1 letra min?scula y 1 n?mero.",
-    "systemPasswordRequired": "Informa la contrase?a del usuario.",
+    "systemPasswordHelp": "8+ caracteres • Mayúscula • Minúscula • Número",
+    "systemPasswordPolicy": "La contraseña debe tener al menos 8 caracteres, con al menos 1 letra mayúscula, 1 letra minúscula y 1 número.",
+    "systemPasswordRequired": "Informa la contraseña del usuario.",
     "bettorPasswordHelp": "Obligatoria para nueva credencial de apostador.",
-    "bettorPasswordRequired": "Informa la contrase?a del apostador.",
-    "passwordRequired": "Informa la contrase?a.",
-    "passwordConfirmationMismatch": "La confirmaci?n de la contrase?a no coincide."
+    "bettorPasswordRequired": "Informa la contraseña del apostador.",
+    "passwordRequired": "Informa la contraseña.",
+    "passwordConfirmationMismatch": "La confirmación de la contraseña no coincide."
   }
 }

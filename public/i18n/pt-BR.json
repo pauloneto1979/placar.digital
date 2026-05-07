@@ -79,7 +79,7 @@
     "partidas": "Resultados e jogos cadastrados.",
     "boloes": "Gestão geral de bolões.",
     "usuarios": "Proprietários e administradores.",
-    "configuracoes": "Configura??es gerais e provedores esportivos.",
+    "configuracoes": "Configurações gerais e provedores esportivos.",
     "perfil": "Atualize seus dados de acesso."
   },
   "topbar": {
@@ -309,7 +309,7 @@
     "phone": "Telefone",
     "initialPassword": "Senha inicial",
     "optional": "Opcional",
-    "requiredForNewCredential": "Obrigat?ria para nova credencial",
+    "requiredForNewCredential": "Obrigatória para nova credencial",
     "confirmInitialPassword": "Confirmar senha inicial",
     "saveParticipant": "Salvar participante",
     "noParticipants": "Nenhum participante cadastrado.",
@@ -335,7 +335,7 @@
     "teams": "Times",
     "abbreviation": "Sigla",
     "fifaCode": "Código FIFA",
-    "shieldUrl": "URL do escudo",
+    "shieldUrl": "URL do brasão",
     "flagUrl": "URL da bandeira",
     "country": "País",
     "saveTeam": "Salvar time",
@@ -350,10 +350,12 @@
     "awayScore": "Placar visitante",
     "saveMatch": "Salvar partida",
     "noMatches": "Nenhuma partida cadastrada.",
-    "shieldUpload": "Enviar bras?o",
-    "shieldUploadHelp": "PNG, JPG, WEBP ou SVG at? 512 KB. A URL do bras?o ser? preenchida automaticamente.",
-    "shieldPreview": "Pr?via do bras?o",
-    "invalidShieldUpload": "Envie uma imagem v?lida de at? 512 KB."
+    "shieldUpload": "Enviar brasão",
+    "shieldUploadHelp": "PNG, JPG, WEBP ou SVG até 512 KB. A URL do brasão será preenchida automaticamente.",
+    "shieldPreview": "Prévia do brasão",
+    "invalidShieldUpload": "Envie uma imagem válida de até 512 KB.",
+    "badgeUrl": "URL do brasão",
+    "removeShieldUpload": "Remover upload do brasão"
   },
   "messages": {
     "noActivePool": "Nenhum bolão ativo encontrado para esta sessão.",
@@ -364,24 +366,24 @@
     "recordUpdatedSuccess": "Registro atualizado com sucesso."
   },
   "security": {
-    "systemPasswordHelp": "M?nimo 8 caracteres, com mai?scula, min?scula e n?mero.",
-    "systemPasswordPolicy": "A senha deve ter no m?nimo 8 caracteres, com ao menos 1 letra mai?scula, 1 letra min?scula e 1 n?mero.",
-    "systemPasswordRequired": "Informe a senha do usu?rio.",
-    "bettorPasswordHelp": "Obrigat?ria para nova credencial de apostador.",
+    "systemPasswordHelp": "8+ caracteres • Maiúscula • Minúscula • Número",
+    "systemPasswordPolicy": "A senha deve ter no mínimo 8 caracteres, com ao menos 1 letra maiúscula, 1 letra minúscula e 1 número.",
+    "systemPasswordRequired": "Informe a senha do usuário.",
+    "bettorPasswordHelp": "Obrigatória para nova credencial de apostador.",
     "bettorPasswordRequired": "Informe a senha do apostador.",
     "passwordRequired": "Informe a senha.",
-    "passwordConfirmationMismatch": "A confirma??o da senha n?o confere."
+    "passwordConfirmationMismatch": "A confirmação da senha não confere."
   },
   "sportsProviders": {
     "title": "Provedores esportivos",
     "empty": "Nenhum provedor esportivo configurado.",
     "baseUrl": "URL base",
-    "syncInterval": "Intervalo de sincroniza??o (segundos)",
+    "syncInterval": "Intervalo de sincronização (segundos)",
     "newToken": "Token da API",
     "tokenPlaceholder": "Informe somente para alterar o token",
     "tokenStatus": "Token: {token}",
-    "tokenNotConfigured": "n?o configurado",
-    "lastSync": "?ltima sincroniza??o: {date}",
+    "tokenNotConfigured": "não configurado",
+    "lastSync": "Última sincronização: {date}",
     "neverSynced": "nunca sincronizado",
     "save": "Salvar provedor",
     "enable": "Ativar",
@@ -395,7 +397,8 @@
     "hideToken": "Ocultar token",
     "copyToken": "Copiar token",
     "tokenCopied": "Token copiado.",
-    "copyTokenError": "Não foi possível copiar o token."
+    "copyTokenError": "Não foi possível copiar o token.",
+    "providerStatus": "Status: {status}"
   },
   "externalMatches": {
     "title": "Vinculação de partidas externas",
@@ -433,6 +436,8 @@
     "linked": "Partida vinculada com sucesso.",
     "selectLinkedLocal": "Selecione uma partida local que já tenha vínculo externo.",
     "confirmUnlink": "Remover o vínculo externo de \"{local}\"?",
-    "unlinked": "Vínculo externo removido com sucesso."
+    "unlinked": "Vínculo externo removido com sucesso.",
+    "clearFilters": "Limpar filtros",
+    "searchError": "Não foi possível buscar as partidas. Verifique os filtros informados."
   }
 }

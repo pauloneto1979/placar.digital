@@ -130,6 +130,13 @@ function money(value) {
   return Number(value || 0).toLocaleString(i18n.getLocale(), { style: 'currency', currency: 'BRL' });
 }
 
+function currency(value, currencyCode = 'BRL') {
+  return Number(value || 0).toLocaleString(i18n.getLocale(), {
+    style: 'currency',
+    currency: currencyCode || 'BRL'
+  });
+}
+
 function dateTime(value) {
   if (!value) return t('common.noDate');
   return new Date(value).toLocaleString(i18n.getLocale(), { dateStyle: 'short', timeStyle: 'short' });
@@ -278,7 +285,11 @@ function staticOptionList(options, selected = '') {
 
 const ICONS = {
   save: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm1 2v5h10V5H6Zm2 12h8v-5H8v5Zm6-11h-2v3h2V6Z"/></svg></span>',
-  plus: '<span class="button-icon button-icon--add" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg></span>'
+  plus: '<span class="button-icon button-icon--add" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg></span>',
+  plugOff: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7.6 3 1.4 1.4L7.4 6H10V3h2v5h1.2l2.4 2.4L21 15.8 19.6 17.2 3 4.4 4.4 3l2 2L7.6 3Zm7.8 11.2L16 14v-2.6L18.6 14 17.2 15.4l-1.8-1.2ZM8.8 10H6v4a5 5 0 0 0 4 4.9V22h2v-3.1a5 5 0 0 0 2.2-.9l-1.5-1.5A3 3 0 0 1 8 14v-2.8l.8-1.2ZM17 3h-2v3h2V3Z"/></svg></span>',
+  eye: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5c5 0 8.7 4.4 9.7 5.8a2 2 0 0 1 0 2.4C20.7 14.6 17 19 12 19s-8.7-4.4-9.7-5.8a2 2 0 0 1 0-2.4C3.3 9.4 7 5 12 5Zm0 2c-4 0-7.1 3.5-8 5 0 0 3.4 5 8 5s8-5 8-5c-.9-1.5-4-5-8-5Zm0 2.5A2.5 2.5 0 1 1 12 14a2.5 2.5 0 0 1 0-5Z"/></svg></span>',
+  copy: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 7a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-1v1a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h1V7Zm2 1h4a3 3 0 0 1 3 3v4h1a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v1Zm-3 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1H7Z"/></svg></span>',
+  upload: '<span class="button-icon button-icon--upload" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 16h2V8.8l2.6 2.6L17 10l-5-5-5 5 1.4 1.4L11 8.8V16Zm-5 4h12a2 2 0 0 0 2-2v-3h-2v3H6v-3H4v3a2 2 0 0 0 2 2Z"/></svg></span>'
 };
 
 function withIcon(name, label) {
@@ -379,7 +390,10 @@ function clearForm(kind) {
   if (!form) return;
   form.reset();
   if (form.elements.id) form.elements.id.value = '';
-  if (kind === 'times') updateTeamShieldPreview(form);
+  if (kind === 'times') {
+    form.dataset.uploadedShield = '';
+    updateTeamShieldPreview(form);
+  }
 }
 
 function updateTeamShieldPreview(form) {
@@ -387,6 +401,8 @@ function updateTeamShieldPreview(form) {
   const input = form?.elements?.escudoUrl;
   if (!preview || !input) return;
   const value = input.value || '';
+  const isUpload = value.startsWith('data:image/');
+  input.readOnly = isUpload;
   if (value) {
     preview.innerHTML = `<img src="${escapeHtml(value)}" alt="${escapeHtml(t('admin.shieldPreview'))}" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><span class="team-avatar__fallback" hidden>PD</span>`;
     return;
@@ -406,11 +422,23 @@ function readTeamShieldFile(input) {
   const reader = new FileReader();
   reader.onload = () => {
     form.elements.escudoUrl.value = String(reader.result || '');
+    form.dataset.uploadedShield = 'true';
     clearFormMessage('times');
     updateTeamShieldPreview(form);
   };
   reader.onerror = () => setFormMessage('times', t('admin.invalidShieldUpload'), 'error');
   reader.readAsDataURL(file);
+}
+
+function removeTeamShieldUpload(form) {
+  if (!form) return;
+  if (form.elements.escudoUpload) form.elements.escudoUpload.value = '';
+  if (form.elements.escudoUrl?.value?.startsWith('data:image/')) {
+    form.elements.escudoUrl.readOnly = false;
+    form.elements.escudoUrl.value = '';
+  }
+  form.dataset.uploadedShield = '';
+  updateTeamShieldPreview(form);
 }
 
 function getRankMedal(position) {
@@ -769,7 +797,10 @@ function renderExternalImportPanel(localMatches) {
             ${['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'SUSPENDED', 'CANCELLED'].map((status) => `<option value="${status}" ${filters.status === status ? 'selected' : ''}>${status}</option>`).join('')}
           </select>
         </label>
-        <div class="form-actions"><button type="submit">${escapeHtml(t('externalMatches.search'))}</button></div>
+        <div class="form-actions">
+          <button type="submit">${escapeHtml(t('externalMatches.search'))}</button>
+          ${iconOnlyButton('plugOff', t('externalMatches.clearFilters'), 'data-clear-external-import-filters')}
+        </div>
         ${scopedMessage('externalMatchImport')}
       </form>
       ${summary ? `
@@ -1296,12 +1327,14 @@ async function renderTimesAdmin() {
         <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
         <label>${escapeHtml(t('admin.abbreviation'))} <input name="sigla"></label>
         <label>${escapeHtml(t('admin.fifaCode'))} <input name="codigoFifa"></label>
-        <label>${escapeHtml(t('admin.shieldUrl'))} <input name="escudoUrl" type="text" inputmode="url" data-team-shield-url></label>
+        <label>${escapeHtml(t('admin.badgeUrl'))} <input name="escudoUrl" type="text" inputmode="url" data-team-shield-url></label>
         <label class="upload-card">
-          <span>${escapeHtml(t('admin.shieldUpload'))}</span>
+          <span class="upload-card__icon">${ICONS.upload}</span>
+          <span class="upload-card__title">${escapeHtml(t('admin.shieldUpload'))}</span>
           <span class="team-avatar team-avatar--preview" data-team-shield-preview><span class="team-avatar__fallback">PD</span></span>
           <input name="escudoUpload" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-team-shield-upload>
           <span class="help-text">${escapeHtml(t('admin.shieldUploadHelp'))}</span>
+          <button class="ghost icon-action" type="button" data-team-shield-remove aria-label="${escapeHtml(t('admin.removeShieldUpload'))}" title="${escapeHtml(t('admin.removeShieldUpload'))}">${iconOnly('plugOff', t('admin.removeShieldUpload'))}</button>
         </label>
         <label class="flag-field">${escapeHtml(t('admin.flagUrl'))} <input name="bandeiraUrl" type="url"></label>
         <label>${escapeHtml(t('admin.country'))} <input name="pais"></label>
@@ -1524,22 +1557,11 @@ function renderSportsProviderForm(provider) {
   const tokenLabel = tokenVisible ? tokenState.token : (provider.apiTokenMasked || t('sportsProviders.tokenNotConfigured'));
   const tokenFieldValue = tokenVisible ? tokenState.token : (provider.apiTokenMasked || '');
   return `
-    <form class="form-card" data-crud-form="provedorEsportivo">
+    <form class="form-card sports-provider-form" data-crud-form="provedorEsportivo">
       <input name="provider" type="hidden" value="${escapeHtml(provider.provider)}">
-      <div class="row-card">
-        <div>
-          <strong>${escapeHtml(provider.displayName || provider.provider)}</strong>
-          <p class="muted token-line">${escapeHtml(t('sportsProviders.tokenStatus', { token: tokenLabel }))}</p>
-        </div>
-        <div class="actions">
-          <span class="pill">${escapeHtml(provider.enabled ? t('sportsProviders.active') : t('sportsProviders.inactive'))}</span>
-          <button class="secondary" type="button" data-provider-token-toggle="${escapeHtml(provider.provider)}">
-            ${escapeHtml(tokenVisible ? t('sportsProviders.hideToken') : t('sportsProviders.showToken'))}
-          </button>
-          <button class="secondary" type="button" data-provider-token-copy="${escapeHtml(provider.provider)}" ${tokenState.token ? '' : 'disabled'}>
-            ${escapeHtml(t('sportsProviders.copyToken'))}
-          </button>
-        </div>
+      <div class="provider-summary">
+        <strong>${escapeHtml(provider.displayName || provider.provider)}</strong>
+        <span class="pill">${escapeHtml(provider.enabled ? t('sportsProviders.active') : t('sportsProviders.inactive'))}</span>
       </div>
       <label>${escapeHtml(t('sportsProviders.baseUrl'))}
         <input name="baseUrl" type="url" required value="${escapeHtml(provider.baseUrl || '')}">
@@ -1547,15 +1569,21 @@ function renderSportsProviderForm(provider) {
       <label>${escapeHtml(t('sportsProviders.syncInterval'))}
         <input name="syncIntervalSeconds" type="number" min="60" step="1" required value="${escapeHtml(provider.syncIntervalSeconds || 300)}">
       </label>
-      <label>${escapeHtml(t('sportsProviders.newToken'))}
-        <input name="apiToken" type="${tokenVisible ? 'text' : 'password'}" autocomplete="new-password" value="${escapeHtml(tokenFieldValue)}" data-token-mask="${escapeHtml(provider.apiTokenMasked || '')}" placeholder="${escapeHtml(t('sportsProviders.tokenPlaceholder'))}">
+      <label class="token-field">${escapeHtml(t('sportsProviders.newToken'))}
+        <span class="token-input-group">
+          <input name="apiToken" type="${tokenVisible ? 'text' : 'password'}" autocomplete="new-password" value="${escapeHtml(tokenFieldValue)}" data-token-mask="${escapeHtml(provider.apiTokenMasked || '')}" placeholder="${escapeHtml(t('sportsProviders.tokenPlaceholder'))}">
+          ${iconOnlyButton('eye', tokenVisible ? t('sportsProviders.hideToken') : t('sportsProviders.showToken'), `data-provider-token-toggle="${escapeHtml(provider.provider)}"`)}
+          ${iconOnlyButton('copy', t('sportsProviders.copyToken'), `data-provider-token-copy="${escapeHtml(provider.provider)}" ${provider.apiTokenConfigured || tokenState.token ? '' : 'disabled'}`)}
+        </span>
+        <span class="help-text token-line">${escapeHtml(t('sportsProviders.tokenStatus', { token: tokenLabel }))}</span>
       </label>
-      <p class="muted">${escapeHtml(t('sportsProviders.lastSync', { date: provider.lastSyncAt ? dateTime(provider.lastSyncAt) : t('sportsProviders.neverSynced') }))}</p>
+      <div class="provider-meta">
+        <span>${escapeHtml(t('sportsProviders.lastSync', { date: provider.lastSyncAt ? dateTime(provider.lastSyncAt) : t('sportsProviders.neverSynced') }))}</span>
+        <span>${escapeHtml(t('sportsProviders.providerStatus', { status: provider.enabled ? t('sportsProviders.active') : t('sportsProviders.inactive') }))}</span>
+      </div>
       <div class="form-actions">
         ${submitIconButton('save', t('sportsProviders.save'))}
-        <button class="secondary" type="button" data-provider-toggle="${escapeHtml(provider.provider)}" data-enabled="${provider.enabled ? 'false' : 'true'}">
-          ${escapeHtml(provider.enabled ? t('sportsProviders.disable') : t('sportsProviders.enable'))}
-        </button>
+        ${iconOnlyButton('plugOff', provider.enabled ? t('sportsProviders.disable') : t('sportsProviders.enable'), `data-provider-toggle="${escapeHtml(provider.provider)}" data-enabled="${provider.enabled ? 'false' : 'true'}"`)}
       </div>
       ${scopedMessage('provedorEsportivo')}
     </form>
@@ -2097,17 +2125,46 @@ content.addEventListener('click', (event) => {
   const tokenCopy = event.target.closest('[data-provider-token-copy]');
   if (tokenCopy) {
     const provider = tokenCopy.dataset.providerTokenCopy;
-    const token = state.providerTokens[provider]?.token || '';
-    if (!token) return;
-    navigator.clipboard?.writeText(token)
+    const copyToken = (token) => (navigator.clipboard?.writeText
+      ? navigator.clipboard.writeText(token)
+      : Promise.reject(new Error('clipboard_unavailable')))
       .then(() => setFormMessage('provedorEsportivo', t('sportsProviders.tokenCopied'), 'success'))
       .catch(() => setFormMessage('provedorEsportivo', t('sportsProviders.copyTokenError'), 'error'));
+    const token = state.providerTokens[provider]?.token || '';
+    if (token) {
+      copyToken(token);
+      return;
+    }
+    api(`/provedores-esportivos/${provider}/token`)
+      .then((result) => {
+        state.providerTokens[provider] = { token: result.apiToken || '', visible: false };
+        return copyToken(result.apiToken || '');
+      })
+      .catch((error) => setFormMessage('provedorEsportivo', error.message, 'error'));
+    return;
+  }
+
+  const shieldRemove = event.target.closest('[data-team-shield-remove]');
+  if (shieldRemove) {
+    event.preventDefault();
+    removeTeamShieldUpload(shieldRemove.closest('[data-crud-form="times"]'));
     return;
   }
 
   const externalImportToggle = event.target.closest('[data-toggle-external-import]');
   if (externalImportToggle) {
     state.externalMatchImport.open = !state.externalMatchImport.open;
+    clearFormMessage('externalMatchImport');
+    navigate(state.route);
+    return;
+  }
+
+  const clearExternalImportFilters = event.target.closest('[data-clear-external-import-filters]');
+  if (clearExternalImportFilters) {
+    state.externalMatchImport.filters = {};
+    state.externalMatchImport.matches = [];
+    state.externalMatchImport.selectedIds = [];
+    state.externalMatchImport.summary = null;
     clearFormMessage('externalMatchImport');
     navigate(state.route);
     return;
@@ -2195,12 +2252,36 @@ content.addEventListener('change', (event) => {
   }
 });
 
+content.addEventListener('dragover', (event) => {
+  const uploadCard = event.target.closest('.upload-card');
+  if (!uploadCard) return;
+  event.preventDefault();
+  uploadCard.classList.add('drag-over');
+});
+
+content.addEventListener('dragleave', (event) => {
+  const uploadCard = event.target.closest('.upload-card');
+  if (!uploadCard) return;
+  uploadCard.classList.remove('drag-over');
+});
+
+content.addEventListener('drop', (event) => {
+  const uploadCard = event.target.closest('.upload-card');
+  if (!uploadCard) return;
+  event.preventDefault();
+  uploadCard.classList.remove('drag-over');
+  const input = uploadCard.querySelector('[data-team-shield-upload]');
+  if (!input || !event.dataTransfer?.files?.length) return;
+  input.files = event.dataTransfer.files;
+  readTeamShieldFile(input);
+});
+
 content.addEventListener('submit', (event) => {
   const externalMatchImportSearchForm = event.target.closest('[data-external-match-import-search]');
   if (externalMatchImportSearchForm) {
     event.preventDefault();
     searchExternalMatchesForImport(externalMatchImportSearchForm).catch((error) => {
-      setFormMessage('externalMatchImport', error.message, 'error');
+      setFormMessage('externalMatchImport', t('externalMatches.searchError'), 'error');
     });
     return;
   }

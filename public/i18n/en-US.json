@@ -353,7 +353,9 @@
     "shieldUpload": "Upload badge",
     "shieldUploadHelp": "PNG, JPG, WEBP, or SVG up to 512 KB. The badge URL will be filled automatically.",
     "shieldPreview": "Badge preview",
-    "invalidShieldUpload": "Upload a valid image up to 512 KB."
+    "invalidShieldUpload": "Upload a valid image up to 512 KB.",
+    "badgeUrl": "Badge URL",
+    "removeShieldUpload": "Remove badge upload"
   },
   "messages": {
     "noActivePool": "No active pool found for this session.",
@@ -395,7 +397,8 @@
     "hideToken": "Hide token",
     "copyToken": "Copy token",
     "tokenCopied": "Token copied.",
-    "copyTokenError": "Could not copy the token."
+    "copyTokenError": "Could not copy the token.",
+    "providerStatus": "Status: {status}"
   },
   "externalMatches": {
     "title": "External match linking",
@@ -433,6 +436,8 @@
     "linked": "Match linked successfully.",
     "selectLinkedLocal": "Select a local match that already has an external link.",
     "confirmUnlink": "Remove the external link from \"{local}\"?",
-    "unlinked": "External link removed successfully."
+    "unlinked": "External link removed successfully.",
+    "clearFilters": "Clear filters",
+    "searchError": "Could not fetch matches. Check the filters entered."
   }
 }

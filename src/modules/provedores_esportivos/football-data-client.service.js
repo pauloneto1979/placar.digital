@@ -2,6 +2,7 @@ const { HttpError } = require('../../shared/errors/http-error');
 
 const FOOTBALL_DATA_PROVIDER = 'football-data';
 const ALLOWED_STATUS = new Set(['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'SUSPENDED', 'CANCELLED']);
+const ALLOWED_COMPETITIONS = new Set(['WC', 'CL', 'BL1', 'DED', 'BSA', 'PD', 'FL1', 'ELC', 'PPL', 'EC', 'SA', 'PL']);
 
 function clean(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -26,7 +27,12 @@ function normalizeStatus(value) {
 }
 
 function normalizeCompetition(value) {
-  return clean(value).replace(/\s+/g, '').toUpperCase();
+  const competition = clean(value).replace(/\s+/g, '').toUpperCase();
+  if (!competition) return '';
+  if (!ALLOWED_COMPETITIONS.has(competition)) {
+    throw new HttpError(400, 'invalid_football_data_competition', 'Competicao externa invalida.');
+  }
+  return competition;
 }
 
 function scoreValue(value) {
@@ -87,6 +93,10 @@ function buildQuery(query) {
   const status = normalizeStatus(query.status);
   const competition = normalizeCompetition(query.competition || query.competitions);
 
+  if (dateFrom && dateTo && dateFrom > dateTo) {
+    throw new HttpError(400, 'invalid_football_data_date_range', 'Data inicial deve ser menor ou igual a data final.');
+  }
+
   if (dateFrom) params.set('dateFrom', dateFrom);
   if (dateTo) params.set('dateTo', dateTo);
   if (status) params.set('status', status);
@@ -141,8 +151,12 @@ function createFootballDataClientService(factory, repository, options = {}) {
       if (response.status === 429) {
         throw new HttpError(429, 'football_data_rate_limit', 'Limite de requisicoes da football-data atingido.');
       }
+      if (response.status === 400) {
+        throw new HttpError(400, 'football_data_invalid_filters', 'Nao foi possivel buscar as partidas. Verifique os filtros informados.');
+      }
       if (!response.ok) {
-        throw new HttpError(502, 'football_data_provider_error', `football-data retornou HTTP ${response.status}.`);
+        console.warn(`[football-data] Consulta de partidas retornou HTTP ${response.status}.`);
+        throw new HttpError(502, 'football_data_provider_error', 'football-data retornou erro ao consultar partidas.');
       }
 
       const body = await response.json().catch(() => ({}));
