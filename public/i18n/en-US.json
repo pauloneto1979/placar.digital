@@ -25,7 +25,9 @@
     "owner": "owner",
     "administration": "administration",
     "platform": "platform",
-    "readOnly": "read only"
+    "readOnly": "read only",
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "auth": {
     "loginTitle": "Placar.digital - Login",
@@ -314,7 +316,12 @@
     "settingsSaved": "Settings saved.",
     "poolAdmins": "Pool administrators",
     "linkedPools": "Linked pools",
-    "noAvailableAdmins": "No active administrator available."
+    "noAvailableAdmins": "No active administrator available.",
+    "editUser": "Edit user",
+    "noLinkedPools": "No linked pools",
+    "linkedPoolsHelp": "Select the pools this administrator can access.",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password"
   },
   "admin": {
     "participants": "Participants",

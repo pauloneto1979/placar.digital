@@ -25,7 +25,9 @@
     "owner": "proprietário",
     "administration": "administração",
     "platform": "plataforma",
-    "readOnly": "somente leitura"
+    "readOnly": "somente leitura",
+    "close": "Fechar",
+    "cancel": "Cancelar"
   },
   "auth": {
     "loginTitle": "Placar.digital - Login",
@@ -313,8 +315,13 @@
     "saveSettings": "Salvar configurações",
     "settingsSaved": "Configurações salvas.",
     "poolAdmins": "Administradores do bol?o",
-    "linkedPools": "Bol?es vinculados",
-    "noAvailableAdmins": "Nenhum administrador ativo dispon?vel."
+    "linkedPools": "Bolões vinculados",
+    "noAvailableAdmins": "Nenhum administrador ativo dispon?vel.",
+    "editUser": "Editar usuário",
+    "noLinkedPools": "Sem bolões vinculados",
+    "linkedPoolsHelp": "Marque os bolões que este administrador pode acessar.",
+    "newPassword": "Nova senha",
+    "confirmNewPassword": "Confirmar nova senha"
   },
   "admin": {
     "participants": "Participantes",

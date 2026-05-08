@@ -25,7 +25,9 @@
     "owner": "propietario",
     "administration": "administración",
     "platform": "plataforma",
-    "readOnly": "solo lectura"
+    "readOnly": "solo lectura",
+    "close": "Cerrar",
+    "cancel": "Cancelar"
   },
   "auth": {
     "loginTitle": "Placar.digital - Login",
@@ -314,7 +316,12 @@
     "settingsSaved": "Configuraciones guardadas.",
     "poolAdmins": "Administradores de la porra",
     "linkedPools": "Porras vinculadas",
-    "noAvailableAdmins": "No hay administrador activo disponible."
+    "noAvailableAdmins": "No hay administrador activo disponible.",
+    "editUser": "Editar usuario",
+    "noLinkedPools": "Sin porras vinculadas",
+    "linkedPoolsHelp": "Marca las porras a las que este administrador puede acceder.",
+    "newPassword": "Nueva contraseña",
+    "confirmNewPassword": "Confirmar nueva contraseña"
   },
   "admin": {
     "participants": "Participantes",

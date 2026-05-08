@@ -20,7 +20,8 @@
     selectedIds: [],
     summary: null
   },
-  providerTokens: {}
+  providerTokens: {},
+  userEditorId: ''
 };
 
 const content = document.querySelector('#content');
@@ -289,7 +290,8 @@ const ICONS = {
   plugOff: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7.6 3 1.4 1.4L7.4 6H10V3h2v5h1.2l2.4 2.4L21 15.8 19.6 17.2 3 4.4 4.4 3l2 2L7.6 3Zm7.8 11.2L16 14v-2.6L18.6 14 17.2 15.4l-1.8-1.2ZM8.8 10H6v4a5 5 0 0 0 4 4.9V22h2v-3.1a5 5 0 0 0 2.2-.9l-1.5-1.5A3 3 0 0 1 8 14v-2.8l.8-1.2ZM17 3h-2v3h2V3Z"/></svg></span>',
   eye: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5c5 0 8.7 4.4 9.7 5.8a2 2 0 0 1 0 2.4C20.7 14.6 17 19 12 19s-8.7-4.4-9.7-5.8a2 2 0 0 1 0-2.4C3.3 9.4 7 5 12 5Zm0 2c-4 0-7.1 3.5-8 5 0 0 3.4 5 8 5s8-5 8-5c-.9-1.5-4-5-8-5Zm0 2.5A2.5 2.5 0 1 1 12 14a2.5 2.5 0 0 1 0-5Z"/></svg></span>',
   copy: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 7a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-1v1a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h1V7Zm2 1h4a3 3 0 0 1 3 3v4h1a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v1Zm-3 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1H7Z"/></svg></span>',
-  upload: '<span class="button-icon button-icon--upload" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 16h2V8.8l2.6 2.6L17 10l-5-5-5 5 1.4 1.4L11 8.8V16Zm-5 4h12a2 2 0 0 0 2-2v-3h-2v3H6v-3H4v3a2 2 0 0 0 2 2Z"/></svg></span>'
+  upload: '<span class="button-icon button-icon--upload" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 16h2V8.8l2.6 2.6L17 10l-5-5-5 5 1.4 1.4L11 8.8V16Zm-5 4h12a2 2 0 0 0 2-2v-3h-2v3H6v-3H4v3a2 2 0 0 0 2 2Z"/></svg></span>',
+  x: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z"/></svg></span>'
 };
 
 function withIcon(name, label) {
@@ -1157,6 +1159,81 @@ function editableRow(kind, row, title, subtitle, badge = '') {
   `;
 }
 
+function usuarioRow(row, boloes) {
+  const poolMap = new Map((boloes || []).map((bolao) => [String(bolao.id), bolao.nome]));
+  const linkedPools = (row.bolaoIds || [])
+    .map((id) => poolMap.get(String(id)))
+    .filter(Boolean);
+  const isAdmin = row.perfil === 'administrador';
+  return `
+    <article class="row-card user-row">
+      <div class="user-row__main">
+        <strong>${escapeHtml(row.nome)}</strong>
+        <p class="muted">${escapeHtml(row.email || '')}</p>
+        <div class="pill-list">
+          <span class="pill">${escapeHtml(badgeLabel(row.perfil || row.status))}</span>
+          <span class="pill">${escapeHtml(statusLabel(row.ativo !== false ? 'ativo' : 'inativo'))}</span>
+          ${isAdmin
+            ? (linkedPools.length
+              ? linkedPools.map((nome) => `<span class="pill admin-pool-pill">${escapeHtml(nome)}</span>`).join('')
+              : `<span class="pill admin-pool-pill admin-pool-pill--empty">${escapeHtml(t('owner.noLinkedPools'))}</span>`)
+            : ''}
+        </div>
+      </div>
+      <div class="actions">
+        <button class="secondary" type="button" data-edit-kind="usuarios" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderUsuarioEditorModal(row, boloes) {
+  if (!row) return '';
+  const isAdmin = row.perfil === 'administrador';
+  return `
+    <div class="modal-backdrop" data-close-user-editor>
+      <section class="modal-card user-editor-modal" role="dialog" aria-modal="true" aria-labelledby="userEditorTitle" data-modal-card>
+        <div class="card-title">
+          <div>
+            <h2 id="userEditorTitle">${escapeHtml(t('owner.editUser'))}</h2>
+            <p class="muted">${escapeHtml(row.email || '')}</p>
+          </div>
+          ${iconOnlyButton('x', t('common.close'), 'data-close-user-editor')}
+        </div>
+        <form class="form-card" data-crud-form="usuarios">
+          <input name="id" type="hidden" value="${escapeHtml(row.id)}">
+          <label>${escapeHtml(t('owner.name'))} <input name="nome" required value="${escapeHtml(row.nome || '')}"></label>
+          <label>${escapeHtml(t('auth.email'))} <input name="email" type="email" required value="${escapeHtml(row.email || '')}"></label>
+          <label>${escapeHtml(t('owner.newPassword'))} <input name="senha" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"></label>
+          <label>${escapeHtml(t('owner.confirmNewPassword'))} <input name="confirmarSenha" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"></label>
+          <label>${escapeHtml(t('owner.profile'))}
+            <select name="perfil">
+              <option value="administrador" ${row.perfil === 'administrador' ? 'selected' : ''}>${escapeHtml(t('roles.administrador'))}</option>
+              <option value="proprietario" ${row.perfil === 'proprietario' ? 'selected' : ''}>${escapeHtml(t('roles.proprietario'))}</option>
+            </select>
+          </label>
+          <label>${escapeHtml(t('owner.status'))}
+            <select name="status">
+              <option value="ativo" ${row.ativo !== false ? 'selected' : ''}>${escapeHtml(statusLabel('ativo'))}</option>
+              <option value="inativo" ${row.ativo === false ? 'selected' : ''}>${escapeHtml(statusLabel('inativo'))}</option>
+            </select>
+          </label>
+          <fieldset class="link-fieldset" data-admin-links-section ${isAdmin ? '' : 'hidden'}>
+            <legend>${escapeHtml(t('owner.linkedPools'))}</legend>
+            <p class="muted">${escapeHtml(t('owner.linkedPoolsHelp'))}</p>
+            ${renderCheckboxGroup('bolaoIds', boloes || [], row.bolaoIds || [], t('owner.noPools'))}
+          </fieldset>
+          <div class="form-actions">
+            ${submitIconButton('save', t('owner.saveUser'))}
+            <button class="ghost" type="button" data-close-user-editor>${escapeHtml(t('common.cancel'))}</button>
+          </div>
+          ${scopedMessage('usuarios')}
+        </form>
+      </section>
+    </div>
+  `;
+}
+
 function regraActions(row, index, rows) {
   const buttons = [];
   if (index > 0) {
@@ -1278,17 +1355,15 @@ async function renderUsuariosOwner() {
             <option value="inativo">${escapeHtml(statusLabel('inativo'))}</option>
           </select>
         </label>
-        <fieldset class="link-fieldset" data-admin-links-section>
-          <legend>${escapeHtml(t('owner.linkedPools'))}</legend>
-          ${renderCheckboxGroup('bolaoIds', boloes.filter((bolao) => bolao.ativo !== false), [], t('owner.noPools'))}
-        </fieldset>
         <div class="form-actions">
           ${submitIconButton('save', t('owner.saveUser'))}
           ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="usuarios"')}
         </div>
+        ${scopedMessage('usuarios')}
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('usuarios', row, row.nome, row.email, row.perfil || row.status)).join('') || empty(t('owner.noUsers'))}</div></section>
+    <section class="card"><div class="list">${rows.map((row) => usuarioRow(row, boloes)).join('') || empty(t('owner.noUsers'))}</div></section>
+    ${renderUsuarioEditorModal(findById(rows, state.userEditorId), boloes)}
   `;
 }
 
@@ -2005,6 +2080,7 @@ const renderers = {
 async function navigate(routeId) {
   const route = routes.find((item) => item.id === routeId && routeAllowed(item));
   state.route = route ? route.id : 'home';
+  if (state.route !== 'usuarios') state.userEditorId = '';
   renderChrome();
   content.innerHTML = loadingMarkup();
   try {
@@ -2213,6 +2289,10 @@ async function submitCrud(kind, form) {
     delete data.escudoUpload;
   }
 
+  if (kind === 'usuarios') {
+    data.bolaoIds = data.perfil === 'administrador' ? (data.bolaoIds || []) : [];
+  }
+
   if (kind === 'partidas') {
     if (!data.timeMandanteId || !data.timeVisitanteId) {
       throw new Error(t('admin.matchTeamsRequired'));
@@ -2243,11 +2323,24 @@ async function submitCrud(kind, form) {
     return;
   }
 
+  if (kind === 'usuarios') {
+    state.userEditorId = '';
+    state.formMessages.usuarios = { text: id ? t('messages.recordUpdated') : t('messages.recordCreated'), tone: 'success' };
+    await navigate(state.route);
+    return;
+  }
+
   showMessage(id ? t('messages.recordUpdated') : t('messages.recordCreated'));
   await navigate(state.route);
 }
 
 function editCrud(kind, id) {
+  if (kind === 'usuarios') {
+    state.userEditorId = id;
+    clearFormMessage('usuarios');
+    navigate('usuarios');
+    return;
+  }
   const row = (state.data[kind] || []).find((item) => item.id === id);
   const form = document.querySelector(`[data-crud-form="${kind}"]`);
   if (!row || !form) return;
@@ -2313,6 +2406,21 @@ content.addEventListener('click', (event) => {
   const editButton = event.target.closest('[data-edit-kind]');
   if (editButton) {
     editCrud(editButton.dataset.editKind, editButton.dataset.id);
+    return;
+  }
+
+  const closeUserEditor = event.target.closest('[data-close-user-editor]');
+  if (closeUserEditor && !event.target.closest('[data-modal-card]')) {
+    state.userEditorId = '';
+    clearFormMessage('usuarios');
+    navigate('usuarios');
+    return;
+  }
+
+  if (event.target.closest('button[data-close-user-editor]')) {
+    state.userEditorId = '';
+    clearFormMessage('usuarios');
+    navigate('usuarios');
     return;
   }
 
@@ -2536,7 +2644,7 @@ content.addEventListener('submit', (event) => {
   if (!form) return;
   event.preventDefault();
   submitCrud(form.dataset.crudForm, form).catch((error) => {
-    if (RULE_FORM_KINDS.has(form.dataset.crudForm) || PROFILE_FORM_KINDS.has(form.dataset.crudForm) || ['provedorEsportivo', 'emailConfiguracao', 'emailTeste'].includes(form.dataset.crudForm)) {
+    if (RULE_FORM_KINDS.has(form.dataset.crudForm) || PROFILE_FORM_KINDS.has(form.dataset.crudForm) || ['provedorEsportivo', 'emailConfiguracao', 'emailTeste', 'usuarios'].includes(form.dataset.crudForm)) {
       setFormMessage(form.dataset.crudForm, error.message, 'error');
       return;
     }

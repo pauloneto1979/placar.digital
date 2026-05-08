@@ -799,6 +799,29 @@ select option {
   text-transform: none;
 }
 
+.pill-list {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  max-width: 100%;
+}
+
+.admin-pool-pill {
+  background: rgba(200, 255, 46, 0.075);
+  border-color: rgba(200, 255, 46, 0.34);
+  color: var(--accent);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.admin-pool-pill--empty {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border);
+  color: var(--muted);
+}
+
 .list {
   display: grid;
   gap: 12px;
@@ -825,6 +848,14 @@ select option {
 
 .row-card {
   grid-template-columns: 1fr;
+}
+
+.user-row {
+  overflow: hidden;
+}
+
+.user-row__main {
+  min-width: 0;
 }
 
 .match-card {
@@ -1048,6 +1079,38 @@ select option {
 .modern-checkbox__text small {
   color: var(--muted);
   font-weight: 700;
+}
+
+.modal-backdrop {
+  align-items: center;
+  background: rgba(2, 8, 14, 0.78);
+  backdrop-filter: blur(14px);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 18px;
+  position: fixed;
+  z-index: 50;
+}
+
+.modal-card {
+  background: linear-gradient(180deg, rgba(12, 30, 45, 0.98), rgba(6, 15, 24, 0.98));
+  border: 1px solid rgba(200, 255, 46, 0.18);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(33, 212, 253, 0.08);
+  max-height: calc(100vh - 32px);
+  max-width: 920px;
+  overflow: auto;
+  padding: clamp(16px, 3vw, 24px);
+  width: min(920px, 100%);
+}
+
+.user-editor-modal .form-card {
+  margin-top: 14px;
+}
+
+.user-editor-modal .link-fieldset {
+  grid-column: 1 / -1;
 }
 
 .flag-field input {
