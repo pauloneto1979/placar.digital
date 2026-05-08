@@ -21,13 +21,17 @@ function payload(body) {
   };
 }
 function createTimesService(repository) {
-  async function ensure(id) { const item = await repository.findById(id); if (!item) throw new HttpError(404, 'team_not_found', 'Time nao encontrado.'); return item; }
+  async function ensure(id, bolaoId) {
+    const item = await repository.findById(id);
+    if (!item || !(await repository.belongsToBolao(id, bolaoId))) throw new HttpError(404, 'team_not_found', 'Time nao encontrado.');
+    return item;
+  }
   return {
     getStatus() { return { module: 'times', implemented: true }; },
-    async list(bolaoId, auth) { await ensureCanAdminBolao(auth, bolaoId); return repository.list(); },
-    async create(bolaoId, body, auth) { await ensureCanAdminBolao(auth, bolaoId); return repository.create(payload(body)); },
-    async update(bolaoId, id, body, auth) { await ensureCanAdminBolao(auth, bolaoId); await ensure(id); return repository.update(id, payload(body)); },
-    async updateStatus(bolaoId, id, body, auth) { await ensureCanAdminBolao(auth, bolaoId); await ensure(id); return repository.updateStatus(id, body.status ? body.status === 'ativo' : body.ativo === true); }
+    async list(bolaoId, auth) { await ensureCanAdminBolao(auth, bolaoId); return repository.list(bolaoId); },
+    async create(bolaoId, body, auth) { await ensureCanAdminBolao(auth, bolaoId); return repository.create(bolaoId, payload(body)); },
+    async update(bolaoId, id, body, auth) { await ensureCanAdminBolao(auth, bolaoId); await ensure(id, bolaoId); return repository.update(id, payload(body)); },
+    async updateStatus(bolaoId, id, body, auth) { await ensureCanAdminBolao(auth, bolaoId); await ensure(id, bolaoId); return repository.updateStatus(id, body.status ? body.status === 'ativo' : body.ativo === true); }
   };
 }
 module.exports = { createTimesService };

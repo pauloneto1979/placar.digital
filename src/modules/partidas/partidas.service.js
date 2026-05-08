@@ -114,7 +114,7 @@ function createPartidasService(repository, options = {}) {
     if (data.faseId && !(await repository.faseBelongsToBolao(data.faseId, data.bolaoId))) {
       throw new HttpError(422, 'invalid_match_phase', 'Fase nao pertence ao bolao.');
     }
-    if (!(await repository.timeAtivo(data.timeMandanteId)) || !(await repository.timeAtivo(data.timeVisitanteId))) {
+    if (!(await repository.timeAtivoNoBolao(data.timeMandanteId, data.bolaoId)) || !(await repository.timeAtivoNoBolao(data.timeVisitanteId, data.bolaoId))) {
       throw new HttpError(422, 'inactive_match_team', 'Times devem estar ativos.');
     }
   }

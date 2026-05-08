@@ -71,6 +71,21 @@ async function timeAtivo(id) {
   const result = await query('select 1 from times where id=$1 and ativo=true limit 1', [id]);
   return result.rowCount > 0;
 }
+async function timeAtivoNoBolao(id, bolaoId) {
+  const result = await query(
+    `
+      select 1
+      from times t
+      join boloes_times bt on bt.time_id = t.id
+      where t.id = $1
+        and bt.bolao_id = $2
+        and t.ativo = true
+      limit 1
+    `,
+    [id, bolaoId]
+  );
+  return result.rowCount > 0;
+}
 async function create(data) {
   const result = await query(
     `
@@ -156,9 +171,19 @@ async function importExternalMatches(items) {
       return result.rows[0] || null;
     }
 
-    async function ensureTeam(team) {
+    async function linkTeamToBolao(bolaoId, timeId) {
+      await client.query(
+        'insert into boloes_times (bolao_id,time_id) values ($1,$2) on conflict (bolao_id,time_id) do nothing',
+        [bolaoId, timeId]
+      );
+    }
+
+    async function ensureTeam(team, bolaoId) {
       const existing = await findTeam(team);
-      if (existing) return existing;
+      if (existing) {
+        await linkTeamToBolao(bolaoId, existing.id);
+        return existing;
+      }
 
       const result = await client.query(
         `
@@ -181,6 +206,7 @@ async function importExternalMatches(items) {
         nome: result.rows[0].nome,
         footballDataTeamId: result.rows[0].football_data_team_id
       });
+      await linkTeamToBolao(bolaoId, result.rows[0].id);
       return result.rows[0];
     }
 
@@ -198,8 +224,8 @@ async function importExternalMatches(items) {
         continue;
       }
 
-      const mandante = await ensureTeam(item.mandante);
-      const visitante = await ensureTeam(item.visitante);
+      const mandante = await ensureTeam(item.mandante, item.bolaoId);
+      const visitante = await ensureTeam(item.visitante, item.bolaoId);
 
       if (!mandante || !visitante) {
         skipped(item, 'team_ambiguous');
@@ -269,4 +295,4 @@ async function createAuditLog(data) {
     [data.usuarioId, data.bolaoId, data.entidade, data.entidadeId, data.acao, JSON.stringify(data.dadosAnteriores), JSON.stringify(data.dadosNovos), data.ip || null, data.userAgent || null]
   );
 }
-module.exports = { listByBolao, findById, listByFootballDataMatchIds, findByFootballDataMatchId, faseBelongsToBolao, timeAtivo, create, update, updateExternalLink, importExternalMatches, createAuditLog };
+module.exports = { listByBolao, findById, listByFootballDataMatchIds, findByFootballDataMatchId, faseBelongsToBolao, timeAtivo, timeAtivoNoBolao, create, update, updateExternalLink, importExternalMatches, createAuditLog };

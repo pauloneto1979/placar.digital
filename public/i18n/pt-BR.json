@@ -515,5 +515,13 @@
     "testSent": "E-mail de teste enviado com sucesso.",
     "lastUpdate": "Atualizado em {date}",
     "noPreviousConfig": "Nenhuma configuração salva ainda."
+  },
+  "matchTabs": {
+    "label": "Filtros de partidas",
+    "inProgress": "Em andamento",
+    "scheduled": "Agendadas",
+    "finished": "Finalizadas",
+    "canceled": "Canceladas",
+    "inactive": "Inativas"
   }
 }

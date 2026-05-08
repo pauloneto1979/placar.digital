@@ -139,20 +139,32 @@ input[readonly] {
 
 .password-field {
   align-items: center;
-  display: flex;
-  gap: 8px;
+  display: block;
   max-width: 100%;
   min-width: 0;
+  position: relative;
   width: 100%;
 }
 
 .password-field input {
-  flex: 1 1 auto;
   min-width: 0;
+  padding-right: calc(var(--tap) + 16px);
 }
 
 .password-field .password-toggle {
-  flex: 0 0 var(--tap);
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(159, 188, 215, 0.18);
+  min-height: 38px;
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  z-index: 1;
+}
+
+.password-field .password-toggle:hover {
+  transform: translateY(-50%);
 }
 
 label {
@@ -887,6 +899,56 @@ select option {
 
 .row-card {
   grid-template-columns: 1fr;
+}
+
+.status-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  scrollbar-width: thin;
+}
+
+.status-tab {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(159, 188, 215, 0.18);
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  min-height: 42px;
+  padding: 9px 12px;
+  white-space: nowrap;
+}
+
+.status-tab strong {
+  align-items: center;
+  background: rgba(33, 212, 253, 0.12);
+  border: 1px solid rgba(33, 212, 253, 0.22);
+  border-radius: 999px;
+  color: var(--cyan);
+  display: inline-flex;
+  font-size: 0.78rem;
+  justify-content: center;
+  min-width: 28px;
+  padding: 3px 7px;
+}
+
+.status-tab.active {
+  background: rgba(200, 255, 46, 0.1);
+  border-color: rgba(200, 255, 46, 0.36);
+  box-shadow: 0 0 0 3px rgba(200, 255, 46, 0.08);
+  color: var(--accent);
+}
+
+.status-tab.active strong {
+  background: rgba(200, 255, 46, 0.14);
+  border-color: rgba(200, 255, 46, 0.34);
+  color: var(--accent);
 }
 
 .user-row {

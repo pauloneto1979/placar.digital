@@ -22,6 +22,7 @@
   },
   providerTokens: {},
   userEditorId: '',
+  partidasStatusTab: 'em_andamento',
   mobileMoreOpen: false
 };
 
@@ -63,6 +64,14 @@ const PRIZE_DISTRIBUTION_OPTIONS = [
   { value: 'percentual', labelKey: 'options.prizeDistribution.percentual' },
   { value: 'fixo', labelKey: 'options.prizeDistribution.fixo' },
   { value: 'vencedor_leva_tudo', labelKey: 'options.prizeDistribution.vencedor_leva_tudo' }
+];
+
+const MATCH_STATUS_TABS = [
+  { id: 'em_andamento', labelKey: 'matchTabs.inProgress', statuses: ['em_andamento'], sort: 'asc' },
+  { id: 'agendada', labelKey: 'matchTabs.scheduled', statuses: ['agendada'], sort: 'asc' },
+  { id: 'finalizada', labelKey: 'matchTabs.finished', statuses: ['finalizada', 'encerrada'], sort: 'desc' },
+  { id: 'cancelada', labelKey: 'matchTabs.canceled', statuses: ['cancelada'], sort: 'desc' },
+  { id: 'inativa', labelKey: 'matchTabs.inactive', statuses: ['inativa'], sort: 'desc' }
 ];
 
 const FOOTBALL_COMPETITIONS = [
@@ -388,6 +397,7 @@ const ICONS = {
   plus: '<span class="button-icon button-icon--add" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg></span>',
   plugOff: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7.6 3 1.4 1.4L7.4 6H10V3h2v5h1.2l2.4 2.4L21 15.8 19.6 17.2 3 4.4 4.4 3l2 2L7.6 3Zm7.8 11.2L16 14v-2.6L18.6 14 17.2 15.4l-1.8-1.2ZM8.8 10H6v4a5 5 0 0 0 4 4.9V22h2v-3.1a5 5 0 0 0 2.2-.9l-1.5-1.5A3 3 0 0 1 8 14v-2.8l.8-1.2ZM17 3h-2v3h2V3Z"/></svg></span>',
   eye: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5c5 0 8.7 4.4 9.7 5.8a2 2 0 0 1 0 2.4C20.7 14.6 17 19 12 19s-8.7-4.4-9.7-5.8a2 2 0 0 1 0-2.4C3.3 9.4 7 5 12 5Zm0 2c-4 0-7.1 3.5-8 5 0 0 3.4 5 8 5s8-5 8-5c-.9-1.5-4-5-8-5Zm0 2.5A2.5 2.5 0 1 1 12 14a2.5 2.5 0 0 1 0-5Z"/></svg></span>',
+  eyeOff: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4.4 3 16.6 16.6-1.4 1.4-3-3A10.2 10.2 0 0 1 12 19c-5 0-8.7-4.4-9.7-5.8a2 2 0 0 1 0-2.4 18.5 18.5 0 0 1 3.1-3.3L3 4.4 4.4 3Zm2.5 5.9A16 16 0 0 0 4 12s3.4 5 8 5c1.1 0 2.1-.2 3-.6l-2-2a2.5 2.5 0 0 1-3.4-3.4L6.9 8.9ZM12 5c5 0 8.7 4.4 9.7 5.8a2 2 0 0 1 0 2.4 17.6 17.6 0 0 1-2.2 2.5l-3.1-3.1A2.5 2.5 0 0 0 13 9.5L10.7 7.2c.4-.1.8-.2 1.3-.2Zm0 2c-.1 0-.2 0-.3.1L14 9.4a2.5 2.5 0 0 1 .6.6l3.4 3.4A12 12 0 0 0 20 12s-3.4-5-8-5Z"/></svg></span>',
   copy: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 7a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-1v1a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h1V7Zm2 1h4a3 3 0 0 1 3 3v4h1a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v1Zm-3 2a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1H7Z"/></svg></span>',
   upload: '<span class="button-icon button-icon--upload" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M11 16h2V8.8l2.6 2.6L17 10l-5-5-5 5 1.4 1.4L11 8.8V16Zm-5 4h12a2 2 0 0 0 2-2v-3h-2v3H6v-3H4v3a2 2 0 0 0 2 2Z"/></svg></span>',
   x: '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z"/></svg></span>'
@@ -484,6 +494,38 @@ function localDateTimeWithOffset(value) {
   const absolute = Math.abs(offsetMinutes);
   const pad = (item) => String(item).padStart(2, '0');
   return `${normalized}${sign}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;
+}
+
+function matchTabConfig(tabId) {
+  return MATCH_STATUS_TABS.find((tab) => tab.id === tabId) || MATCH_STATUS_TABS[0];
+}
+
+function sortedMatchesForTab(rows, tabId) {
+  const tab = matchTabConfig(tabId);
+  return rows
+    .filter((row) => tab.statuses.includes(row.status))
+    .sort((a, b) => {
+      const dateA = new Date(gameDateValue(a)).getTime() || 0;
+      const dateB = new Date(gameDateValue(b)).getTime() || 0;
+      return tab.sort === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+}
+
+function renderMatchTabs(rows) {
+  return `
+    <div class="status-tabs" role="tablist" aria-label="${escapeHtml(t('matchTabs.label'))}">
+      ${MATCH_STATUS_TABS.map((tab) => {
+        const count = rows.filter((row) => tab.statuses.includes(row.status)).length;
+        const active = tab.id === state.partidasStatusTab;
+        return `
+          <button class="status-tab ${active ? 'active' : ''}" type="button" role="tab" aria-selected="${active ? 'true' : 'false'}" data-match-status-tab="${escapeHtml(tab.id)}">
+            <span>${escapeHtml(t(tab.labelKey))}</span>
+            <strong>${escapeHtml(count)}</strong>
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
 
 function formPayload(form) {
@@ -1739,6 +1781,10 @@ async function renderPartidasAdmin() {
   state.data.partidas = rows;
   state.data.fases = fases;
   state.data.times = times;
+  if (!MATCH_STATUS_TABS.some((tab) => tab.id === state.partidasStatusTab)) {
+    state.partidasStatusTab = MATCH_STATUS_TABS[0].id;
+  }
+  const visibleRows = sortedMatchesForTab(rows, state.partidasStatusTab);
   const partidaRow = (row) => {
     const mandante = findById(times, row.timeMandanteId) || { nome: row.timeMandanteId };
     const visitante = findById(times, row.timeVisitanteId) || { nome: row.timeVisitanteId };
@@ -1794,7 +1840,10 @@ async function renderPartidasAdmin() {
       </form>
     </section>
     ${state.externalMatchImport.open ? renderExternalImportPanel(rows) : ''}
-    <section class="card"><div class="list">${rows.map(partidaRow).join('') || empty(t('admin.noMatches'))}</div></section>
+    <section class="card">
+      ${renderMatchTabs(rows)}
+      <div class="list">${visibleRows.map(partidaRow).join('') || empty(t('admin.noMatches'))}</div>
+    </section>
   `;
 }
 
@@ -2649,6 +2698,7 @@ content.addEventListener('click', (event) => {
     const label = visible ? t('common.showPassword') : t('common.hidePassword');
     passwordToggle.setAttribute('aria-label', label);
     passwordToggle.setAttribute('title', label);
+    passwordToggle.innerHTML = iconOnly(visible ? 'eye' : 'eyeOff', label);
     return;
   }
 
@@ -2664,6 +2714,13 @@ content.addEventListener('click', (event) => {
     input.dispatchEvent(new Event('input', { bubbles: true }));
     betAdjust.classList.add('tap');
     window.setTimeout(() => betAdjust.classList.remove('tap'), 160);
+    return;
+  }
+
+  const matchStatusTab = event.target.closest('[data-match-status-tab]');
+  if (matchStatusTab) {
+    state.partidasStatusTab = matchStatusTab.dataset.matchStatusTab || MATCH_STATUS_TABS[0].id;
+    navigate('partidas');
     return;
   }
 

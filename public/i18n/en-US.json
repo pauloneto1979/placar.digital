@@ -515,5 +515,13 @@
     "testSent": "Test email sent successfully.",
     "lastUpdate": "Updated at {date}",
     "noPreviousConfig": "No configuration saved yet."
+  },
+  "matchTabs": {
+    "label": "Match filters",
+    "inProgress": "In progress",
+    "scheduled": "Scheduled",
+    "finished": "Finished",
+    "canceled": "Canceled",
+    "inactive": "Inactive"
   }
 }

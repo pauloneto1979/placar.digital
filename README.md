@@ -24,6 +24,7 @@ Funcionalidades implementadas:
 - Cadastro de participantes/apostadores com criação/vínculo de credencial de login.
 - Fases, times, partidas, pagamentos, apostas, regras, ranking e notificações.
 - Upload/URL de brasão dos times, com preview, fallback visual e validação.
+- Times vinculados por bolão; novos bolões começam sem times e recebem times por cadastro manual ou importação.
 - Importação de partidas externas pela tela de Partidas.
 - Sincronização automática de partidas vinculadas com football-data.org.
 - Status de atualização exibido no dashboard/partidas a partir da última sincronização do provider.
@@ -519,6 +520,7 @@ Migrations existentes:
 | `016_times_football_data_team_id.sql` | Campo externo football-data em times. |
 | `017_email_configuracoes.sql` | Configuração SMTP/e-mail. |
 | `018_partidas_football_data_match_id_por_bolao.sql` | Unicidade multi-tenant por bolão para partidas externas. |
+| `019_boloes_times.sql` | Vínculo multi-tenant entre bolões e times. |
 
 ### Migration 017
 
@@ -541,6 +543,14 @@ Regra final:
 UNIQUE (bolao_id, football_data_match_id)
 WHERE football_data_match_id IS NOT NULL
 ```
+
+### Migration 019
+
+Cria a tabela `boloes_times` para controlar quais times pertencem a cada bol?o. A migration faz backfill dos bol?es existentes para preservar a opera??o atual, mas bol?es criados depois da migration iniciam sem times. Times passam a ser vinculados ao bol?o ao cadastrar manualmente ou ao importar partidas externas.
+
+### Migration 019
+
+Cria a tabela `boloes_times` para controlar quais times pertencem a cada bol?o. A migration faz backfill dos bol?es existentes para preservar a opera??o atual, mas bol?es criados depois da migration iniciam sem times. Times passam a ser vinculados ao bol?o ao cadastrar manualmente ou ao importar partidas externas.
 
 ## 18. Troubleshooting
 
