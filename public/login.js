@@ -17,6 +17,15 @@ function syncLocaleControl() {
   }
 }
 
+function syncPasswordToggleLabels() {
+  document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+    const input = button.closest('.password-field')?.querySelector('[data-password-toggle-input]');
+    const label = input?.type === 'text' ? t('common.hidePassword') : t('common.showPassword');
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
+  });
+}
+
 function saveSession(result) {
   localStorage.setItem('placar.token', result.accessToken || '');
   localStorage.setItem('placar.user', JSON.stringify(result.user || {}));
@@ -45,11 +54,22 @@ async function postJson(path, payload) {
 i18n.ready.then(() => {
   i18n.applyI18n(document);
   syncLocaleControl();
+  syncPasswordToggleLabels();
 
   localeSelect.addEventListener('change', () => {
     i18n.setLocale(localeSelect.value).then(() => {
       syncLocaleControl();
+      syncPasswordToggleLabels();
     });
+  });
+
+  document.addEventListener('click', (event) => {
+    const toggle = event.target.closest('[data-password-toggle]');
+    if (!toggle) return;
+    const input = toggle.closest('.password-field')?.querySelector('[data-password-toggle-input]');
+    if (!input) return;
+    input.type = input.type === 'text' ? 'password' : 'text';
+    syncPasswordToggleLabels();
   });
 
   form.addEventListener('submit', async (event) => {

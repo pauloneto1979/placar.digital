@@ -51,7 +51,25 @@ async function getDashboard(bolaoId) {
         (select count(*)::int from participantes where bolao_id = $1 and papel = 'apostador' and status <> 'removido') as participantes_total,
         (select count(*)::int from partidas where bolao_id = $1 and ativo = true) as partidas_total,
         (select count(*)::int from partidas where bolao_id = $1 and status in ('finalizada', 'encerrada')) as partidas_finalizadas,
-        (select coalesce(sum(valor), 0)::numeric from pagamentos where bolao_id = $1 and status = 'pago') as total_arrecadado
+        (select coalesce(sum(valor), 0)::numeric from pagamentos where bolao_id = $1 and status = 'pago') as total_arrecadado,
+        (
+          select enabled
+          from provedores_dados_esportivos
+          where provider = 'football-data'
+          limit 1
+        ) as sports_provider_enabled,
+        (
+          select last_sync_at
+          from provedores_dados_esportivos
+          where provider = 'football-data'
+          limit 1
+        ) as sports_provider_last_sync_at,
+        (
+          select sync_interval_seconds
+          from provedores_dados_esportivos
+          where provider = 'football-data'
+          limit 1
+        ) as sports_provider_sync_interval_seconds
     `,
     [bolaoId]
   );

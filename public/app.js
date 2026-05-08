@@ -183,6 +183,17 @@ function countdownText(value) {
   return t('home.countdownMinutes', { minutes });
 }
 
+function syncStatusText(sync) {
+  if (!sync || sync.enabled === false) return t('sportsProviders.syncInactiveShort');
+  if (!sync.lastSyncAt) return t('sportsProviders.noLastSyncShort');
+  const syncTime = new Date(sync.lastSyncAt).getTime();
+  if (Number.isNaN(syncTime)) return t('sportsProviders.noLastSyncShort');
+  const diffMinutes = Math.max(0, Math.floor((Date.now() - syncTime) / 60000));
+  if (diffMinutes < 1) return t('sportsProviders.updatedNow');
+  if (diffMinutes < 60) return t('sportsProviders.updatedMinutesAgo', { minutes: diffMinutes });
+  return t('sportsProviders.updatedHoursAgo', { hours: Math.floor(diffMinutes / 60) });
+}
+
 function statusLabel(value) {
   return t(`status.${value}`, {}, value || '');
 }
@@ -427,15 +438,52 @@ function scopedMessage(kind) {
   return `<p class="message card-message" data-form-message="${kind}" data-tone="${escapeHtml(current?.tone || 'warning')}" ${current ? '' : 'hidden'}>${escapeHtml(current?.text || '')}</p>`;
 }
 
+function enhancePasswordFields(root = document) {
+  root.querySelectorAll('input[type="password"], input[data-password-toggle-input]').forEach((input) => {
+    if (input.closest('.password-field') || input.closest('.token-control-row')) return;
+    input.dataset.passwordToggleInput = 'true';
+    const wrapper = document.createElement('span');
+    wrapper.className = 'password-field';
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+    const label = t('common.showPassword');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ghost icon-action password-toggle';
+    button.setAttribute('data-password-toggle', '');
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
+    button.innerHTML = iconOnly('eye', label);
+    wrapper.appendChild(button);
+  });
+}
+
 function findById(rows, id) {
   return rows.find((row) => row.id === id) || null;
 }
 
 function dateTimeInput(value) {
   if (!value) return '';
+  const raw = String(value);
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw) && !/[zZ]|[+-]\d{2}:\d{2}$/.test(raw)) {
+    return raw.slice(0, 16);
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 16);
+  const pad = (item) => String(item).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function localDateTimeWithOffset(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const normalized = value.length === 16 ? `${value}:00` : value.slice(0, 19);
+  const offsetMinutes = -date.getTimezoneOffset();
+  const sign = offsetMinutes >= 0 ? '+' : '-';
+  const absolute = Math.abs(offsetMinutes);
+  const pad = (item) => String(item).padStart(2, '0');
+  return `${normalized}${sign}${pad(Math.floor(absolute / 60))}:${pad(absolute % 60)}`;
 }
 
 function formPayload(form) {
@@ -453,6 +501,9 @@ function formPayload(form) {
       data[key] = value;
     }
   }
+  form.querySelectorAll('input[type="datetime-local"][name]').forEach((field) => {
+    if (data[field.name]) data[field.name] = localDateTimeWithOffset(field.value);
+  });
   Object.keys(data).forEach((key) => {
     if (Array.isArray(data[key])) {
       data[key] = [...new Set(data[key].filter(Boolean))];
@@ -701,6 +752,8 @@ async function renderHome() {
   const leaderPoints = ranking.length ? Number(ranking[0].pontosAtuais ?? ranking[0].pontos_atuais ?? 0) : 0;
   const meusPontos = Number(meuRanking.pontosAtuais ?? meuRanking.pontos_atuais ?? 0);
   const gap = Math.max(0, leaderPoints - meusPontos);
+  const totalArrecadado = Number(dashboard?.totalArrecadado || 0);
+  const syncText = syncStatusText(dashboard?.sportsSync);
   const apostasPorPartida = new Map(minhas.map((item) => [String(item.partidaId), item]));
   const palpitesPendentes = minhas.filter((item) => item.statusAposta === 'sem_aposta' && item.podeAlterar).length;
   const jogosOrdenados = [...jogos].sort((a, b) => new Date(gameDateValue(a)).getTime() - new Date(gameDateValue(b)).getTime());
@@ -725,6 +778,7 @@ async function renderHome() {
       <div class="dashboard-countdown">
         <span>${escapeHtml(t('home.nextKickoff'))}</span>
         <strong>${escapeHtml(countdownText(gameDateValue(proximoJogo)))}</strong>
+        <small>${escapeHtml(syncText)}</small>
       </div>
     </section>
 
@@ -743,6 +797,11 @@ async function renderHome() {
         <span>${escapeHtml(t('home.gapToLeader'))}</span>
         <strong>${escapeHtml(gap)}</strong>
         <p>${escapeHtml(gap ? t('home.pointsBehindLeader', { points: gap }) : t('home.youAreLeader'))}</p>
+      </article>
+      <article class="card stat-card">
+        <span>${escapeHtml(t('home.collected'))}</span>
+        <strong class="stat-card__money">${escapeHtml(money(totalArrecadado))}</strong>
+        <p>${escapeHtml(t('home.collectedHint'))}</p>
       </article>
       <article class="card stat-card">
         <span>${escapeHtml(t('home.pendingGuesses'))}</span>
@@ -1188,8 +1247,11 @@ async function renderRanking() {
 }
 
 async function renderJogos() {
-  const jogos = await api(`/apostas/boloes/${state.activeBolaoId}/jogos`);
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>${escapeHtml(t('games.title'))}</h2></div><div class="list">${jogos.map(renderGameCard).join('') || empty(t('games.none'))}</div></section>`;
+  const [jogos, dashboard] = await Promise.all([
+    api(`/apostas/boloes/${state.activeBolaoId}/jogos`),
+    api(`/apostas/boloes/${state.activeBolaoId}/dashboard`).catch(() => null)
+  ]);
+  content.innerHTML = `<section class="card"><div class="card-title"><h2>${escapeHtml(t('games.title'))}</h2><span class="pill sync-pill">${escapeHtml(syncStatusText(dashboard?.sportsSync))}</span></div><div class="list">${jogos.map(renderGameCard).join('') || empty(t('games.none'))}</div></section>`;
 }
 
 async function renderRegras() {
@@ -1668,10 +1730,11 @@ async function renderTimesAdmin() {
 }
 
 async function renderPartidasAdmin() {
-  const [rows, fases, times] = await Promise.all([
+  const [rows, fases, times, dashboard] = await Promise.all([
     api(`/partidas/boloes/${state.activeBolaoId}`),
     api(`/fases/boloes/${state.activeBolaoId}`),
-    api(`/times/boloes/${state.activeBolaoId}`)
+    api(`/times/boloes/${state.activeBolaoId}`),
+    api(`/apostas/boloes/${state.activeBolaoId}/dashboard`).catch(() => null)
   ]);
   state.data.partidas = rows;
   state.data.fases = fases;
@@ -1702,6 +1765,7 @@ async function renderPartidasAdmin() {
         <h2>${escapeHtml(t('admin.matches'))}</h2>
         <div class="actions">
           <span class="pill">${escapeHtml(t('common.administration'))}</span>
+          <span class="pill sync-pill">${escapeHtml(syncStatusText(dashboard?.sportsSync))}</span>
           <button class="secondary" type="button" data-toggle-external-import>${escapeHtml(t('externalMatches.searchImportButton'))}</button>
         </div>
       </div>
@@ -2197,6 +2261,7 @@ async function navigate(routeId) {
   content.innerHTML = loadingMarkup();
   try {
     await renderers[state.route]();
+    enhancePasswordFields(content);
     renderChrome();
   } catch (error) {
     content.innerHTML = `<section class="card">${empty(error.message)}</section>`;
@@ -2574,6 +2639,19 @@ mobileMoreClose?.addEventListener('click', () => {
 });
 
 content.addEventListener('click', (event) => {
+  const passwordToggle = event.target.closest('[data-password-toggle]');
+  if (passwordToggle) {
+    const field = passwordToggle.closest('.password-field');
+    const input = field?.querySelector('[data-password-toggle-input]');
+    if (!input) return;
+    const visible = input.type === 'text';
+    input.type = visible ? 'password' : 'text';
+    const label = visible ? t('common.showPassword') : t('common.hidePassword');
+    passwordToggle.setAttribute('aria-label', label);
+    passwordToggle.setAttribute('title', label);
+    return;
+  }
+
   const betAdjust = event.target.closest('[data-bet-adjust]');
   if (betAdjust) {
     const card = betAdjust.closest('[data-partida-id]');

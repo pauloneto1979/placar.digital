@@ -137,6 +137,24 @@ input[readonly] {
   opacity: 0.72;
 }
 
+.password-field {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.password-field input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.password-field .password-toggle {
+  flex: 0 0 var(--tap);
+}
+
 label {
   color: var(--muted);
   display: grid;
@@ -666,6 +684,12 @@ select option {
   line-height: 1;
 }
 
+.dashboard-countdown small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .dashboard-kpis {
   display: grid;
   gap: 14px;
@@ -683,6 +707,12 @@ select option {
   font-size: clamp(32px, 10vw, 54px);
   font-weight: 950;
   line-height: 0.95;
+  overflow-wrap: anywhere;
+}
+
+.stat-card strong.stat-card__money {
+  color: var(--cyan);
+  font-size: clamp(24px, 6vw, 42px);
 }
 
 .stat-card p {
@@ -1529,6 +1559,13 @@ button[data-provider-toggle]:hover {
   border-color: rgba(159, 188, 215, 0.18);
 }
 
+.sync-pill {
+  background: rgba(33, 212, 253, 0.08);
+  border-color: rgba(33, 212, 253, 0.24);
+  color: var(--cyan);
+  max-width: 100%;
+}
+
 .bet-status--saved {
   background: rgba(71, 245, 154, 0.1);
   border-color: rgba(71, 245, 154, 0.28);
@@ -2077,7 +2114,7 @@ button[data-reset-form]:not(.icon-action)::before {
   }
 
   .dashboard-kpis {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   }
 
   .external-linking-grid {
@@ -2456,28 +2493,36 @@ button[data-reset-form]:not(.icon-action)::before {
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(159, 188, 215, 0.14);
     border-radius: 20px;
-    justify-content: center;
+    display: grid;
+    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    justify-content: stretch;
     padding: 10px 8px;
     width: 100%;
   }
 
   .bet-stepper {
-    flex: 1 1 0;
+    flex: 1 1 auto;
+    gap: 2px;
     justify-content: space-between;
     min-width: 0;
+    width: 100%;
   }
 
   .bet-stepper input {
-    font-size: 2rem;
-    min-height: 52px;
-    width: 46px;
+    flex: 1 1 auto;
+    font-size: clamp(1.3rem, 6.4vw, 1.9rem);
+    min-height: 48px;
+    min-width: 30px;
+    width: 100%;
   }
 
   .bet-stepper__button {
-    flex-basis: 46px;
-    height: 46px;
-    min-height: 46px;
-    min-width: 46px;
+    flex: 0 0 clamp(34px, 10vw, 42px);
+    height: clamp(38px, 10vw, 44px);
+    min-height: 38px;
+    min-width: 0;
+    width: clamp(34px, 10vw, 42px);
   }
 
   .bet-card__separator {

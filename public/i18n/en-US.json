@@ -28,7 +28,9 @@
     "readOnly": "read only",
     "close": "Close",
     "more": "More",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "auth": {
     "loginTitle": "Placar.digital - Login",
@@ -189,7 +191,8 @@
     "nextGames": "Upcoming games",
     "bet": "Predict",
     "viewGames": "View games",
-    "noGames": "No games registered."
+    "noGames": "No games registered.",
+    "collectedHint": "Confirmed payments in the active pool"
   },
   "ranking": {
     "full": "Full ranking",
@@ -426,7 +429,12 @@
     "copyToken": "Copy token",
     "tokenCopied": "Token copied.",
     "copyTokenError": "Could not copy the token.",
-    "providerStatus": "Status: {status}"
+    "providerStatus": "Status: {status}",
+    "syncInactiveShort": "Sports sync inactive",
+    "noLastSyncShort": "No sync registered",
+    "updatedNow": "Updated just now",
+    "updatedMinutesAgo": "Updated {minutes} min ago",
+    "updatedHoursAgo": "Updated {hours} h ago"
   },
   "externalMatches": {
     "title": "External match linking",

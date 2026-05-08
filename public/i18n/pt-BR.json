@@ -28,7 +28,9 @@
     "readOnly": "somente leitura",
     "close": "Fechar",
     "more": "Mais",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha"
   },
   "auth": {
     "loginTitle": "Placar.digital - Login",
@@ -189,7 +191,8 @@
     "nextGames": "Próximos jogos",
     "bet": "Apostar",
     "viewGames": "Ver jogos",
-    "noGames": "Nenhum jogo cadastrado."
+    "noGames": "Nenhum jogo cadastrado.",
+    "collectedHint": "Pagamentos confirmados no bolão ativo"
   },
   "ranking": {
     "full": "Ranking completo",
@@ -426,7 +429,12 @@
     "copyToken": "Copiar token",
     "tokenCopied": "Token copiado.",
     "copyTokenError": "Não foi possível copiar o token.",
-    "providerStatus": "Status: {status}"
+    "providerStatus": "Status: {status}",
+    "syncInactiveShort": "Sincronização esportiva inativa",
+    "noLastSyncShort": "Sem sincronização registrada",
+    "updatedNow": "Atualizado agora",
+    "updatedMinutesAgo": "Atualizado há {minutes} min",
+    "updatedHoursAgo": "Atualizado há {hours} h"
   },
   "externalMatches": {
     "title": "Vinculação de partidas externas",

@@ -28,7 +28,9 @@
     "readOnly": "solo lectura",
     "close": "Cerrar",
     "more": "Más",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "auth": {
     "loginTitle": "Placar.digital - Login",
@@ -189,7 +191,8 @@
     "nextGames": "Próximos juegos",
     "bet": "Apostar",
     "viewGames": "Ver juegos",
-    "noGames": "Ningún juego registrado."
+    "noGames": "Ningún juego registrado.",
+    "collectedHint": "Pagos confirmados en la porra activa"
   },
   "ranking": {
     "full": "Ranking completo",
@@ -417,7 +420,12 @@
     "copyToken": "Copiar token",
     "tokenCopied": "Token copiado.",
     "copyTokenError": "No fue posible copiar el token.",
-    "providerStatus": "Estado: {status}"
+    "providerStatus": "Estado: {status}",
+    "syncInactiveShort": "Sincronización deportiva inactiva",
+    "noLastSyncShort": "Sin sincronización registrada",
+    "updatedNow": "Actualizado ahora",
+    "updatedMinutesAgo": "Actualizado hace {minutes} min",
+    "updatedHoursAgo": "Actualizado hace {hours} h"
   },
   "externalMatches": {
     "title": "Vinculación de partidos externos",
@@ -464,7 +472,7 @@
     "ignoredReasonsTitle": "Motivos de partidos ignorados",
     "ignoredReasonLine": "ID {id}: {reason}.",
     "moreIgnored": "+{count} partido(s) ignorado(s) no mostrado(s).",
-    "warningsTitle": "Avisos de importaci?n",
+    "warningsTitle": "Avisos de importación",
     "skipReasons": {
       "already_imported_in_pool": "ya existe en este pool",
       "football_data_match_id_exists": "ya existe en este pool",
@@ -484,7 +492,7 @@
     "passwordConfirmationMismatch": "La confirmación de la contraseña no coincide."
   },
   "email": {
-    "title": "Correo electr?nico",
+    "title": "Correo electrónico",
     "statusConfigured": "configurado",
     "statusNotConfigured": "no configurado",
     "statusEnabled": "habilitado",
@@ -493,19 +501,19 @@
     "smtpPort": "Puerto",
     "smtpSecure": "SSL/TLS",
     "smtpUser": "Usuario SMTP",
-    "smtpPassword": "Contrase?a SMTP",
-    "passwordPlaceholder": "Informar solo para cambiar la contrase?a",
+    "smtpPassword": "Contraseña SMTP",
+    "passwordPlaceholder": "Informar solo para cambiar la contraseña",
     "fromName": "Nombre del remitente",
     "fromEmail": "Email del remitente",
     "replyTo": "Reply-To",
     "enabled": "Habilitado",
     "save": "Guardar email",
-    "testTitle": "Prueba de env?o",
+    "testTitle": "Prueba de envío",
     "testTo": "Email destino",
     "sendTest": "Enviar email de prueba",
-    "saved": "Configuraci?n de email guardada.",
+    "saved": "Configuración de email guardada.",
     "testSent": "Email de prueba enviado correctamente.",
     "lastUpdate": "Actualizado en {date}",
-    "noPreviousConfig": "A?n no hay configuraci?n guardada."
+    "noPreviousConfig": "Aún no hay configuración guardada."
   }
 }

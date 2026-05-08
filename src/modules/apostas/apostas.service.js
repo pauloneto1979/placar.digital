@@ -76,6 +76,12 @@ function createApostasService(repository) {
         partidasTotal: dashboard.partidas_total,
         partidasFinalizadas: dashboard.partidas_finalizadas,
         totalArrecadado: Number(dashboard.total_arrecadado),
+        sportsSync: {
+          provider: 'football-data',
+          enabled: dashboard.sports_provider_enabled === true,
+          lastSyncAt: dashboard.sports_provider_last_sync_at || null,
+          syncIntervalSeconds: Number(dashboard.sports_provider_sync_interval_seconds || 0)
+        },
         top3Ranking,
         jogosDoDia,
         partidasPorStatus: resumoStatus

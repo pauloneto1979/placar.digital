@@ -26,6 +26,7 @@ Funcionalidades implementadas:
 - Upload/URL de brasão dos times, com preview, fallback visual e validação.
 - Importação de partidas externas pela tela de Partidas.
 - Sincronização automática de partidas vinculadas com football-data.org.
+- Status de atualização exibido no dashboard/partidas a partir da última sincronização do provider.
 - Configuração sanitizada de provedores esportivos.
 - Configuração SMTP via tela administrativa.
 
@@ -250,6 +251,8 @@ Integração implementada:
 - Respeita `sync_interval_seconds`, nunca abaixo de 60 segundos.
 - Faz no máximo 1 chamada por execução do job.
 - Usa `X-Auth-Token`, sem logar token.
+- A atualização de status/placar é periódica. O sistema não usa WebSocket nem tempo real instantâneo nesta etapa.
+- O dashboard e a tela de Partidas exibem a última sincronização quando o provider está ativo.
 - Atualiza somente partidas já vinculadas por `football_data_match_id`.
 - Não cria partidas automaticamente pelo job.
 - Se uma partida vinculada chega como finalizada e com placar alterado, reaproveita o fluxo de atualização de resultado e recálculo.
@@ -570,6 +573,8 @@ A busca externa trata datas como intervalo local fechado:
 - fim: `23:59:59`
 
 Isso evita perder partidas por conversão UTC.
+
+Na edição manual de partidas, o frontend preenche o `datetime-local` usando o horário local visível ao usuário. Assim, abrir uma partida marcada para 15:00, alterar outro campo e salvar mantém 15:00, sem aplicar conversão UTC duplicada. Partidas importadas da football-data continuam chegando em UTC e são exibidas no horário local do navegador/app.
 
 ### PM2
 
