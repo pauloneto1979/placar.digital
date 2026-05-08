@@ -221,7 +221,13 @@
     "cannotIdentifyMatch": "No fue posible identificar el partido.",
     "saving": "Guardando...",
     "fillBothScores": "Informe ambos marcadores",
-    "saved": "Apuesta guardada."
+    "saved": "Apuesta guardada.",
+    "resultConfirmed": "Resultado confirmado",
+    "deadlineClosed": "Plazo cerrado",
+    "details": "Detalles",
+    "officialScore": "Marcador oficial: {home} x {away}",
+    "decreaseScore": "Disminuir marcador",
+    "increaseScore": "Aumentar marcador"
   },
   "games": {
     "homeTeam": "Local",

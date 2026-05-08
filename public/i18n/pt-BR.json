@@ -221,7 +221,13 @@
     "cannotIdentifyMatch": "Não foi possível identificar a partida.",
     "saving": "Salvando...",
     "fillBothScores": "Informe os dois placares",
-    "saved": "Aposta salva."
+    "saved": "Aposta salva.",
+    "resultConfirmed": "Resultado confirmado",
+    "deadlineClosed": "Prazo encerrado",
+    "details": "Detalhes",
+    "officialScore": "Placar oficial: {home} x {away}",
+    "decreaseScore": "Diminuir placar",
+    "increaseScore": "Aumentar placar"
   },
   "games": {
     "homeTeam": "Mandante",

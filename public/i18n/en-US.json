@@ -221,7 +221,13 @@
     "cannotIdentifyMatch": "Could not identify the match.",
     "saving": "Saving...",
     "fillBothScores": "Fill both scores",
-    "saved": "Prediction saved."
+    "saved": "Prediction saved.",
+    "resultConfirmed": "Result confirmed",
+    "deadlineClosed": "Deadline closed",
+    "details": "Details",
+    "officialScore": "Official score: {home} x {away}",
+    "decreaseScore": "Decrease score",
+    "increaseScore": "Increase score"
   },
   "games": {
     "homeTeam": "Home",

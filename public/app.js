@@ -782,12 +782,19 @@ function dashboardGuessStatus(bet) {
   return t('home.guessLocked');
 }
 
+function dashboardGuessTone(bet) {
+  if (!isApostador()) return 'bet-status--info';
+  if (!bet || bet.statusAposta === 'sem_aposta') return 'bet-status--pending';
+  if (bet.podeAlterar) return 'bet-status--saved';
+  return 'bet-status--locked';
+}
+
 function renderDashboardGameCard(game, bet) {
   const mandante = game.mandante?.nome || game.mandante || game.timeMandante || t('games.homeTeam');
   const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || t('games.awayTeam');
   const date = gameDateValue(game);
   return `
-    <article class="dashboard-game">
+    <article class="dashboard-game dashboard-game--premium">
       <div class="dashboard-game__teams">
         ${renderTeamName(game.mandante || { nome: mandante }, mandante)}
         <span class="score">${escapeHtml(t('common.scoreSeparator'))}</span>
@@ -796,9 +803,12 @@ function renderDashboardGameCard(game, bet) {
       <div class="dashboard-game__meta">
         <span>${escapeHtml(dateTime(date))}</span>
         <span>${escapeHtml(statusLabel(game.status))}</span>
-        <span class="pill">${escapeHtml(dashboardGuessStatus(bet))}</span>
+        <span class="pill bet-status-pill ${dashboardGuessTone(bet)}">${escapeHtml(dashboardGuessStatus(bet))}</span>
       </div>
-      <div class="dashboard-game__countdown">${escapeHtml(countdownText(date))}</div>
+      <div class="dashboard-game__countdown">
+        <span>${escapeHtml(t('home.nextKickoff'))}</span>
+        <strong>${escapeHtml(countdownText(date))}</strong>
+      </div>
     </article>
   `;
 }
@@ -900,16 +910,20 @@ function renderGameCard(game) {
   const placarVisitante = game.placarVisitante ?? game.placar_visitante;
   const hasScore = placarMandante !== null && placarMandante !== undefined && placarVisitante !== null && placarVisitante !== undefined;
   return `
-    <article class="match-card">
-      <div>
-        <div class="team-line">
+    <article class="match-card sports-match-card">
+      <div class="sports-match-card__body">
+        <div class="sports-match-card__teams">
           ${renderTeamName(game.mandante || { nome: mandante }, mandante)}
-          <span class="score">${hasScore ? `${escapeHtml(placarMandante)} ${escapeHtml(t('common.scoreSeparator'))} ${escapeHtml(placarVisitante)}` : escapeHtml(t('common.scoreSeparator'))}</span>
+          <span class="score sports-match-card__score">${hasScore ? `${escapeHtml(placarMandante)} ${escapeHtml(t('common.scoreSeparator'))} ${escapeHtml(placarVisitante)}` : escapeHtml(t('common.scoreSeparator'))}</span>
           ${renderTeamName(game.visitante || { nome: visitante }, visitante)}
         </div>
-        <p class="muted">${escapeHtml(game.fase || game.faseNome || '')} ${dateTime(game.dataHora || game.inicioAt || game.inicio_at)} - ${escapeHtml(statusLabel(game.status))}</p>
+        <div class="sports-match-card__meta">
+          <span>${escapeHtml(game.fase || game.faseNome || t('common.game'))}</span>
+          <span>${escapeHtml(dateTime(game.dataHora || game.inicioAt || game.inicio_at))}</span>
+          <span>${escapeHtml(game.estadio || '')}</span>
+        </div>
       </div>
-      <span class="pill">${escapeHtml(game.estadio || t('common.game'))}</span>
+      <span class="pill bet-status-pill ${hasScore ? 'bet-status--result' : 'bet-status--pending'}">${escapeHtml(statusLabel(game.status))}</span>
     </article>
   `;
 }
@@ -1115,25 +1129,49 @@ function renderBetCard(aposta) {
   const canEdit = Boolean(aposta.podeAlterar);
   const left = aposta.meuPalpite?.mandante ?? '';
   const right = aposta.meuPalpite?.visitante ?? '';
-  const status = canEdit ? t('bets.savedAutomatically') : (aposta.statusAposta === 'sem_aposta' ? t('bets.notAvailable') : t('bets.closed'));
+  const hasBet = aposta.statusAposta && aposta.statusAposta !== 'sem_aposta';
+  const result = officialScore(aposta);
+  const status = result
+    ? t('bets.resultConfirmed')
+    : canEdit
+      ? (hasBet ? t('bets.savedAutomatically') : t('home.guessPending'))
+      : (aposta.statusAposta === 'sem_aposta' ? t('bets.notAvailable') : t('bets.closed'));
+  const statusClass = result ? 'bet-status--result' : canEdit ? (hasBet ? 'bet-status--saved' : 'bet-status--pending') : 'bet-status--locked';
   const mandante = aposta.mandante?.nome || aposta.mandante || t('games.homeTeam');
   const visitante = aposta.visitante?.nome || aposta.visitante || t('games.awayTeam');
   return `
-    <article class="match-card" data-partida-id="${escapeHtml(aposta.partidaId)}">
-      <div>
-        <div class="team-line">
-          ${renderTeamName(aposta.mandante || { nome: mandante }, mandante)}
-          <div class="bet-inputs">
-            <input type="number" min="0" inputmode="numeric" value="${escapeHtml(left)}" data-bet-side="mandante" ${canEdit ? '' : 'disabled'}>
-            <span class="score">${escapeHtml(t('common.scoreSeparator'))}</span>
-            <input type="number" min="0" inputmode="numeric" value="${escapeHtml(right)}" data-bet-side="visitante" ${canEdit ? '' : 'disabled'}>
-          </div>
-          ${renderTeamName(aposta.visitante || { nome: visitante }, visitante)}
+    <article class="match-card bet-card ${canEdit ? 'bet-card--open' : 'bet-card--locked'}" data-partida-id="${escapeHtml(aposta.partidaId)}">
+      <div class="bet-card__content">
+        <div class="bet-card__header">
+          <span class="pill bet-status-pill ${statusClass}" data-save-status>${escapeHtml(status)}</span>
+          ${!canEdit ? `<span class="pill bet-status-pill bet-status--locked">${escapeHtml(t('bets.deadlineClosed'))}</span>` : ''}
         </div>
-        <p class="muted">${escapeHtml(aposta.fase || '')} · ${dateTime(aposta.dataHora)} · ${escapeHtml(aposta.estadio || '')}</p>
+        <div class="bet-card__teams">
+          <div class="bet-card__team">${renderTeamName(aposta.mandante || { nome: mandante }, mandante)}</div>
+          <div class="bet-card__scoreboard">
+            ${renderBetStepper('mandante', left, canEdit, mandante)}
+            <span class="score bet-card__separator">${escapeHtml(t('common.scoreSeparator'))}</span>
+            ${renderBetStepper('visitante', right, canEdit, visitante)}
+          </div>
+          <div class="bet-card__team bet-card__team--away">${renderTeamName(aposta.visitante || { nome: visitante }, visitante)}</div>
+        </div>
+        <details class="bet-card__details">
+          <summary>${escapeHtml(t('bets.details'))}</summary>
+          <p class="muted">${escapeHtml(aposta.fase || t('common.game'))} · ${dateTime(aposta.dataHora)} · ${escapeHtml(aposta.estadio || '')}</p>
+          ${result ? `<p class="muted">${escapeHtml(t('bets.officialScore', { home: result.mandante, away: result.visitante }))}</p>` : ''}
+        </details>
       </div>
-      <span class="pill" data-save-status>${escapeHtml(status)}</span>
     </article>
+  `;
+}
+
+function renderBetStepper(side, value, canEdit, label) {
+  return `
+    <div class="bet-stepper" aria-label="${escapeHtml(label)}">
+      <button class="ghost bet-stepper__button" type="button" data-bet-adjust="${escapeHtml(side)}" data-step="-1" ${canEdit ? '' : 'disabled'} aria-label="${escapeHtml(t('bets.decreaseScore'))}">-</button>
+      <input type="number" min="0" inputmode="numeric" value="${escapeHtml(value)}" data-bet-side="${escapeHtml(side)}" aria-label="${escapeHtml(label)}" ${canEdit ? '' : 'disabled'}>
+      <button class="ghost bet-stepper__button" type="button" data-bet-adjust="${escapeHtml(side)}" data-step="1" ${canEdit ? '' : 'disabled'} aria-label="${escapeHtml(t('bets.increaseScore'))}">+</button>
+    </div>
   `;
 }
 
@@ -2536,6 +2574,21 @@ mobileMoreClose?.addEventListener('click', () => {
 });
 
 content.addEventListener('click', (event) => {
+  const betAdjust = event.target.closest('[data-bet-adjust]');
+  if (betAdjust) {
+    const card = betAdjust.closest('[data-partida-id]');
+    const side = betAdjust.dataset.betAdjust;
+    const input = card?.querySelector(`[data-bet-side="${side}"]`);
+    if (!input || input.disabled) return;
+    const current = input.value === '' ? 0 : Number(input.value);
+    const next = Math.max(0, (Number.isFinite(current) ? current : 0) + Number(betAdjust.dataset.step || 0));
+    input.value = String(next);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    betAdjust.classList.add('tap');
+    window.setTimeout(() => betAdjust.classList.remove('tap'), 160);
+    return;
+  }
+
   const route = event.target.closest('[data-route]')?.dataset.route;
   if (route) {
     navigate(route);
@@ -2830,18 +2883,27 @@ content.addEventListener('input', (event) => {
   if (!input) return;
   const card = input.closest('[data-partida-id]');
   const partidaId = card?.dataset.partidaId;
-  const status = card.querySelector('[data-save-status]');
+  const status = card?.querySelector('[data-save-status]');
   if (!partidaId) {
-    status.textContent = t('bets.cannotIdentifyMatch');
+    if (status) status.textContent = t('bets.cannotIdentifyMatch');
     return;
   }
-  status.textContent = t('bets.saving');
+  if (Number(input.value) < 0) input.value = '0';
+  if (status) {
+    status.textContent = t('bets.saving');
+    status.className = 'pill bet-status-pill bet-status--saving';
+  }
+  card.classList.add('bet-card--saving');
   clearTimeout(pendingSaves.get(partidaId));
   pendingSaves.set(partidaId, window.setTimeout(async () => {
     const mandante = card.querySelector('[data-bet-side="mandante"]').value;
     const visitante = card.querySelector('[data-bet-side="visitante"]').value;
     if (mandante === '' || visitante === '') {
-      status.textContent = t('bets.fillBothScores');
+      if (status) {
+        status.textContent = t('bets.fillBothScores');
+        status.className = 'pill bet-status-pill bet-status--pending';
+      }
+      card.classList.remove('bet-card--saving');
       return;
     }
     try {
@@ -2849,11 +2911,20 @@ content.addEventListener('input', (event) => {
         method: 'POST',
         body: JSON.stringify({ partidaId, palpiteMandante: Number(mandante), palpiteVisitante: Number(visitante) })
       });
-      status.textContent = t('bets.savedAutomatically');
+      if (status) {
+        status.textContent = t('bets.savedAutomatically');
+        status.className = 'pill bet-status-pill bet-status--saved';
+      }
+      card.classList.remove('bet-card--saving');
+      card.classList.add('bet-card--saved-pulse');
       showMessage(t('bets.saved'));
       await renderApostas();
     } catch (error) {
-      status.textContent = error.message;
+      if (status) {
+        status.textContent = error.message;
+        status.className = 'pill bet-status-pill bet-status--locked';
+      }
+      card.classList.remove('bet-card--saving');
     }
   }, 650));
 });
