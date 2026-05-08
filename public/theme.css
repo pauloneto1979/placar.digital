@@ -809,9 +809,10 @@ select option {
 }
 
 .admin-pool-pill {
-  background: rgba(200, 255, 46, 0.075);
-  border-color: rgba(200, 255, 46, 0.34);
-  color: var(--accent);
+  background: rgba(33, 212, 253, 0.075);
+  border-color: rgba(33, 212, 253, 0.38);
+  box-shadow: 0 0 18px rgba(33, 212, 253, 0.08);
+  color: var(--cyan);
   max-width: 100%;
   overflow-wrap: anywhere;
 }

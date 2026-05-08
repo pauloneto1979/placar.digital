@@ -189,6 +189,39 @@ function isApostador() {
   return state.user.perfilGlobal === 'apostador';
 }
 
+function isSelectableBolao(bolao) {
+  if (!bolao) return false;
+  if (bolao.ativo === false) return false;
+  if (bolao.status && String(bolao.status).toLowerCase() !== 'ativo') return false;
+  return true;
+}
+
+function selectableBoloes(boloes = []) {
+  return (boloes || []).filter(isSelectableBolao);
+}
+
+function persistBolaoContext() {
+  localStorage.setItem('placar.boloes', JSON.stringify(state.boloes));
+  localStorage.setItem('placar.activeBolaoId', state.activeBolaoId || '');
+  localStorage.setItem('placar.activeBolaoNome', state.activeBolaoNome || '');
+}
+
+function syncActiveBolaoWithAvailable() {
+  state.boloes = selectableBoloes(state.boloes);
+  const active = state.boloes.find((bolao) => String(bolao.id) === String(state.activeBolaoId));
+  if (active) {
+    state.activeBolaoId = active.id;
+    state.activeBolaoNome = active.nome;
+  } else if (state.boloes.length) {
+    state.activeBolaoId = state.boloes[0].id;
+    state.activeBolaoNome = state.boloes[0].nome;
+  } else {
+    state.activeBolaoId = '';
+    state.activeBolaoNome = '';
+  }
+  persistBolaoContext();
+}
+
 function redirectLogin() {
   window.location.href = '/app/login.html';
 }
@@ -196,16 +229,14 @@ function redirectLogin() {
 function saveAuth(result) {
   state.token = result.accessToken || state.token;
   state.user = result.user || state.user;
-  if (Array.isArray(result.boloes) && result.boloes.length > 0) {
-    state.boloes = result.boloes;
+  if (Array.isArray(result.boloes)) {
+    state.boloes = selectableBoloes(result.boloes);
   }
   state.activeBolaoId = result.selectedBolao?.id || state.activeBolaoId;
   state.activeBolaoNome = result.selectedBolao?.nome || state.activeBolaoNome;
+  syncActiveBolaoWithAvailable();
   localStorage.setItem('placar.token', state.token);
   localStorage.setItem('placar.user', JSON.stringify(state.user));
-  localStorage.setItem('placar.boloes', JSON.stringify(state.boloes));
-  localStorage.setItem('placar.activeBolaoId', state.activeBolaoId || '');
-  localStorage.setItem('placar.activeBolaoNome', state.activeBolaoNome || '');
 }
 
 async function api(path, options = {}) {
@@ -242,6 +273,7 @@ function renderMenu() {
 }
 
 function renderChrome() {
+  syncActiveBolaoWithAvailable();
   const route = currentRoute();
   pageTitle.textContent = t(route.labelKey);
   pageSubtitle.textContent = state.activeBolaoNome || t(route.subtitleKey);
@@ -252,9 +284,10 @@ function renderChrome() {
   syncLocaleControl();
   renderMenu();
 
-  if (state.boloes.length > 1) {
+  const availableBoloes = selectableBoloes(state.boloes);
+  if (availableBoloes.length > 1) {
     bolaoSwitcher.hidden = false;
-    bolaoSelect.innerHTML = state.boloes.map((bolao) => `
+    bolaoSelect.innerHTML = availableBoloes.map((bolao) => `
       <option value="${escapeHtml(bolao.id)}" ${bolao.id === state.activeBolaoId ? 'selected' : ''}>
         ${escapeHtml(bolao.nome)}
       </option>
@@ -579,6 +612,7 @@ function renderRankingHeader() {
 }
 
 async function loadBaseData() {
+  syncActiveBolaoWithAvailable();
   if (!state.activeBolaoId && !isOwner()) {
     content.innerHTML = empty(t('messages.noActivePool'));
     return false;
@@ -586,23 +620,15 @@ async function loadBaseData() {
 
   if (isOwner()) {
     const ownerBoloes = await api('/proprietario/boloes').catch(() => []);
-    state.boloes = ownerBoloes.map((bolao) => ({
-      id: bolao.id,
-      nome: bolao.nome,
-      status: bolao.status,
-      papel: 'proprietario'
-    }));
-    if (!state.activeBolaoId && state.boloes.length) {
-      state.activeBolaoId = state.boloes[0].id;
-      state.activeBolaoNome = state.boloes[0].nome;
-    }
-    const active = state.boloes.find((bolao) => bolao.id === state.activeBolaoId);
-    if (active) {
-      state.activeBolaoNome = active.nome;
-    }
-    localStorage.setItem('placar.boloes', JSON.stringify(state.boloes));
-    localStorage.setItem('placar.activeBolaoId', state.activeBolaoId || '');
-    localStorage.setItem('placar.activeBolaoNome', state.activeBolaoNome || '');
+    state.boloes = ownerBoloes
+      .filter(isSelectableBolao)
+      .map((bolao) => ({
+        id: bolao.id,
+        nome: bolao.nome,
+        status: bolao.status,
+        papel: 'proprietario'
+      }));
+    syncActiveBolaoWithAvailable();
   }
 
   return true;
@@ -1334,6 +1360,7 @@ async function renderUsuariosOwner() {
   ]);
   state.data.usuarios = rows;
   state.data.boloes = boloes;
+  const activeBoloes = selectableBoloes(boloes);
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>${escapeHtml(t('owner.users'))}</h2><span class="pill">${escapeHtml(t('common.owner'))}</span></div>
@@ -1362,8 +1389,8 @@ async function renderUsuariosOwner() {
         ${scopedMessage('usuarios')}
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => usuarioRow(row, boloes)).join('') || empty(t('owner.noUsers'))}</div></section>
-    ${renderUsuarioEditorModal(findById(rows, state.userEditorId), boloes)}
+    <section class="card"><div class="list">${rows.map((row) => usuarioRow(row, activeBoloes)).join('') || empty(t('owner.noUsers'))}</div></section>
+    ${renderUsuarioEditorModal(findById(rows, state.userEditorId), activeBoloes)}
   `;
 }
 
@@ -2101,14 +2128,21 @@ function loadingMarkup() {
 }
 
 async function switchBolao(bolaoId) {
+  const target = selectableBoloes(state.boloes).find((bolao) => String(bolao.id) === String(bolaoId));
+  if (!target) {
+    showMessage(t('messages.noActivePool'), 'warning');
+    syncActiveBolaoWithAvailable();
+    await navigate(state.route);
+    return;
+  }
   const result = await api('/auth/trocar-bolao', {
     method: 'POST',
     body: JSON.stringify({ bolaoId })
   });
   saveAuth(result);
-  const active = state.boloes.find((bolao) => bolao.id === state.activeBolaoId);
+  const active = selectableBoloes(state.boloes).find((bolao) => bolao.id === state.activeBolaoId);
   state.activeBolaoNome = active?.nome || result.selectedBolao?.nome || '';
-  localStorage.setItem('placar.activeBolaoNome', state.activeBolaoNome);
+  persistBolaoContext();
   await navigate(state.route);
 }
 
@@ -2307,10 +2341,14 @@ async function submitCrud(kind, form) {
     body: JSON.stringify(data)
   });
 
-  if (kind === 'boloes' && !id && saved?.id) {
+  if (kind === 'boloes') {
     await loadBaseData();
-    await switchBolao(saved.id);
-    showMessage(t('messages.recordCreated'));
+    if (!id && saved?.id && isSelectableBolao(saved)) {
+      await switchBolao(saved.id);
+    } else {
+      showMessage(id ? t('messages.recordUpdated') : t('messages.recordCreated'));
+      await navigate(state.route);
+    }
     return;
   }
 

@@ -87,9 +87,12 @@ function createProprietarioService(repository) {
     return bolao;
   }
 
-  async function ensureBoloesExist(ids) {
+  async function ensureBoloesAtivos(ids) {
     for (const id of ids) {
-      await ensureBolaoExists(id);
+      const bolao = await ensureBolaoExists(id);
+      if (!bolao.ativo || bolao.status !== 'ativo') {
+        throw new HttpError(422, 'inactive_pool_link', 'Bolao inativo nao pode ser vinculado operacionalmente.');
+      }
     }
   }
 
@@ -257,7 +260,7 @@ function createProprietarioService(repository) {
       });
       if (perfil === 'administrador') {
         const bolaoIds = normalizeIdList(payload.bolaoIds || payload.bolao_ids);
-        await ensureBoloesExist(bolaoIds);
+        await ensureBoloesAtivos(bolaoIds);
         await repository.syncBoloesUsuarioAdministrador(usuario.id, bolaoIds);
       }
 
@@ -304,7 +307,7 @@ function createProprietarioService(repository) {
       const hasBolaoIdsPayload = payload.bolaoIds !== undefined || payload.bolao_ids !== undefined;
       if (perfil === 'administrador' && hasBolaoIdsPayload) {
         const bolaoIds = normalizeIdList(payload.bolaoIds || payload.bolao_ids);
-        await ensureBoloesExist(bolaoIds);
+        await ensureBoloesAtivos(bolaoIds);
         await repository.syncBoloesUsuarioAdministrador(id, bolaoIds);
       } else if (perfil !== 'administrador') {
         await repository.syncBoloesUsuarioAdministrador(id, []);

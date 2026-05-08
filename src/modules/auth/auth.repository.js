@@ -61,6 +61,7 @@ async function listUserBoloes(usuarioId) {
         and u.perfil_global = 'administrador'
         and u.ativo = true
         and b.ativo = true
+        and b.status = 'ativo'
       union all
       select
         p.id as participante_id,
@@ -80,6 +81,7 @@ async function listUserBoloes(usuarioId) {
         and u.perfil_global = 'apostador'
         and u.ativo = true
         and b.ativo = true
+        and b.status = 'ativo'
       order by bolao_nome asc
     `,
     [usuarioId]
@@ -110,6 +112,7 @@ async function findUserBolao(usuarioId, bolaoId) {
         and u.perfil_global = 'administrador'
         and u.ativo = true
         and b.ativo = true
+        and b.status = 'ativo'
       union all
       select
         p.id as participante_id,
@@ -130,6 +133,7 @@ async function findUserBolao(usuarioId, bolaoId) {
         and u.perfil_global = 'apostador'
         and u.ativo = true
         and b.ativo = true
+        and b.status = 'ativo'
       limit 1
     `,
     [usuarioId, bolaoId]
@@ -149,6 +153,7 @@ async function findBolaoById(bolaoId) {
       from boloes
       where id = $1
         and ativo = true
+        and status = 'ativo'
       limit 1
     `,
     [bolaoId]

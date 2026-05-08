@@ -465,6 +465,13 @@ async function syncBoloesUsuarioAdministrador(usuarioId, bolaoIds = []) {
         set ativo = false
         where usuario_id = $1
           and perfil = 'administrador'
+          and exists (
+            select 1
+            from boloes b
+            where b.id = boloes_usuarios.bolao_id
+              and b.ativo = true
+              and b.status = 'ativo'
+          )
           and (${ids.length ? 'bolao_id <> all($2::uuid[])' : 'true'})
       `,
       ids.length ? [usuarioId, ids] : [usuarioId]
