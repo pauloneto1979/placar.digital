@@ -619,6 +619,54 @@ VariÃ¡veis mÃ­nimas:
 - `INFINITEPAY_API_URL`
 - `INFINITEPAY_HANDLE`
 
+## Configuracao De E-mail SMTP
+
+O envio de e-mails pode ser configurado pelo app em `Configuracoes > E-mail`, acessivel apenas para usuario proprietario.
+
+Tabela usada:
+
+- `email_configuracoes`
+
+Rotas protegidas:
+
+- `GET /api/v1/email/configuracao`
+- `PUT /api/v1/email/configuracao`
+- `POST /api/v1/email/teste`
+
+Campos principais:
+
+- provider
+- host SMTP
+- porta
+- SSL/TLS ou STARTTLS
+- usuario SMTP
+- senha SMTP
+- nome e e-mail do remetente
+- Reply-To
+- habilitado/inativo
+
+Seguranca:
+
+- a senha SMTP nao e retornada completa ao frontend;
+- a senha aparece mascarada na edicao;
+- campo de senha vazio ou mascarado nao apaga a senha ja salva;
+- logs de teste nao exibem a senha;
+- somente proprietario pode alterar e testar configuracao de e-mail.
+
+HostGator SMTP:
+
+- porta `465`: usar SSL/TLS habilitado;
+- porta `587`: usar STARTTLS, deixando SSL/TLS desabilitado;
+- host comum: `smtp.seudominio.com.br` ou o host SMTP informado no painel da hospedagem;
+- usuario normalmente e o e-mail completo da conta;
+- depois de salvar, use `Enviar e-mail de teste` para validar conexao, autenticacao e envio.
+
+Troubleshooting:
+
+- erro de autenticacao: validar usuario, senha e bloqueios do provedor;
+- erro de conexao: validar host, porta, SSL/TLS e firewall;
+- timeout: validar rede do servidor, DNS e se o provedor permite SMTP externo.
+
 ## Deploy E PM2
 
 DiretÃ³rio atual no servidor:

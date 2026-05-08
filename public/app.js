@@ -1646,9 +1646,10 @@ async function renderRegrasAdmin() {
 }
 
 async function renderConfiguracoesOwner() {
-  const [config, provedores] = await Promise.all([
+  const [config, provedores, emailConfig] = await Promise.all([
     isOwner() ? api('/proprietario/configuracoes-gerais').catch(() => ({})) : Promise.resolve(null),
-    api('/provedores-esportivos').catch(() => [])
+    api('/provedores-esportivos').catch(() => []),
+    isOwner() ? api('/email/configuracao').catch(() => ({ configured: false })) : Promise.resolve(null)
   ]);
   const footballData = provedores.find((item) => item.provider === 'football-data') || provedores[0] || {};
   content.innerHTML = `
@@ -1667,12 +1668,77 @@ async function renderConfiguracoesOwner() {
         <div class="form-actions">${submitIconButton('save', t('owner.saveSettings'))}</div>
       </form>
     </section>` : ''}
+    ${isOwner() ? renderEmailConfigSection(emailConfig || {}) : ''}
     <section class="card">
       <div class="card-title">
         <h2>${escapeHtml(t('sportsProviders.title'))}</h2>
         <span class="pill">${escapeHtml(footballData.enabled ? statusLabel('ativo') : statusLabel('inativo'))}</span>
       </div>
       ${footballData.provider ? renderSportsProviderForm(footballData) : empty(t('sportsProviders.empty'))}
+    </section>
+  `;
+}
+
+function renderEmailConfigSection(config) {
+  const statusKey = config.configured ? (config.smtpEnabled ? 'email.statusEnabled' : 'email.statusConfigured') : 'email.statusNotConfigured';
+  const passwordMask = config.smtpPasswordMasked || '';
+  return `
+    <section class="card">
+      <div class="card-title">
+        <h2>${escapeHtml(t('email.title'))}</h2>
+        <span class="pill">${escapeHtml(t(statusKey))}</span>
+      </div>
+      <form class="form-card email-config-form" data-crud-form="emailConfiguracao">
+        <label>${escapeHtml(t('email.provider'))}
+          <input name="providerName" value="${escapeHtml(config.providerName || 'HostGator')}">
+        </label>
+        <label>${escapeHtml(t('email.smtpHost'))}
+          <input name="smtpHost" required value="${escapeHtml(config.smtpHost || '')}" placeholder="smtp.seudominio.com.br">
+        </label>
+        <label>${escapeHtml(t('email.smtpPort'))}
+          <input name="smtpPort" type="number" min="1" max="65535" required value="${escapeHtml(config.smtpPort || 587)}">
+        </label>
+        <label>${escapeHtml(t('email.smtpSecure'))}
+          <select name="smtpSecure">
+            <option value="true" ${config.smtpSecure === true ? 'selected' : ''}>SSL/TLS</option>
+            <option value="false" ${config.smtpSecure !== true ? 'selected' : ''}>STARTTLS</option>
+          </select>
+        </label>
+        <label>${escapeHtml(t('email.smtpUser'))}
+          <input name="smtpUser" required value="${escapeHtml(config.smtpUser || '')}">
+        </label>
+        <label>${escapeHtml(t('email.smtpPassword'))}
+          <input name="smtpPassword" type="password" autocomplete="new-password" value="${escapeHtml(passwordMask)}" data-password-mask="${escapeHtml(passwordMask)}" placeholder="${escapeHtml(t('email.passwordPlaceholder'))}">
+        </label>
+        <label>${escapeHtml(t('email.fromName'))}
+          <input name="smtpFromName" required value="${escapeHtml(config.smtpFromName || 'Placar.digital')}">
+        </label>
+        <label>${escapeHtml(t('email.fromEmail'))}
+          <input name="smtpFromEmail" type="email" required value="${escapeHtml(config.smtpFromEmail || '')}">
+        </label>
+        <label>${escapeHtml(t('email.replyTo'))}
+          <input name="smtpReplyTo" type="email" value="${escapeHtml(config.smtpReplyTo || '')}">
+        </label>
+        <label>${escapeHtml(t('email.enabled'))}
+          <select name="smtpEnabled">
+            <option value="true" ${config.smtpEnabled !== false ? 'selected' : ''}>${escapeHtml(t('common.yes'))}</option>
+            <option value="false" ${config.smtpEnabled === false ? 'selected' : ''}>${escapeHtml(t('common.no'))}</option>
+          </select>
+        </label>
+        <div class="email-status-line">
+          <span>${escapeHtml(config.updatedAt ? t('email.lastUpdate', { date: dateTime(config.updatedAt) }) : t('email.noPreviousConfig'))}</span>
+        </div>
+        <div class="form-actions">${submitIconButton('save', t('email.save'))}</div>
+        ${scopedMessage('emailConfiguracao')}
+      </form>
+      <form class="form-card email-test-form" data-crud-form="emailTeste">
+        <div class="card-title card-title--compact"><h3>${escapeHtml(t('email.testTitle'))}</h3></div>
+        <label>${escapeHtml(t('email.testTo'))}
+          <input name="destino" type="email" required placeholder="destino@dominio.com">
+        </label>
+        <div class="form-actions">${submitIconButton('save', t('email.sendTest'))}</div>
+        ${scopedMessage('emailTeste')}
+      </form>
     </section>
   `;
 }
@@ -1998,6 +2064,33 @@ async function submitCrud(kind, form) {
     });
     delete state.providerTokens[provider];
     state.formMessages.provedorEsportivo = { text: t('sportsProviders.saved'), tone: 'success' };
+    await navigate(state.route);
+    return;
+  }
+
+  if (kind === 'emailConfiguracao') {
+    clearFormMessage(kind);
+    const passwordMask = form.elements.smtpPassword?.dataset.passwordMask || '';
+    if (!data.smtpPassword || data.smtpPassword === passwordMask) delete data.smtpPassword;
+    data.smtpPort = Number(data.smtpPort || 0);
+    data.smtpSecure = data.smtpSecure === 'true';
+    data.smtpEnabled = data.smtpEnabled === 'true';
+    await api('/email/configuracao', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    state.formMessages.emailConfiguracao = { text: t('email.saved'), tone: 'success' };
+    await navigate(state.route);
+    return;
+  }
+
+  if (kind === 'emailTeste') {
+    clearFormMessage(kind);
+    await api('/email/teste', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    state.formMessages.emailTeste = { text: t('email.testSent'), tone: 'success' };
     await navigate(state.route);
     return;
   }
@@ -2434,7 +2527,7 @@ content.addEventListener('submit', (event) => {
   if (!form) return;
   event.preventDefault();
   submitCrud(form.dataset.crudForm, form).catch((error) => {
-    if (RULE_FORM_KINDS.has(form.dataset.crudForm) || PROFILE_FORM_KINDS.has(form.dataset.crudForm) || form.dataset.crudForm === 'provedorEsportivo') {
+    if (RULE_FORM_KINDS.has(form.dataset.crudForm) || PROFILE_FORM_KINDS.has(form.dataset.crudForm) || ['provedorEsportivo', 'emailConfiguracao', 'emailTeste'].includes(form.dataset.crudForm)) {
       setFormMessage(form.dataset.crudForm, error.message, 'error');
       return;
     }

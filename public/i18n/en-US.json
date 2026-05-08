@@ -466,5 +466,30 @@
       "same_team": "home and away teams resolved to the same team",
       "unknown": "unknown reason"
     }
+  },
+  "email": {
+    "title": "Email",
+    "statusConfigured": "configured",
+    "statusNotConfigured": "not configured",
+    "statusEnabled": "enabled",
+    "provider": "Provider",
+    "smtpHost": "SMTP host",
+    "smtpPort": "Port",
+    "smtpSecure": "SSL/TLS",
+    "smtpUser": "SMTP user",
+    "smtpPassword": "SMTP password",
+    "passwordPlaceholder": "Fill only to change the password",
+    "fromName": "Sender name",
+    "fromEmail": "Sender email",
+    "replyTo": "Reply-To",
+    "enabled": "Enabled",
+    "save": "Save email",
+    "testTitle": "Send test",
+    "testTo": "Destination email",
+    "sendTest": "Send test email",
+    "saved": "Email configuration saved.",
+    "testSent": "Test email sent successfully.",
+    "lastUpdate": "Updated at {date}",
+    "noPreviousConfig": "No configuration saved yet."
   }
 }

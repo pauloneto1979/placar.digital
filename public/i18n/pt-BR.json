@@ -466,5 +466,30 @@
       "same_team": "mandante e visitante foram resolvidos como o mesmo time",
       "unknown": "motivo n?o identificado"
     }
+  },
+  "email": {
+    "title": "E-mail",
+    "statusConfigured": "configurado",
+    "statusNotConfigured": "n?o configurado",
+    "statusEnabled": "habilitado",
+    "provider": "Provider",
+    "smtpHost": "Host SMTP",
+    "smtpPort": "Porta",
+    "smtpSecure": "SSL/TLS",
+    "smtpUser": "Usu?rio SMTP",
+    "smtpPassword": "Senha SMTP",
+    "passwordPlaceholder": "Informe somente para alterar a senha",
+    "fromName": "Nome remetente",
+    "fromEmail": "Email remetente",
+    "replyTo": "Reply-To",
+    "enabled": "Habilitado",
+    "save": "Salvar e-mail",
+    "testTitle": "Teste de envio",
+    "testTo": "Email destino",
+    "sendTest": "Enviar e-mail de teste",
+    "saved": "Configura??o de e-mail salva.",
+    "testSent": "E-mail de teste enviado com sucesso.",
+    "lastUpdate": "Atualizado em {date}",
+    "noPreviousConfig": "Nenhuma configura??o salva ainda."
   }
 }

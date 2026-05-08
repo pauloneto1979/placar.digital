@@ -1244,6 +1244,35 @@ select option {
   max-width: 720px;
 }
 
+.email-config-form,
+.email-test-form {
+  max-width: 820px;
+}
+
+.email-status-line {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 0.86rem;
+  min-height: 40px;
+}
+
+.email-test-form {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  margin-top: 14px;
+  padding: 14px;
+}
+
+.card-title--compact {
+  margin-bottom: 0;
+}
+
+.card-title--compact h3 {
+  font-size: 0.98rem;
+}
+
 .provider-meta,
 .token-control-row,
 .token-input-group {
