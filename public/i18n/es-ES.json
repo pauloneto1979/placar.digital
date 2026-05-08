@@ -27,6 +27,7 @@
     "platform": "plataforma",
     "readOnly": "solo lectura",
     "close": "Cerrar",
+    "more": "Más",
     "cancel": "Cancelar"
   },
   "auth": {

@@ -26,6 +26,10 @@
           <button id="menuButton" class="hamburger" type="button" aria-label="Abrir menu" data-i18n-aria-label="topbar.openMenu">
             <span></span><span></span><span></span>
           </button>
+          <div class="mobile-top-brand" aria-label="Placar.digital">
+            <img src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
+            <span>Placar.digital</span>
+          </div>
           <div class="page-title">
             <h1 id="pageTitle" data-i18n="nav.home">Placar</h1>
             <p id="pageSubtitle" data-i18n="subtitles.home">Resumo, ranking e próximos jogos.</p>
@@ -59,6 +63,19 @@
         <section id="content" class="content"></section>
         <p id="message" class="message"></p>
       </main>
+      <nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="Navegação principal"></nav>
+      <div id="mobileMoreDrawer" class="mobile-more-drawer" hidden>
+        <div class="mobile-more-backdrop" data-mobile-more-close></div>
+        <section class="mobile-more-panel" aria-modal="true" role="dialog">
+          <div class="mobile-more-header">
+            <h2 data-i18n="common.more">Mais</h2>
+            <button id="mobileMoreClose" class="ghost icon-button" type="button" aria-label="Fechar" title="Fechar" data-i18n-aria-label="common.close" data-i18n-title="common.close">
+              <svg viewBox="0 0 24 24" role="presentation"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z"/></svg>
+            </button>
+          </div>
+          <div id="mobileMoreList" class="mobile-more-list"></div>
+        </section>
+      </div>
     </div>
     <script src="/app/i18n/i18n.js"></script>
     <script src="/app/app.js"></script>

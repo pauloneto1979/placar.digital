@@ -21,7 +21,8 @@
     summary: null
   },
   providerTokens: {},
-  userEditorId: ''
+  userEditorId: '',
+  mobileMoreOpen: false
 };
 
 const content = document.querySelector('#content');
@@ -36,6 +37,10 @@ const bolaoSelect = document.querySelector('#bolaoSelect');
 const profileButton = document.querySelector('#profileButton');
 const localeSelect = document.querySelector('#localeSelect');
 const localeCurrentLabel = document.querySelector('#localeCurrentLabel');
+const mobileBottomNav = document.querySelector('#mobileBottomNav');
+const mobileMoreDrawer = document.querySelector('#mobileMoreDrawer');
+const mobileMoreList = document.querySelector('#mobileMoreList');
+const mobileMoreClose = document.querySelector('#mobileMoreClose');
 const i18n = window.PlacarI18n;
 const t = (key, params, fallback) => i18n.t(key, params, fallback);
 
@@ -96,6 +101,15 @@ const routes = [
   { id: 'configuracoes', labelKey: 'nav.configuracoes', subtitleKey: 'subtitles.configuracoes', owner: true },
   { id: 'perfil', labelKey: 'nav.perfil', subtitleKey: 'subtitles.perfil', hidden: true }
 ];
+
+const MOBILE_ICONS = {
+  home: '<svg viewBox="0 0 24 24" role="presentation"><path d="M3 11.5 12 4l9 7.5-1.3 1.5-1.7-1.4V20h-5v-5h-2v5H6v-8.4L4.3 13 3 11.5Z"/></svg>',
+  apostas: '<svg viewBox="0 0 24 24" role="presentation"><path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2Zm5 3v8h2V8h-2Z"/></svg>',
+  ranking: '<svg viewBox="0 0 24 24" role="presentation"><path d="M5 20V9h4v11H5Zm5 0V4h4v16h-4Zm5 0v-7h4v7h-4Z"/></svg>',
+  jogos: '<svg viewBox="0 0 24 24" role="presentation"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm1 2.1V7l2.4 1.7 2.6-.8A8 8 0 0 0 13 4.1ZM6 7.9l2.6.8L11 7V4.1a8 8 0 0 0-5 3.8Zm1.1 8.4 1-2.9-1.7-2.4-2.3.1a8 8 0 0 0 3 5.2Zm9.8 0a8 8 0 0 0 3-5.2l-2.3-.1-1.7 2.4 1 2.9ZM10 10l-1.4 3 2.2 2h2.4l2.2-2L14 10h-4Zm2 9.9a8 8 0 0 0 3.3-.7l-.8-2.2H9.5l-.8 2.2a8 8 0 0 0 3.3.7Z"/></svg>',
+  partidas: '<svg viewBox="0 0 24 24" role="presentation"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h3v2H8V9Zm5 0h3v2h-3V9Zm-5 4h8v2H8v-2Z"/></svg>',
+  more: '<svg viewBox="0 0 24 24" role="presentation"><path d="M5 10a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 0a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></svg>'
+};
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -264,6 +278,46 @@ function currentRoute() {
   return routes.find((item) => item.id === state.route) || routes[0];
 }
 
+function routeById(id) {
+  return routes.find((item) => item.id === id) || null;
+}
+
+function mobilePrimaryRoutes() {
+  const gameRoute = routeAllowed(routeById('partidas')) ? 'partidas' : 'jogos';
+  return ['home', 'apostas', 'ranking', gameRoute]
+    .map(routeById)
+    .filter((route, index, list) => route && !route.hidden && routeAllowed(route) && list.findIndex((item) => item?.id === route.id) === index);
+}
+
+function renderMobileNavigation() {
+  if (!mobileBottomNav || !mobileMoreDrawer || !mobileMoreList) return;
+  const primaryRoutes = mobilePrimaryRoutes();
+  const primaryIds = new Set(primaryRoutes.map((route) => route.id));
+  const isMoreActive = !primaryIds.has(state.route) && state.route !== 'perfil';
+  mobileBottomNav.innerHTML = [
+    ...primaryRoutes.map((route) => `
+      <button class="mobile-nav-item ${route.id === state.route ? 'active' : ''}" type="button" data-mobile-route="${escapeHtml(route.id)}" aria-label="${escapeHtml(t(route.labelKey))}">
+        <span class="mobile-nav-icon" aria-hidden="true">${MOBILE_ICONS[route.id] || MOBILE_ICONS.more}</span>
+        <span>${escapeHtml(t(route.labelKey))}</span>
+      </button>
+    `),
+    `<button class="mobile-nav-item ${isMoreActive ? 'active' : ''}" type="button" data-mobile-more aria-label="${escapeHtml(t('common.more'))}">
+      <span class="mobile-nav-icon" aria-hidden="true">${MOBILE_ICONS.more}</span>
+      <span>${escapeHtml(t('common.more'))}</span>
+    </button>`
+  ].join('');
+
+  const moreRoutes = routes.filter((route) => !route.hidden && routeAllowed(route) && !primaryIds.has(route.id));
+  mobileMoreList.innerHTML = moreRoutes.map((route) => `
+    <button class="mobile-more-item ${route.id === state.route ? 'active' : ''}" type="button" data-mobile-route="${escapeHtml(route.id)}">
+      <span class="mobile-more-dot" aria-hidden="true"></span>
+      <span>${escapeHtml(t(route.labelKey))}</span>
+    </button>
+  `).join('') || empty(t('messages.noActivePool'));
+  mobileMoreDrawer.hidden = !state.mobileMoreOpen;
+  mobileMoreDrawer.classList.toggle('open', state.mobileMoreOpen);
+}
+
 function renderMenu() {
   menu.innerHTML = routes.filter((item) => !item.hidden && routeAllowed(item)).map((item) => `
     <button class="nav-item ${item.id === state.route ? 'active' : ''}" type="button" data-route="${item.id}">
@@ -283,6 +337,7 @@ function renderChrome() {
   i18n.applyI18n(document);
   syncLocaleControl();
   renderMenu();
+  renderMobileNavigation();
 
   const availableBoloes = selectableBoloes(state.boloes);
   if (availableBoloes.length > 1) {
@@ -2098,6 +2153,7 @@ const renderers = {
 async function navigate(routeId) {
   const route = routes.find((item) => item.id === routeId && routeAllowed(item));
   state.route = route ? route.id : 'home';
+  state.mobileMoreOpen = false;
   if (state.route !== 'usuarios') state.userEditorId = '';
   renderChrome();
   content.innerHTML = loadingMarkup();
@@ -2115,6 +2171,11 @@ function loadingMarkup() {
       <img src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
       <strong>Placar.digital</strong>
       <span class="loading-spinner" aria-hidden="true"></span>
+      <div class="loading-skeleton" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
     </section>
   `;
 }
@@ -2443,6 +2504,35 @@ async function init() {
 menu.addEventListener('click', (event) => {
   const route = event.target.closest('[data-route]')?.dataset.route;
   if (route) navigate(route);
+});
+
+mobileBottomNav?.addEventListener('click', (event) => {
+  const route = event.target.closest('[data-mobile-route]')?.dataset.mobileRoute;
+  if (route) {
+    navigate(route);
+    return;
+  }
+  if (event.target.closest('[data-mobile-more]')) {
+    state.mobileMoreOpen = true;
+    renderChrome();
+  }
+});
+
+mobileMoreDrawer?.addEventListener('click', (event) => {
+  const route = event.target.closest('[data-mobile-route]')?.dataset.mobileRoute;
+  if (route) {
+    navigate(route);
+    return;
+  }
+  if (event.target.closest('[data-mobile-more-close]')) {
+    state.mobileMoreOpen = false;
+    renderChrome();
+  }
+});
+
+mobileMoreClose?.addEventListener('click', () => {
+  state.mobileMoreOpen = false;
+  renderChrome();
 });
 
 content.addEventListener('click', (event) => {
