@@ -19,6 +19,11 @@ function normalizeEmail(value) {
   return normalizeText(value).toLowerCase();
 }
 
+function normalizeIdList(value) {
+  const values = Array.isArray(value) ? value : (value === undefined || value === null ? [] : [value]);
+  return [...new Set(values.map((item) => normalizeText(item)).filter(Boolean))];
+}
+
 function createSlug(value) {
   return normalizeText(value)
     .normalize('NFD')
@@ -80,6 +85,24 @@ function createProprietarioService(repository) {
     }
 
     return bolao;
+  }
+
+  async function ensureBoloesExist(ids) {
+    for (const id of ids) {
+      await ensureBolaoExists(id);
+    }
+  }
+
+  async function ensureAdministradores(ids) {
+    for (const id of ids) {
+      const usuario = await ensureUsuarioSistema(id);
+      if (usuario.perfil !== 'administrador') {
+        throw new HttpError(422, 'invalid_admin_link_profile', 'Somente usuarios administradores podem ser vinculados ao bolao.');
+      }
+      if (!usuario.ativo) {
+        throw new HttpError(422, 'inactive_admin_link', 'Nao e possivel vincular administrador inativo.');
+      }
+    }
   }
 
   async function ensureUsuarioSistema(id) {
@@ -152,7 +175,10 @@ function createProprietarioService(repository) {
 
     async createBolao(payload, auth, context) {
       const data = await buildBolaoPayload(payload, auth);
+      const administradorIds = normalizeIdList(payload.administradorIds || payload.administrador_ids);
+      await ensureAdministradores(administradorIds);
       const bolao = await repository.createBolaoWithDefaults(data);
+      await repository.syncAdministradoresBolao(bolao.id, administradorIds);
       await audit(auth, context, {
         bolaoId: bolao.id,
         entidade: 'boloes',
@@ -161,13 +187,18 @@ function createProprietarioService(repository) {
         dadosNovos: bolao
       });
 
-      return bolao;
+      return repository.findBolaoById(bolao.id);
     },
 
     async updateBolao(id, payload, auth, context) {
       const existing = await ensureBolaoExists(id);
       const data = await buildBolaoPayload(payload, auth, existing);
       const bolao = await repository.updateBolao(id, data);
+      if (payload.administradorIds !== undefined || payload.administrador_ids !== undefined) {
+        const administradorIds = normalizeIdList(payload.administradorIds || payload.administrador_ids);
+        await ensureAdministradores(administradorIds);
+        await repository.syncAdministradoresBolao(bolao.id, administradorIds);
+      }
       await audit(auth, context, {
         bolaoId: bolao.id,
         entidade: 'boloes',
@@ -177,7 +208,7 @@ function createProprietarioService(repository) {
         dadosNovos: bolao
       });
 
-      return bolao;
+      return repository.findBolaoById(bolao.id);
     },
 
     async fecharBolao(id, auth, context) {
@@ -224,6 +255,11 @@ function createProprietarioService(repository) {
         ativo,
         senhaHash: hashPassword(senha)
       });
+      if (perfil === 'administrador') {
+        const bolaoIds = normalizeIdList(payload.bolaoIds || payload.bolao_ids);
+        await ensureBoloesExist(bolaoIds);
+        await repository.syncBoloesUsuarioAdministrador(usuario.id, bolaoIds);
+      }
 
       await audit(auth, context, {
         entidade: 'usuarios',
@@ -232,7 +268,7 @@ function createProprietarioService(repository) {
         dadosNovos: usuario
       });
 
-      return usuario;
+      return repository.findUsuarioById(usuario.id);
     },
 
     async updateUsuario(id, payload, auth, context) {
@@ -265,6 +301,14 @@ function createProprietarioService(repository) {
         ativo,
         senhaHash
       });
+      const hasBolaoIdsPayload = payload.bolaoIds !== undefined || payload.bolao_ids !== undefined;
+      if (perfil === 'administrador' && hasBolaoIdsPayload) {
+        const bolaoIds = normalizeIdList(payload.bolaoIds || payload.bolao_ids);
+        await ensureBoloesExist(bolaoIds);
+        await repository.syncBoloesUsuarioAdministrador(id, bolaoIds);
+      } else if (perfil !== 'administrador') {
+        await repository.syncBoloesUsuarioAdministrador(id, []);
+      }
 
       await audit(auth, context, {
         entidade: 'usuarios',
@@ -274,7 +318,7 @@ function createProprietarioService(repository) {
         dadosNovos: usuario
       });
 
-      return usuario;
+      return repository.findUsuarioById(usuario.id);
     },
 
     async updateUsuarioStatus(id, payload, auth, context) {

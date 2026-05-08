@@ -138,7 +138,16 @@
     "oitavas": "oitavas",
     "quartas": "quartas",
     "semifinal": "semifinal",
-    "final": "final"
+    "final": "final",
+    "SCHEDULED": "Agendada",
+    "LIVE": "Ao vivo",
+    "IN_PLAY": "Em andamento",
+    "PAUSED": "Pausada",
+    "FINISHED": "Finalizada",
+    "POSTPONED": "Adiada",
+    "SUSPENDED": "Suspensa",
+    "CANCELLED": "Cancelada",
+    "AWARDED": "Confirmada"
   },
   "home": {
     "dashboardTitle": "Painel do bolão",
@@ -302,7 +311,10 @@
     "notificationsActive": "Notificações ativas",
     "paymentGateway": "Gateway de pagamento",
     "saveSettings": "Salvar configurações",
-    "settingsSaved": "Configurações salvas."
+    "settingsSaved": "Configurações salvas.",
+    "poolAdmins": "Administradores do bol?o",
+    "linkedPools": "Bol?es vinculados",
+    "noAvailableAdmins": "Nenhum administrador ativo dispon?vel."
   },
   "admin": {
     "participants": "Participantes",

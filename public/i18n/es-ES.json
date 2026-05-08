@@ -138,7 +138,16 @@
     "oitavas": "octavos",
     "quartas": "cuartos",
     "semifinal": "semifinal",
-    "final": "final"
+    "final": "final",
+    "SCHEDULED": "Programada",
+    "LIVE": "En vivo",
+    "IN_PLAY": "En juego",
+    "PAUSED": "Pausada",
+    "FINISHED": "Finalizada",
+    "POSTPONED": "Aplazada",
+    "SUSPENDED": "Suspendida",
+    "CANCELLED": "Cancelada",
+    "AWARDED": "Confirmada"
   },
   "home": {
     "dashboardTitle": "Panel de la porra",
@@ -302,7 +311,10 @@
     "notificationsActive": "Notificaciones activas",
     "paymentGateway": "Gateway de pago",
     "saveSettings": "Guardar configuraciones",
-    "settingsSaved": "Configuraciones guardadas."
+    "settingsSaved": "Configuraciones guardadas.",
+    "poolAdmins": "Administradores de la porra",
+    "linkedPools": "Porras vinculadas",
+    "noAvailableAdmins": "No hay administrador activo disponible."
   },
   "admin": {
     "participants": "Participantes",

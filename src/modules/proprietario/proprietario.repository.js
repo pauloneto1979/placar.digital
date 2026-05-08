@@ -11,6 +11,7 @@ function mapBolao(row) {
     dataFim: row.data_fim,
     status: row.status,
     ativo: row.ativo,
+    administradorIds: row.administrador_ids || [],
     criadoAt: row.criado_at,
     atualizadoAt: row.atualizado_at
   };
@@ -24,6 +25,7 @@ function mapUsuario(row) {
     perfil: row.perfil_global,
     ativo: row.ativo,
     status: row.ativo ? 'ativo' : 'inativo',
+    bolaoIds: row.bolao_ids || [],
     ultimoLoginAt: row.ultimo_login_at,
     criadoAt: row.criado_at,
     atualizadoAt: row.atualizado_at
@@ -46,9 +48,31 @@ function mapAdminVinculado(row) {
 async function listBoloes() {
   const result = await query(
     `
-      select id, proprietario_id, nome, slug, descricao, data_inicio, data_fim, status, ativo, criado_at, atualizado_at
-      from boloes
-      order by criado_at desc
+      select
+        b.id,
+        b.proprietario_id,
+        b.nome,
+        b.slug,
+        b.descricao,
+        b.data_inicio,
+        b.data_fim,
+        b.status,
+        b.ativo,
+        coalesce(admins.administrador_ids, '{}'::uuid[]) as administrador_ids,
+        b.criado_at,
+        b.atualizado_at
+      from boloes b
+      left join lateral (
+        select array_agg(bu.usuario_id order by u.nome asc) as administrador_ids
+        from boloes_usuarios bu
+        join usuarios u on u.id = bu.usuario_id
+        where bu.bolao_id = b.id
+          and bu.perfil = 'administrador'
+          and bu.ativo = true
+          and u.perfil_global = 'administrador'
+          and u.ativo = true
+      ) admins on true
+      order by b.criado_at desc
     `
   );
 
@@ -243,10 +267,27 @@ async function fecharBolao(id) {
 async function listUsuarios() {
   const result = await query(
     `
-      select id, nome, email, perfil_global, ativo, ultimo_login_at, criado_at, atualizado_at
-      from usuarios
-      where perfil_global in ('proprietario', 'administrador')
-      order by nome asc
+      select
+        u.id,
+        u.nome,
+        u.email,
+        u.perfil_global,
+        u.ativo,
+        coalesce(links.bolao_ids, '{}'::uuid[]) as bolao_ids,
+        u.ultimo_login_at,
+        u.criado_at,
+        u.atualizado_at
+      from usuarios u
+      left join lateral (
+        select array_agg(bu.bolao_id order by b.nome asc) as bolao_ids
+        from boloes_usuarios bu
+        join boloes b on b.id = bu.bolao_id
+        where bu.usuario_id = u.id
+          and bu.perfil = 'administrador'
+          and bu.ativo = true
+      ) links on true
+      where u.perfil_global in ('proprietario', 'administrador')
+      order by u.nome asc
     `
   );
 
@@ -385,6 +426,64 @@ async function removerVinculoAdministrador(bolaoId, usuarioId) {
   return result.rowCount > 0;
 }
 
+async function syncAdministradoresBolao(bolaoId, usuarioIds = []) {
+  const ids = [...new Set((usuarioIds || []).filter(Boolean))];
+
+  return transaction(async (client) => {
+    await client.query(
+      `
+        update boloes_usuarios
+        set ativo = false
+        where bolao_id = $1
+          and perfil = 'administrador'
+          and (${ids.length ? 'usuario_id <> all($2::uuid[])' : 'true'})
+      `,
+      ids.length ? [bolaoId, ids] : [bolaoId]
+    );
+
+    for (const usuarioId of ids) {
+      await client.query(
+        `
+          insert into boloes_usuarios (bolao_id, usuario_id, perfil, ativo)
+          values ($1, $2, 'administrador', true)
+          on conflict (bolao_id, usuario_id)
+          do update set perfil = 'administrador', ativo = true
+        `,
+        [bolaoId, usuarioId]
+      );
+    }
+  });
+}
+
+async function syncBoloesUsuarioAdministrador(usuarioId, bolaoIds = []) {
+  const ids = [...new Set((bolaoIds || []).filter(Boolean))];
+
+  return transaction(async (client) => {
+    await client.query(
+      `
+        update boloes_usuarios
+        set ativo = false
+        where usuario_id = $1
+          and perfil = 'administrador'
+          and (${ids.length ? 'bolao_id <> all($2::uuid[])' : 'true'})
+      `,
+      ids.length ? [usuarioId, ids] : [usuarioId]
+    );
+
+    for (const bolaoId of ids) {
+      await client.query(
+        `
+          insert into boloes_usuarios (bolao_id, usuario_id, perfil, ativo)
+          values ($1, $2, 'administrador', true)
+          on conflict (bolao_id, usuario_id)
+          do update set perfil = 'administrador', ativo = true
+        `,
+        [bolaoId, usuarioId]
+      );
+    }
+  });
+}
+
 async function listConfiguracoesGerais() {
   const result = await query(
     `
@@ -465,6 +564,8 @@ module.exports = {
   vincularAdministrador,
   listAdministradoresBolao,
   removerVinculoAdministrador,
+  syncAdministradoresBolao,
+  syncBoloesUsuarioAdministrador,
   listConfiguracoesGerais,
   upsertConfiguracaoGeral,
   createAuditLog

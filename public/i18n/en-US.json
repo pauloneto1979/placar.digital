@@ -138,7 +138,16 @@
     "oitavas": "round of 16",
     "quartas": "quarterfinals",
     "semifinal": "semifinal",
-    "final": "final"
+    "final": "final",
+    "SCHEDULED": "Scheduled",
+    "LIVE": "Live",
+    "IN_PLAY": "In play",
+    "PAUSED": "Paused",
+    "FINISHED": "Finished",
+    "POSTPONED": "Postponed",
+    "SUSPENDED": "Suspended",
+    "CANCELLED": "Cancelled",
+    "AWARDED": "Awarded"
   },
   "home": {
     "dashboardTitle": "Pool dashboard",
@@ -302,7 +311,10 @@
     "notificationsActive": "Notifications active",
     "paymentGateway": "Payment gateway",
     "saveSettings": "Save settings",
-    "settingsSaved": "Settings saved."
+    "settingsSaved": "Settings saved.",
+    "poolAdmins": "Pool administrators",
+    "linkedPools": "Linked pools",
+    "noAvailableAdmins": "No active administrator available."
   },
   "admin": {
     "participants": "Participants",

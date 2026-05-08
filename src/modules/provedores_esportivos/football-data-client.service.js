@@ -1,7 +1,7 @@
 const { HttpError } = require('../../shared/errors/http-error');
 
 const FOOTBALL_DATA_PROVIDER = 'football-data';
-const ALLOWED_STATUS = new Set(['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'SUSPENDED', 'CANCELLED']);
+const ALLOWED_STATUS = new Set(['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'SUSPENDED', 'CANCELLED', 'AWARDED']);
 const ALLOWED_COMPETITIONS = new Set(['WC', 'CL', 'BL1', 'DED', 'BSA', 'PD', 'FL1', 'ELC', 'PPL', 'EC', 'SA', 'PL']);
 
 function clean(value) {
@@ -33,6 +33,26 @@ function normalizeCompetition(value) {
     throw new HttpError(400, 'invalid_football_data_competition', 'Competicao externa invalida.');
   }
   return competition;
+}
+
+function addDays(dateText, days) {
+  const [year, month, day] = dateText.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return date.toISOString().slice(0, 10);
+}
+
+function localDateKey(value, timeZone = 'America/Sao_Paulo') {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
 }
 
 function scoreValue(value) {
@@ -98,7 +118,7 @@ function buildQuery(query) {
   }
 
   if (dateFrom) params.set('dateFrom', dateFrom);
-  if (dateTo) params.set('dateTo', dateTo);
+  if (dateTo) params.set('dateTo', addDays(dateTo, 1));
   if (status) params.set('status', status);
   if (competition) params.set('competitions', competition);
   return params.toString();
@@ -157,6 +177,8 @@ function createFootballDataClientService(factory, repository, options = {}) {
   async function listarPartidas(query = {}) {
     const config = await getActiveFootballDataConfig();
     const baseUrl = String(config.baseUrl || '').replace(/\/$/, '');
+    const dateFrom = onlyDate(query.dateFrom, 'dateFrom');
+    const dateTo = onlyDate(query.dateTo, 'dateTo');
     const qs = buildQuery(query);
     const url = `${baseUrl}/matches${qs ? `?${qs}` : ''}`;
     const controller = new AbortController();
@@ -197,15 +219,26 @@ function createFootballDataClientService(factory, repository, options = {}) {
       } catch {
         body = {};
       }
+      const partidas = Array.isArray(body.matches)
+        ? body.matches
+          .filter((match) => {
+            const key = localDateKey(match.utcDate);
+            if (dateFrom && key && key < dateFrom) return false;
+            if (dateTo && key && key > dateTo) return false;
+            return true;
+          })
+          .map(mapMatch)
+        : [];
+
       return {
-        count: Array.isArray(body.matches) ? body.matches.length : 0,
+        count: partidas.length,
         filters: {
           dateFrom: query.dateFrom || null,
           dateTo: query.dateTo || null,
           competition: query.competition || query.competitions || null,
           status: query.status || null
         },
-        partidas: Array.isArray(body.matches) ? body.matches.map(mapMatch) : []
+        partidas
       };
     } catch (error) {
       if (error.name === 'AbortError') {

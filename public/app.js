@@ -349,8 +349,25 @@ function dateTimeInput(value) {
 }
 
 function formPayload(form) {
-  const data = Object.fromEntries(new FormData(form).entries());
+  const data = {};
+  const multiKeys = new Set();
+  form.querySelectorAll('[data-multi-value]').forEach((field) => {
+    if (field.name) multiKeys.add(field.name);
+  });
+  const formData = new FormData(form);
+  for (const [key, value] of formData.entries()) {
+    if (multiKeys.has(key)) {
+      data[key] = data[key] || [];
+      if (value) data[key].push(value);
+    } else {
+      data[key] = value;
+    }
+  }
   Object.keys(data).forEach((key) => {
+    if (Array.isArray(data[key])) {
+      data[key] = [...new Set(data[key].filter(Boolean))];
+      return;
+    }
     if (data[key] === '') delete data[key];
   });
   return data;
@@ -377,6 +394,17 @@ function setFormValues(form, row) {
   Object.entries(row).forEach(([key, value]) => {
     const field = form.elements[key];
     if (!field) return;
+    if (field instanceof RadioNodeList || (field.length && field[0]?.type === 'checkbox')) {
+      const values = new Set((Array.isArray(value) ? value : [value]).map(String));
+      Array.from(field).forEach((item) => {
+        if (item.type === 'checkbox') item.checked = values.has(String(item.value));
+      });
+      return;
+    }
+    if (field.type === 'checkbox') {
+      field.checked = Array.isArray(value) ? value.map(String).includes(String(field.value)) : Boolean(value);
+      return;
+    }
     if (field.type === 'datetime-local') {
       field.value = dateTimeInput(value);
       return;
@@ -385,15 +413,46 @@ function setFormValues(form, row) {
   });
 }
 
+function renderCheckboxGroup(name, options, selectedValues = [], emptyMessage = '') {
+  const selected = new Set((selectedValues || []).map(String));
+  if (!options.length) return empty(emptyMessage || t('common.noDescription'));
+  return `
+    <div class="checkbox-grid">
+      <input type="hidden" name="${escapeHtml(name)}" value="" data-multi-value>
+      ${options.map((option) => `
+        <label class="modern-checkbox">
+          <input type="checkbox" name="${escapeHtml(name)}" value="${escapeHtml(option.id)}" data-multi-value ${selected.has(String(option.id)) ? 'checked' : ''}>
+          <span class="modern-checkbox__box" aria-hidden="true"></span>
+          <span class="modern-checkbox__text">
+            <strong>${escapeHtml(option.nome)}</strong>
+            ${option.email ? `<small>${escapeHtml(option.email)}</small>` : ''}
+          </span>
+        </label>
+      `).join('')}
+    </div>
+  `;
+}
+
 function clearForm(kind) {
   const form = document.querySelector(`[data-crud-form="${kind}"]`);
   if (!form) return;
   form.reset();
   if (form.elements.id) form.elements.id.value = '';
+  if (kind === 'usuarios') syncAdminLinksVisibility(form);
   if (kind === 'times') {
     form.dataset.uploadedShield = '';
     updateTeamShieldPreview(form);
   }
+}
+
+function syncAdminLinksVisibility(form) {
+  const section = form?.querySelector('[data-admin-links-section]');
+  if (!section) return;
+  const isAdmin = form.elements.perfil?.value === 'administrador';
+  section.hidden = !isAdmin;
+  section.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+    input.disabled = !isAdmin;
+  });
 }
 
 function updateTeamShieldPreview(form) {
@@ -795,7 +854,7 @@ function renderExternalImportPanel(localMatches) {
         <label>${escapeHtml(t('externalMatches.status'))}
           <select name="status">
             <option value="">${escapeHtml(t('common.select'))}</option>
-            ${['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'SUSPENDED', 'CANCELLED'].map((status) => `<option value="${status}" ${filters.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+            ${['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'SUSPENDED', 'CANCELLED', 'AWARDED'].map((status) => `<option value="${status}" ${filters.status === status ? 'selected' : ''}>${escapeHtml(statusLabel(status))}</option>`).join('')}
           </select>
         </label>
         <div class="form-actions">
@@ -814,9 +873,6 @@ function renderExternalImportPanel(localMatches) {
           }))}
         </div>
       ` : ''}
-      <div class="list external-import-list">
-        ${externalMatches.map((row) => renderExternalImportRow(row, importedIds, selectedIds)).join('') || empty(t('externalMatches.noExternalResults'))}
-      </div>
       <div class="form-actions external-import-toolbar">
         <label class="checkbox-pill">
           <input type="checkbox" data-toggle-all-import-matches ${allSelected ? 'checked' : ''} ${selectableMatches.length ? '' : 'disabled'}>
@@ -824,6 +880,9 @@ function renderExternalImportPanel(localMatches) {
         </label>
         <span class="pill">${escapeHtml(t('externalMatches.selectedCount', { count: selectedIds.size }))}</span>
         <button type="button" data-import-external-matches ${selectedIds.size ? '' : 'disabled'}>${escapeHtml(t('externalMatches.importSelected'))}</button>
+      </div>
+      <div class="list external-import-list">
+        ${externalMatches.map((row) => renderExternalImportRow(row, importedIds, selectedIds)).join('') || empty(t('externalMatches.noExternalResults'))}
       </div>
     </section>
   `;
@@ -837,7 +896,7 @@ function renderExternalImportRow(row, importedIds, selectedIds) {
     <article class="external-link-card external-import-card ${selected ? 'selected' : ''} ${imported ? 'linked' : ''}" data-toggle-import-match="${escapeHtml(id)}" ${imported ? 'aria-disabled="true"' : ''}>
       <label class="external-import-check">
         <input type="checkbox" data-toggle-import-match="${escapeHtml(id)}" ${selected ? 'checked' : ''} ${imported ? 'disabled' : ''}>
-        <span>${escapeHtml(imported ? t('externalMatches.alreadyImported') : t('externalMatches.selectMatch'))}</span>
+        <span class="sr-only">${escapeHtml(imported ? t('externalMatches.alreadyImported') : t('externalMatches.selectMatch'))}</span>
       </label>
       <span class="match-inline">${renderTeamName(row.mandante, row.mandante?.name, 'sm')}<span class="score score--inline">${escapeHtml(externalScore(row))}</span>${renderTeamName(row.visitante, row.visitante?.name, 'sm')}</span>
       <span class="muted">${escapeHtml(`${competitionName(row)} - ${dateTime(row.utcDate)} - ${statusLabel(row.status)}`)}</span>
@@ -1116,8 +1175,13 @@ async function renderMeuPerfil() {
 }
 
 async function renderBoloesOwner() {
-  const rows = await api('/proprietario/boloes');
+  const [rows, usuarios] = await Promise.all([
+    api('/proprietario/boloes'),
+    api('/proprietario/usuarios')
+  ]);
   state.data.boloes = rows;
+  state.data.usuarios = usuarios;
+  const administradores = usuarios.filter((usuario) => usuario.perfil === 'administrador' && usuario.ativo !== false);
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>${escapeHtml(t('owner.pools'))}</h2><span class="pill">${escapeHtml(t('common.owner'))}</span></div>
@@ -1134,6 +1198,10 @@ async function renderBoloesOwner() {
             <option value="inativo">${escapeHtml(statusLabel('inativo'))}</option>
           </select>
         </label>
+        <fieldset class="link-fieldset">
+          <legend>${escapeHtml(t('owner.poolAdmins'))}</legend>
+          ${renderCheckboxGroup('administradorIds', administradores, [], t('owner.noAvailableAdmins'))}
+        </fieldset>
         <div class="form-actions">
           ${submitIconButton('save', t('owner.savePool'))}
           ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="boloes"')}
@@ -1145,8 +1213,12 @@ async function renderBoloesOwner() {
 }
 
 async function renderUsuariosOwner() {
-  const rows = await api('/proprietario/usuarios');
+  const [rows, boloes] = await Promise.all([
+    api('/proprietario/usuarios'),
+    api('/proprietario/boloes')
+  ]);
   state.data.usuarios = rows;
+  state.data.boloes = boloes;
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>${escapeHtml(t('owner.users'))}</h2><span class="pill">${escapeHtml(t('common.owner'))}</span></div>
@@ -1154,7 +1226,8 @@ async function renderUsuariosOwner() {
         <input name="id" type="hidden">
         <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
         <label>${escapeHtml(t('auth.email'))} <input name="email" type="email" required></label>
-        <label>${escapeHtml(t('owner.password'))} <input name="senha" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"></label>
+        <label>${escapeHtml(t('admin.initialPassword'))} <input name="senha" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"></label>
+        <label>${escapeHtml(t('admin.confirmInitialPassword'))} <input name="confirmarSenha" type="password" autocomplete="new-password" placeholder="${escapeHtml(t('owner.passwordPlaceholder'))}"></label>
         <label>${escapeHtml(t('owner.profile'))}
           <select name="perfil">
             <option value="administrador">${escapeHtml(t('roles.administrador'))}</option>
@@ -1167,6 +1240,10 @@ async function renderUsuariosOwner() {
             <option value="inativo">${escapeHtml(statusLabel('inativo'))}</option>
           </select>
         </label>
+        <fieldset class="link-fieldset" data-admin-links-section>
+          <legend>${escapeHtml(t('owner.linkedPools'))}</legend>
+          ${renderCheckboxGroup('bolaoIds', boloes.filter((bolao) => bolao.ativo !== false), [], t('owner.noPools'))}
+        </fieldset>
         <div class="form-actions">
           ${submitIconButton('save', t('owner.saveUser'))}
           ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="usuarios"')}
@@ -1650,7 +1727,7 @@ function renderExternalMatchLinking(partidas, times) {
       <label>${escapeHtml(t('externalMatches.status'))}
         <select name="status">
           <option value="">${escapeHtml(t('common.select'))}</option>
-          ${['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'SUSPENDED', 'CANCELLED'].map((status) => `<option value="${status}" ${filters.status === status ? 'selected' : ''}>${status}</option>`).join('')}
+          ${['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'SUSPENDED', 'CANCELLED', 'AWARDED'].map((status) => `<option value="${status}" ${filters.status === status ? 'selected' : ''}>${escapeHtml(statusLabel(status))}</option>`).join('')}
         </select>
       </label>
       <div class="form-actions"><button type="submit">${escapeHtml(t('externalMatches.search'))}</button></div>
@@ -1986,6 +2063,10 @@ async function submitCrud(kind, form) {
     } else if (data.senha) {
       ensureSystemPassword(data.senha);
     }
+    if ((data.senha || data.confirmarSenha) && (data.senha || '') !== (data.confirmarSenha || '')) {
+      throw new Error(t('security.passwordConfirmationMismatch'));
+    }
+    delete data.confirmarSenha;
   }
 
   if (kind === 'participantes') {
@@ -2032,6 +2113,7 @@ function editCrud(kind, id) {
   if (!row || !form) return;
   setFormValues(form, row);
   if (kind === 'times') updateTeamShieldPreview(form);
+  if (kind === 'usuarios') syncAdminLinksVisibility(form);
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -2258,6 +2340,12 @@ content.addEventListener('change', (event) => {
   const toggleAllImportCheckbox = event.target.closest('input[data-toggle-all-import-matches]');
   if (toggleAllImportCheckbox && !toggleAllImportCheckbox.disabled) {
     toggleAllExternalImportSelection();
+    return;
+  }
+
+  const perfilUsuario = event.target.closest('[data-crud-form="usuarios"] [name="perfil"]');
+  if (perfilUsuario) {
+    syncAdminLinksVisibility(perfilUsuario.closest('[data-crud-form="usuarios"]'));
   }
 });
 
