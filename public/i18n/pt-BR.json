@@ -367,7 +367,9 @@
     "shieldPreview": "Prévia do brasão",
     "invalidShieldUpload": "Imagem inválida. Use PNG, JPG, WEBP ou SVG até 512 KB.",
     "badgeUrl": "URL do brasão",
-    "removeShieldUpload": "Remover upload do brasão"
+    "removeShieldUpload": "Remover upload do brasão",
+    "matchTeamsRequired": "Selecione mandante e visitante.",
+    "matchTeamsDifferent": "Mandante e visitante devem ser times diferentes."
   },
   "messages": {
     "noActivePool": "Nenhum bolão ativo encontrado para esta sessão.",
@@ -443,7 +445,7 @@
     "imported": "Importação concluída.",
     "importSummary": "Partidas criadas: {created}. Ignoradas: {skipped}. Times criados: {teams}. Avisos: {warnings}.",
     "selectBoth": "Selecione uma partida local e uma partida externa.",
-    "duplicateBlocked": "Essa partida externa já está vinculada a outra partida local.",
+    "duplicateBlocked": "Essa partida externa já existe neste bolão.",
     "confirmLink": "Vincular \"{local}\" com \"{external}\"?",
     "linked": "Partida vinculada com sucesso.",
     "selectLinkedLocal": "Selecione uma partida local que já tenha vínculo externo.",
@@ -459,8 +461,8 @@
     "moreIgnored": "+{count} partida(s) ignorada(s) n?o exibida(s).",
     "warningsTitle": "Avisos da importa??o",
     "skipReasons": {
-      "already_imported_in_pool": "j? existe neste bol?o",
-      "football_data_match_id_exists": "football_data_match_id j? est? vinculado a outra partida",
+      "already_imported_in_pool": "já existe neste bolão",
+      "football_data_match_id_exists": "já existe neste bolão",
       "local_match_duplicate": "j? existe partida local com os mesmos times e data",
       "team_ambiguous": "time encontrado de forma amb?gua",
       "same_team": "mandante e visitante foram resolvidos como o mesmo time",

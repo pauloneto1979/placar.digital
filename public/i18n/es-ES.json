@@ -367,7 +367,9 @@
     "shieldPreview": "Vista previa del escudo",
     "invalidShieldUpload": "Imagen inválida. Usa PNG, JPG, WEBP o SVG hasta 512 KB.",
     "badgeUrl": "URL del escudo",
-    "removeShieldUpload": "Quitar carga del escudo"
+    "removeShieldUpload": "Quitar carga del escudo",
+    "matchTeamsRequired": "Selecciona local y visitante.",
+    "matchTeamsDifferent": "Local y visitante deben ser equipos diferentes."
   },
   "messages": {
     "noActivePool": "Ninguna porra activa encontrada para esta sesión.",
@@ -434,7 +436,7 @@
     "imported": "Importación concluida.",
     "importSummary": "Partidos creados: {created}. Ignorados: {skipped}. Equipos creados: {teams}. Avisos: {warnings}.",
     "selectBoth": "Selecciona un partido local y un partido externo.",
-    "duplicateBlocked": "Este partido externo ya está vinculado a otro partido local.",
+    "duplicateBlocked": "Este partido externo ya existe en este pool.",
     "confirmLink": "¿Vincular \"{local}\" con \"{external}\"?",
     "linked": "Partido vinculado correctamente.",
     "selectLinkedLocal": "Selecciona un partido local que ya tenga un vínculo externo.",
@@ -450,8 +452,8 @@
     "moreIgnored": "+{count} partido(s) ignorado(s) no mostrado(s).",
     "warningsTitle": "Avisos de importaci?n",
     "skipReasons": {
-      "already_imported_in_pool": "ya existe en esta porra",
-      "football_data_match_id_exists": "football_data_match_id ya est? vinculado a otro partido",
+      "already_imported_in_pool": "ya existe en este pool",
+      "football_data_match_id_exists": "ya existe en este pool",
       "local_match_duplicate": "ya existe un partido local con los mismos equipos y fecha",
       "team_ambiguous": "equipo encontrado de forma ambigua",
       "same_team": "local y visitante se resolvieron como el mismo equipo",

@@ -367,7 +367,9 @@
     "shieldPreview": "Badge preview",
     "invalidShieldUpload": "Invalid image. Use PNG, JPG, WEBP or SVG up to 512 KB.",
     "badgeUrl": "Badge URL",
-    "removeShieldUpload": "Remove badge upload"
+    "removeShieldUpload": "Remove badge upload",
+    "matchTeamsRequired": "Select home and away teams.",
+    "matchTeamsDifferent": "Home and away teams must be different."
   },
   "messages": {
     "noActivePool": "No active pool found for this session.",
@@ -443,7 +445,7 @@
     "imported": "Import completed.",
     "importSummary": "Matches created: {created}. Skipped: {skipped}. Teams created: {teams}. Warnings: {warnings}.",
     "selectBoth": "Select one local match and one external match.",
-    "duplicateBlocked": "This external match is already linked to another local match.",
+    "duplicateBlocked": "This external match already exists in this pool.",
     "confirmLink": "Link \"{local}\" with \"{external}\"?",
     "linked": "Match linked successfully.",
     "selectLinkedLocal": "Select a local match that already has an external link.",
@@ -460,7 +462,7 @@
     "warningsTitle": "Import warnings",
     "skipReasons": {
       "already_imported_in_pool": "already exists in this pool",
-      "football_data_match_id_exists": "football_data_match_id is already linked to another match",
+      "football_data_match_id_exists": "already exists in this pool",
       "local_match_duplicate": "a local match already exists with the same teams and date",
       "team_ambiguous": "team match was ambiguous",
       "same_team": "home and away teams resolved to the same team",

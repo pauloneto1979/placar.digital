@@ -198,9 +198,9 @@ function createPartidasService(repository, options = {}) {
         throw new HttpError(400, 'invalid_external_provider', 'Provider deve ser football-data.');
       }
       const matchId = externalMatchId(body.externalMatchId || body.external_match_id);
-      const linked = await repository.findByFootballDataMatchId(matchId);
+      const linked = await repository.findByFootballDataMatchId(matchId, partida.bolaoId);
       if (linked && linked.id !== partida.id) {
-        throw new HttpError(409, 'external_match_already_linked', 'Partida externa ja vinculada a outra partida local.');
+        throw new HttpError(409, 'external_match_already_linked', 'Partida externa ja existe neste bolao.');
       }
       const updated = await repository.updateExternalLink(partida.id, matchId);
       await repository.createAuditLog({

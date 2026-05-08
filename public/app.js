@@ -858,7 +858,7 @@ function renderExternalImportPanel(localMatches) {
           </select>
         </label>
         <div class="form-actions">
-          <button type="submit">${escapeHtml(t('externalMatches.search'))}</button>
+          <button class="ghost" type="submit">${escapeHtml(t('externalMatches.search'))}</button>
           <button class="ghost" type="button" data-clear-external-import-filters>${escapeHtml(t('externalMatches.clearFilters'))}</button>
         </div>
         ${scopedMessage('externalMatchImport')}
@@ -872,7 +872,7 @@ function renderExternalImportPanel(localMatches) {
           <span>${escapeHtml(t('externalMatches.selectAll'))}</span>
         </label>
         <span class="pill">${escapeHtml(t('externalMatches.selectedCount', { count: selectedIds.size }))}</span>
-        <button type="button" data-import-external-matches ${selectedIds.size ? '' : 'disabled'}>${escapeHtml(t('externalMatches.importSelected'))}</button>
+        <button class="ghost" type="button" data-import-external-matches ${selectedIds.size ? '' : 'disabled'}>${escapeHtml(t('externalMatches.importSelected'))}</button>
       </div>
       <div class="list external-import-list">
         ${externalMatches.map((row) => renderExternalImportRow(row, importedIds, selectedIds)).join('') || empty(t('externalMatches.noExternalResults'))}
@@ -1522,8 +1522,8 @@ async function renderPartidasAdmin() {
       <form class="form-card" data-crud-form="partidas">
         <input name="id" type="hidden">
         <label>${escapeHtml(t('admin.phase'))} <select name="faseId"><option value="">${escapeHtml(t('games.noPhase'))}</option>${optionList(fases)}</select></label>
-        <label>${escapeHtml(t('admin.home'))} <select name="timeMandanteId" required>${optionList(times)}</select></label>
-        <label>${escapeHtml(t('admin.away'))} <select name="timeVisitanteId" required>${optionList(times)}</select></label>
+        <label>${escapeHtml(t('admin.home'))} <select name="timeMandanteId" required><option value="">${escapeHtml(t('common.select'))}</option>${optionList(times)}</select></label>
+        <label>${escapeHtml(t('admin.away'))} <select name="timeVisitanteId" required><option value="">${escapeHtml(t('common.select'))}</option>${optionList(times)}</select></label>
         <label>${escapeHtml(t('admin.dateTime'))} <input name="dataHora" type="datetime-local" required></label>
         <label>${escapeHtml(t('admin.stadium'))} <input name="estadio"></label>
         <label>${escapeHtml(t('admin.homeScore'))} <input name="placarMandante" type="number" min="0"></label>
@@ -2211,6 +2211,15 @@ async function submitCrud(kind, form) {
 
   if (kind === 'times') {
     delete data.escudoUpload;
+  }
+
+  if (kind === 'partidas') {
+    if (!data.timeMandanteId || !data.timeVisitanteId) {
+      throw new Error(t('admin.matchTeamsRequired'));
+    }
+    if (data.timeMandanteId === data.timeVisitanteId) {
+      throw new Error(t('admin.matchTeamsDifferent'));
+    }
   }
 
   const saved = await api(id ? config.update(id) : config.create, {

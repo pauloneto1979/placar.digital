@@ -36,11 +36,16 @@ async function listByFootballDataMatchIds(matchIds) {
   );
   return result.rows.map(map);
 }
-async function findByFootballDataMatchId(matchId) {
-  const result = await query(
-    'select * from partidas where football_data_match_id = $1 limit 1',
-    [String(matchId)]
-  );
+async function findByFootballDataMatchId(matchId, bolaoId = null) {
+  const result = bolaoId
+    ? await query(
+      'select * from partidas where bolao_id = $1 and football_data_match_id = $2 limit 1',
+      [bolaoId, String(matchId)]
+    )
+    : await query(
+      'select * from partidas where football_data_match_id = $1 limit 1',
+      [String(matchId)]
+    );
   return result.rows[0] ? map(result.rows[0]) : null;
 }
 async function findDuplicateLocalMatch(client, item, mandanteId, visitanteId) {
@@ -181,12 +186,12 @@ async function importExternalMatches(items) {
 
     for (const item of items) {
       const exists = await client.query(
-        'select * from partidas where football_data_match_id = $1 limit 1',
-        [String(item.footballDataMatchId)]
+        'select * from partidas where bolao_id = $1 and football_data_match_id = $2 limit 1',
+        [item.bolaoId, String(item.footballDataMatchId)]
       );
 
       if (exists.rowCount > 0) {
-        skipped(item, exists.rows[0].bolao_id === item.bolaoId ? 'already_imported_in_pool' : 'football_data_match_id_exists', {
+        skipped(item, 'already_imported_in_pool', {
           partidaId: exists.rows[0].id,
           bolaoId: exists.rows[0].bolao_id
         });
