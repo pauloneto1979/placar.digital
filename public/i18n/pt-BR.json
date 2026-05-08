@@ -314,9 +314,9 @@
     "paymentGateway": "Gateway de pagamento",
     "saveSettings": "Salvar configurações",
     "settingsSaved": "Configurações salvas.",
-    "poolAdmins": "Administradores do bol?o",
+    "poolAdmins": "Administradores do bolão",
     "linkedPools": "Bolões vinculados",
-    "noAvailableAdmins": "Nenhum administrador ativo dispon?vel.",
+    "noAvailableAdmins": "Nenhum administrador ativo disponível.",
     "editUser": "Editar usuário",
     "noLinkedPools": "Sem bolões vinculados",
     "linkedPoolsHelp": "Marque os bolões que este administrador pode acessar.",
@@ -388,7 +388,7 @@
   },
   "security": {
     "systemPasswordHelp": "8+ caracteres • Maiúscula • Minúscula • Número",
-    "systemPasswordPolicy": "A senha deve ter no mínimo 8 caracteres, com ao menos 1 letra maiúscula, 1 letra minúscula e 1 número.",
+    "systemPasswordPolicy": "A senha deve ter no mínimo 8 caracteres, com maiúscula, minúscula e número.",
     "systemPasswordRequired": "Informe a senha do usuário.",
     "bettorPasswordHelp": "Obrigatória para nova credencial de apostador.",
     "bettorPasswordRequired": "Informe a senha do apostador.",
@@ -465,27 +465,27 @@
     "invalidDateRange": "A data final não pode ser menor que a data inicial.",
     "ignoredReasonsTitle": "Motivos das partidas ignoradas",
     "ignoredReasonLine": "ID {id}: {reason}.",
-    "moreIgnored": "+{count} partida(s) ignorada(s) n?o exibida(s).",
-    "warningsTitle": "Avisos da importa??o",
+    "moreIgnored": "+{count} partida(s) ignorada(s) não exibida(s).",
+    "warningsTitle": "Avisos da importação",
     "skipReasons": {
       "already_imported_in_pool": "já existe neste bolão",
       "football_data_match_id_exists": "já existe neste bolão",
-      "local_match_duplicate": "j? existe partida local com os mesmos times e data",
-      "team_ambiguous": "time encontrado de forma amb?gua",
+      "local_match_duplicate": "já existe partida local com os mesmos times e data",
+      "team_ambiguous": "time encontrado de forma ambígua",
       "same_team": "mandante e visitante foram resolvidos como o mesmo time",
-      "unknown": "motivo n?o identificado"
+      "unknown": "motivo não identificado"
     }
   },
   "email": {
     "title": "E-mail",
     "statusConfigured": "configurado",
-    "statusNotConfigured": "n?o configurado",
+    "statusNotConfigured": "não configurado",
     "statusEnabled": "habilitado",
     "provider": "Provider",
     "smtpHost": "Host SMTP",
     "smtpPort": "Porta",
     "smtpSecure": "SSL/TLS",
-    "smtpUser": "Usu?rio SMTP",
+    "smtpUser": "Usuário SMTP",
     "smtpPassword": "Senha SMTP",
     "passwordPlaceholder": "Informe somente para alterar a senha",
     "fromName": "Nome remetente",
@@ -496,9 +496,9 @@
     "testTitle": "Teste de envio",
     "testTo": "Email destino",
     "sendTest": "Enviar e-mail de teste",
-    "saved": "Configura??o de e-mail salva.",
+    "saved": "Configuração de e-mail salva.",
     "testSent": "E-mail de teste enviado com sucesso.",
     "lastUpdate": "Atualizado em {date}",
-    "noPreviousConfig": "Nenhuma configura??o salva ainda."
+    "noPreviousConfig": "Nenhuma configuração salva ainda."
   }
 }

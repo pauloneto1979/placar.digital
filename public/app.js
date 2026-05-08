@@ -226,10 +226,10 @@ function redirectLogin() {
   window.location.href = '/app/login.html';
 }
 
-function saveAuth(result) {
+function saveAuth(result, options = {}) {
   state.token = result.accessToken || state.token;
   state.user = result.user || state.user;
-  if (Array.isArray(result.boloes)) {
+  if (Array.isArray(result.boloes) && (result.boloes.length > 0 || !options.keepBoloesWhenEmpty)) {
     state.boloes = selectableBoloes(result.boloes);
   }
   state.activeBolaoId = result.selectedBolao?.id || state.activeBolaoId;
@@ -349,18 +349,18 @@ function optionLabel(options, value, fallback = '') {
   return fallback || value || '';
 }
 
-function setFormMessage(kind, text, tone = 'warning') {
+function setFormMessage(kind, text, tone = 'warning', root = document) {
   state.formMessages[kind] = { text, tone };
-  const el = document.querySelector(`[data-form-message="${kind}"]`);
+  const el = root.querySelector(`[data-form-message="${kind}"]`) || document.querySelector(`[data-form-message="${kind}"]`);
   if (!el) return;
   el.hidden = false;
   el.dataset.tone = tone;
   el.textContent = text;
 }
 
-function clearFormMessage(kind) {
+function clearFormMessage(kind, root = document) {
   delete state.formMessages[kind];
-  const el = document.querySelector(`[data-form-message="${kind}"]`);
+  const el = root.querySelector(`[data-form-message="${kind}"]`) || document.querySelector(`[data-form-message="${kind}"]`);
   if (!el) return;
   el.hidden = true;
   el.textContent = '';
@@ -1316,13 +1316,8 @@ async function renderMeuPerfil() {
 }
 
 async function renderBoloesOwner() {
-  const [rows, usuarios] = await Promise.all([
-    api('/proprietario/boloes'),
-    api('/proprietario/usuarios')
-  ]);
+  const rows = await api('/proprietario/boloes');
   state.data.boloes = rows;
-  state.data.usuarios = usuarios;
-  const administradores = usuarios.filter((usuario) => usuario.perfil === 'administrador' && usuario.ativo !== false);
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>${escapeHtml(t('owner.pools'))}</h2><span class="pill">${escapeHtml(t('common.owner'))}</span></div>
@@ -1339,10 +1334,6 @@ async function renderBoloesOwner() {
             <option value="inativo">${escapeHtml(statusLabel('inativo'))}</option>
           </select>
         </label>
-        <fieldset class="link-fieldset">
-          <legend>${escapeHtml(t('owner.poolAdmins'))}</legend>
-          ${renderCheckboxGroup('administradorIds', administradores, [], t('owner.noAvailableAdmins'))}
-        </fieldset>
         <div class="form-actions">
           ${submitIconButton('save', t('owner.savePool'))}
           ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="boloes"')}
@@ -2112,6 +2103,7 @@ async function navigate(routeId) {
   content.innerHTML = loadingMarkup();
   try {
     await renderers[state.route]();
+    renderChrome();
   } catch (error) {
     content.innerHTML = `<section class="card">${empty(error.message)}</section>`;
   }
@@ -2128,6 +2120,13 @@ function loadingMarkup() {
 }
 
 async function switchBolao(bolaoId) {
+  const previous = {
+    token: state.token,
+    user: { ...state.user },
+    boloes: [...state.boloes],
+    activeBolaoId: state.activeBolaoId,
+    activeBolaoNome: state.activeBolaoNome
+  };
   const target = selectableBoloes(state.boloes).find((bolao) => String(bolao.id) === String(bolaoId));
   if (!target) {
     showMessage(t('messages.noActivePool'), 'warning');
@@ -2135,15 +2134,26 @@ async function switchBolao(bolaoId) {
     await navigate(state.route);
     return;
   }
-  const result = await api('/auth/trocar-bolao', {
-    method: 'POST',
-    body: JSON.stringify({ bolaoId })
-  });
-  saveAuth(result);
-  const active = selectableBoloes(state.boloes).find((bolao) => bolao.id === state.activeBolaoId);
-  state.activeBolaoNome = active?.nome || result.selectedBolao?.nome || '';
-  persistBolaoContext();
-  await navigate(state.route);
+  try {
+    const result = await api('/auth/trocar-bolao', {
+      method: 'POST',
+      body: JSON.stringify({ bolaoId })
+    });
+    saveAuth(result, { keepBoloesWhenEmpty: true });
+    const active = selectableBoloes(state.boloes).find((bolao) => String(bolao.id) === String(state.activeBolaoId));
+    state.activeBolaoNome = active?.nome || result.selectedBolao?.nome || '';
+    persistBolaoContext();
+    await navigate(state.route);
+  } catch (error) {
+    state.token = previous.token;
+    state.user = previous.user;
+    state.boloes = previous.boloes;
+    state.activeBolaoId = previous.activeBolaoId;
+    state.activeBolaoNome = previous.activeBolaoNome;
+    persistBolaoContext();
+    renderChrome();
+    throw error;
+  }
 }
 
 async function submitCrud(kind, form) {
@@ -2298,6 +2308,7 @@ async function submitCrud(kind, form) {
   if (!config) return;
 
   if (kind === 'usuarios') {
+    clearFormMessage(kind, form);
     if (!id) {
       ensureRequiredPassword(data.senha, 'security.systemPasswordRequired');
       ensureSystemPassword(data.senha);
@@ -2683,7 +2694,7 @@ content.addEventListener('submit', (event) => {
   event.preventDefault();
   submitCrud(form.dataset.crudForm, form).catch((error) => {
     if (RULE_FORM_KINDS.has(form.dataset.crudForm) || PROFILE_FORM_KINDS.has(form.dataset.crudForm) || ['provedorEsportivo', 'emailConfiguracao', 'emailTeste', 'usuarios'].includes(form.dataset.crudForm)) {
-      setFormMessage(form.dataset.crudForm, error.message, 'error');
+      setFormMessage(form.dataset.crudForm, error.message, 'error', form);
       return;
     }
     showMessage(error.message, 'error');
