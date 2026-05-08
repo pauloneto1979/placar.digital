@@ -864,14 +864,7 @@ function renderExternalImportPanel(localMatches) {
         ${scopedMessage('externalMatchImport')}
       </form>
       ${summary ? `
-        <div class="message card-message" data-tone="success">
-          ${escapeHtml(t('externalMatches.importSummary', {
-            created: summary.partidasCriadas || 0,
-            skipped: summary.partidasIgnoradas || 0,
-            teams: summary.timesCriados || 0,
-            warnings: (summary.avisos || []).length
-          }))}
-        </div>
+        ${renderExternalImportSummary(summary)}
       ` : ''}
       <div class="form-actions external-import-toolbar">
         <label class="checkbox-pill">
@@ -885,6 +878,51 @@ function renderExternalImportPanel(localMatches) {
         ${externalMatches.map((row) => renderExternalImportRow(row, importedIds, selectedIds)).join('') || empty(t('externalMatches.noExternalResults'))}
       </div>
     </section>
+  `;
+}
+
+function externalIgnoredReason(item = {}) {
+  return t(`externalMatches.skipReasons.${item.reason || item.motivo}`, {}, item.reason || item.motivo || t('externalMatches.skipReasons.unknown'));
+}
+
+function externalIgnoredTitle(item = {}) {
+  const teams = [item.mandante, item.visitante].filter(Boolean).join(` ${t('common.scoreSeparator')} `);
+  return teams || t('externalMatches.externalId', { id: item.externalMatchId || '-' });
+}
+
+function renderExternalImportSummary(summary = {}) {
+  const ignoradas = Array.isArray(summary.ignoradas) ? summary.ignoradas : [];
+  const avisos = Array.isArray(summary.avisos) ? summary.avisos : [];
+  return `
+    <div class="message card-message import-summary" data-tone="success">
+      <strong>${escapeHtml(t('externalMatches.importSummary', {
+        created: summary.partidasCriadas || 0,
+        skipped: summary.partidasIgnoradas || 0,
+        teams: summary.timesCriados || 0,
+        warnings: avisos.length
+      }))}</strong>
+      ${ignoradas.length ? `
+        <div class="import-summary__details">
+          <span>${escapeHtml(t('externalMatches.ignoredReasonsTitle'))}</span>
+          ${ignoradas.slice(0, 8).map((item) => `
+            <p>
+              <strong>${escapeHtml(externalIgnoredTitle(item))}</strong>
+              <span>${escapeHtml(t('externalMatches.ignoredReasonLine', {
+                id: item.externalMatchId || '-',
+                reason: externalIgnoredReason(item)
+              }))}</span>
+            </p>
+          `).join('')}
+          ${ignoradas.length > 8 ? `<small>${escapeHtml(t('externalMatches.moreIgnored', { count: ignoradas.length - 8 }))}</small>` : ''}
+        </div>
+      ` : ''}
+      ${avisos.length ? `
+        <div class="import-summary__details">
+          <span>${escapeHtml(t('externalMatches.warningsTitle'))}</span>
+          ${avisos.slice(0, 5).map((item) => `<p>${escapeHtml(item.message || item.code || '')}</p>`).join('')}
+        </div>
+      ` : ''}
+    </div>
   `;
 }
 

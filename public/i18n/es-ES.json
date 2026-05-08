@@ -444,7 +444,19 @@
     "searchError": "No se pudieron buscar los partidos. Verifica los filtros informados.",
     "invalidDateFrom": "Fecha inicial inválida.",
     "invalidDateTo": "Fecha final inválida.",
-    "invalidDateRange": "La fecha final no puede ser menor que la fecha inicial."
+    "invalidDateRange": "La fecha final no puede ser menor que la fecha inicial.",
+    "ignoredReasonsTitle": "Motivos de partidos ignorados",
+    "ignoredReasonLine": "ID {id}: {reason}.",
+    "moreIgnored": "+{count} partido(s) ignorado(s) no mostrado(s).",
+    "warningsTitle": "Avisos de importaci?n",
+    "skipReasons": {
+      "already_imported_in_pool": "ya existe en esta porra",
+      "football_data_match_id_exists": "football_data_match_id ya est? vinculado a otro partido",
+      "local_match_duplicate": "ya existe un partido local con los mismos equipos y fecha",
+      "team_ambiguous": "equipo encontrado de forma ambigua",
+      "same_team": "local y visitante se resolvieron como el mismo equipo",
+      "unknown": "motivo no identificado"
+    }
   },
   "security": {
     "systemPasswordHelp": "8+ caracteres • Mayúscula • Minúscula • Número",

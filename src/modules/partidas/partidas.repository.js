@@ -43,6 +43,21 @@ async function findByFootballDataMatchId(matchId) {
   );
   return result.rows[0] ? map(result.rows[0]) : null;
 }
+async function findDuplicateLocalMatch(client, item, mandanteId, visitanteId) {
+  const result = await client.query(
+    `
+      select *
+      from partidas
+      where bolao_id = $1
+        and time_mandante_id = $2
+        and time_visitante_id = $3
+        and inicio_at = $4
+      limit 1
+    `,
+    [item.bolaoId, mandanteId, visitanteId, item.dataHora]
+  );
+  return result.rows[0] || null;
+}
 async function faseBelongsToBolao(faseId, bolaoId) {
   const result = await query('select 1 from fases where id=$1 and bolao_id=$2 and ativo=true limit 1', [faseId, bolaoId]);
   return result.rowCount > 0;
@@ -86,6 +101,18 @@ async function importExternalMatches(items) {
     const warnings = [];
     const createdTeams = [];
 
+    function skipped(item, reason, extra = {}) {
+      skippedMatches.push({
+        externalMatchId: String(item.footballDataMatchId),
+        mandante: item.mandante?.nome || '',
+        visitante: item.visitante?.nome || '',
+        dataHora: item.dataHora || null,
+        reason,
+        motivo: reason,
+        ...extra
+      });
+    }
+
     async function findTeam(team) {
       const externalId = team.footballDataTeamId ? String(team.footballDataTeamId) : null;
       const nome = team.nome || '';
@@ -115,6 +142,7 @@ async function importExternalMatches(items) {
         warnings.push({
           code: 'team_match_ambiguous',
           message: `Possivel duplicidade para o time ${nome}. Nenhum time foi criado automaticamente.`,
+          motivo: 'team_match_ambiguous',
           team: nome
         });
         return null;
@@ -158,10 +186,9 @@ async function importExternalMatches(items) {
       );
 
       if (exists.rowCount > 0) {
-        skippedMatches.push({
-          externalMatchId: String(item.footballDataMatchId),
-          reason: 'duplicate',
-          partidaId: exists.rows[0].id
+        skipped(item, exists.rows[0].bolao_id === item.bolaoId ? 'already_imported_in_pool' : 'football_data_match_id_exists', {
+          partidaId: exists.rows[0].id,
+          bolaoId: exists.rows[0].bolao_id
         });
         continue;
       }
@@ -170,21 +197,24 @@ async function importExternalMatches(items) {
       const visitante = await ensureTeam(item.visitante);
 
       if (!mandante || !visitante) {
-        skippedMatches.push({
-          externalMatchId: String(item.footballDataMatchId),
-          reason: 'team_ambiguous'
-        });
+        skipped(item, 'team_ambiguous');
         continue;
       }
 
       if (mandante.id === visitante.id) {
-        skippedMatches.push({
-          externalMatchId: String(item.footballDataMatchId),
-          reason: 'same_team'
-        });
+        skipped(item, 'same_team');
         warnings.push({
           code: 'same_team',
           message: `Mandante e visitante foram resolvidos para o mesmo time na partida ${item.footballDataMatchId}.`
+        });
+        continue;
+      }
+
+      const duplicateLocalMatch = await findDuplicateLocalMatch(client, item, mandante.id, visitante.id);
+      if (duplicateLocalMatch) {
+        skipped(item, 'local_match_duplicate', {
+          partidaId: duplicateLocalMatch.id,
+          bolaoId: duplicateLocalMatch.bolao_id
         });
         continue;
       }

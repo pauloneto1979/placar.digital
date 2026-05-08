@@ -453,6 +453,18 @@
     "searchError": "Could not fetch matches. Check the filters entered.",
     "invalidDateFrom": "Invalid start date.",
     "invalidDateTo": "Invalid end date.",
-    "invalidDateRange": "The end date cannot be earlier than the start date."
+    "invalidDateRange": "The end date cannot be earlier than the start date.",
+    "ignoredReasonsTitle": "Reasons for skipped matches",
+    "ignoredReasonLine": "ID {id}: {reason}.",
+    "moreIgnored": "+{count} skipped match(es) not shown.",
+    "warningsTitle": "Import warnings",
+    "skipReasons": {
+      "already_imported_in_pool": "already exists in this pool",
+      "football_data_match_id_exists": "football_data_match_id is already linked to another match",
+      "local_match_duplicate": "a local match already exists with the same teams and date",
+      "team_ambiguous": "team match was ambiguous",
+      "same_team": "home and away teams resolved to the same team",
+      "unknown": "unknown reason"
+    }
   }
 }
