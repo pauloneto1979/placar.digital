@@ -2,8 +2,8 @@ const nodemailer = require('nodemailer');
 const { HttpError } = require('../../shared/errors/http-error');
 const { maskSecret, validateConfigPayload, validateTestPayload } = require('./email.validator');
 
-const TEST_SUBJECT = 'Teste de configuração de e-mail';
-const TEST_TEXT = 'Seu serviço de envio de e-mail do Placar.digital foi configurado com sucesso.';
+const TEST_SUBJECT = 'Teste de configuracao de e-mail';
+const TEST_TEXT = 'Seu servico de envio de e-mail do Placar.digital foi configurado com sucesso.';
 
 function sanitize(config) {
   if (!config) {
@@ -66,6 +66,13 @@ function friendlyMailError(error) {
   return new HttpError(502, 'smtp_send_error', 'Nao foi possivel enviar o e-mail de teste.');
 }
 
+function friendlyConfigError(error) {
+  if (error.code === '23514' && String(error.constraint || '').startsWith('email_configuracoes_')) {
+    return new HttpError(400, 'invalid_email_configuration', 'Configuracao de e-mail invalida. Verifique os e-mails e a porta informados.');
+  }
+  return error;
+}
+
 function createEmailService(repository) {
   async function getSecretConfig() {
     const config = await repository.getLatest({ includeSecret: true });
@@ -84,7 +91,12 @@ function createEmailService(repository) {
       const existing = await repository.getLatest({ includeSecret: true });
       const existingForValidation = existing ? { ...existing, smtpPasswordMasked: maskSecret(existing.smtpPassword) } : null;
       const data = validateConfigPayload(payload, existingForValidation);
-      const saved = await repository.upsert(data);
+      let saved;
+      try {
+        saved = await repository.upsert(data);
+      } catch (error) {
+        throw friendlyConfigError(error);
+      }
       return sanitize(saved);
     },
 

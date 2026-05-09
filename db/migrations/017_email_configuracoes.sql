@@ -15,8 +15,8 @@ create table if not exists email_configuracoes (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint email_configuracoes_port_check check (smtp_port between 1 and 65535),
-  constraint email_configuracoes_from_email_check check (smtp_from_email ~* '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'),
-  constraint email_configuracoes_reply_to_check check (smtp_reply_to is null or smtp_reply_to = '' or smtp_reply_to ~* '^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+  constraint email_configuracoes_from_email_check check (smtp_from_email ~* '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'),
+  constraint email_configuracoes_reply_to_check check (smtp_reply_to is null or smtp_reply_to = '' or smtp_reply_to ~* '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$')
 );
 
 create index if not exists email_configuracoes_enabled_idx on email_configuracoes (smtp_enabled);
