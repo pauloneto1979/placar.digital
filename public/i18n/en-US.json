@@ -261,7 +261,15 @@
     "officialResult": "Official result",
     "points": "Points",
     "noOfficialResult": "No official result",
-    "finishedSummary": "Finished match summary"
+    "finishedSummary": "Finished match summary",
+    "noPoints": "No points",
+    "filters": {
+      "label": "Match filters",
+      "today": "Today",
+      "next": "Upcoming",
+      "all": "All",
+      "allItems": "All"
+    }
   },
   "games": {
     "homeTeam": "Home",
@@ -574,7 +582,8 @@
     "final": "Final",
     "regularSeason": "Regular season",
     "roundNumber": "Matchday {number}",
-    "matchesCount": "{count} match(es)"
+    "matchesCount": "{count} match(es)",
+    "phase": "Phase"
   },
   "accountActivation": {
     "title": "Activate account",

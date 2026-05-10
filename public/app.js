@@ -24,6 +24,12 @@
   userEditorId: '',
   partidasStatusTab: 'em_andamento',
   apostasTab: 'pendentes',
+  apostasFilters: {
+    periodo: 'todas',
+    fase: '',
+    rodada: '',
+    grupo: ''
+  },
   betGuessesModal: {
     open: false,
     loading: false,
@@ -91,6 +97,12 @@ const BET_STATUS_TABS = [
   { id: 'todas', labelKey: 'bets.tabs.all' }
 ];
 
+const BET_PERIOD_FILTERS = [
+  { id: 'hoje', labelKey: 'bets.filters.today' },
+  { id: 'proximas', labelKey: 'bets.filters.next' },
+  { id: 'todas', labelKey: 'bets.filters.all' }
+];
+
 const BET_IN_PROGRESS_STATUSES = ['em_andamento', 'ao_vivo', 'live', 'in_play', 'paused'];
 const BET_FINISHED_STATUSES = ['finalizada', 'encerrada', 'finished'];
 
@@ -117,7 +129,7 @@ const routes = [
   { id: 'home', labelKey: 'nav.home', subtitleKey: 'subtitles.home' },
   { id: 'apostas', labelKey: 'nav.apostas', subtitleKey: 'subtitles.apostas', roles: ['apostador'] },
   { id: 'ranking', labelKey: 'nav.ranking', subtitleKey: 'subtitles.ranking' },
-  { id: 'jogos', labelKey: 'nav.jogos', subtitleKey: 'subtitles.jogos' },
+  { id: 'jogos', labelKey: 'nav.jogos', subtitleKey: 'subtitles.jogos', roles: ['proprietario', 'administrador'] },
   { id: 'regras', labelKey: 'nav.regras', subtitleKey: 'subtitles.regras' },
   { id: 'notificacoes', labelKey: 'nav.notificacoes', subtitleKey: 'subtitles.notificacoes' },
   { id: 'participantes', labelKey: 'nav.participantes', subtitleKey: 'subtitles.participantes', admin: true },
@@ -576,6 +588,38 @@ function betMatchesTab(aposta, tabId) {
   return true;
 }
 
+function localDateKey(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function uniqueBetFilterValues(rows, fieldNames = []) {
+  const values = [];
+  rows.forEach((row) => {
+    const value = fieldNames.map((field) => row[field]).find(Boolean);
+    if (value && !values.includes(value)) values.push(value);
+  });
+  return values.sort((a, b) => String(a).localeCompare(String(b)));
+}
+
+function betMatchesFilters(aposta) {
+  const filters = state.apostasFilters || {};
+  const period = filters.periodo || 'todas';
+  const matchDate = localDateKey(aposta.dataHora);
+  const today = localDateKey(new Date());
+  if (period === 'hoje' && matchDate !== today) return false;
+  if (period === 'proximas' && (isBetFinished(aposta) || betSortValue(aposta) < Date.now())) return false;
+  if (filters.fase && String(aposta.fase || aposta.faseNome || '') !== filters.fase) return false;
+  if (filters.rodada && String(aposta.rodada || aposta.rodadaNome || '') !== filters.rodada) return false;
+  if (filters.grupo && String(aposta.grupo || aposta.grupoNome || '') !== filters.grupo) return false;
+  return true;
+}
+
 function betSortValue(aposta) {
   return new Date(aposta.dataHora || 0).getTime() || 0;
 }
@@ -587,8 +631,8 @@ function betSortCategory(aposta) {
   return 4;
 }
 
-function sortedBetsForTab(rows, tabId) {
-  return [...rows].filter((row) => betMatchesTab(row, tabId)).sort((a, b) => {
+function sortedBetsForTab(rows, tabId, applyFilters = false) {
+  return [...rows].filter((row) => betMatchesTab(row, tabId) && (!applyFilters || betMatchesFilters(row))).sort((a, b) => {
     if (tabId === 'finalizadas') return betSortValue(b) - betSortValue(a);
     if (tabId === 'todas') {
       const category = betSortCategory(a) - betSortCategory(b);
@@ -597,6 +641,38 @@ function sortedBetsForTab(rows, tabId) {
     }
     return betSortValue(a) - betSortValue(b);
   });
+}
+
+function renderBetFilters(rows = []) {
+  const filters = state.apostasFilters || {};
+  const fases = uniqueBetFilterValues(rows, ['fase', 'faseNome']);
+  const rodadas = uniqueBetFilterValues(rows, ['rodada', 'rodadaNome']);
+  const grupos = uniqueBetFilterValues(rows, ['grupo', 'grupoNome']);
+  const select = (name, labelKey, values) => values.length ? `
+    <label class="bet-filter-select">
+      <span>${escapeHtml(t(labelKey))}</span>
+      <select data-bet-filter="${escapeHtml(name)}">
+        <option value="">${escapeHtml(t('bets.filters.allItems'))}</option>
+        ${values.map((value) => `<option value="${escapeHtml(value)}" ${filters[name] === value ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}
+      </select>
+    </label>
+  ` : '';
+  return `
+    <div class="bet-filters" aria-label="${escapeHtml(t('bets.filters.label'))}">
+      <div class="segmented bet-period-filter">
+        ${BET_PERIOD_FILTERS.map((item) => `
+          <button type="button" class="${(filters.periodo || 'todas') === item.id ? 'active' : ''}" data-bet-filter-period="${escapeHtml(item.id)}">
+            ${escapeHtml(t(item.labelKey))}
+          </button>
+        `).join('')}
+      </div>
+      <div class="bet-filter-selects">
+        ${select('fase', 'sports.phase', fases)}
+        ${select('rodada', 'sports.round', rodadas)}
+        ${select('grupo', 'sports.group', grupos)}
+      </div>
+    </div>
+  `;
 }
 
 function renderBetTabs(rows = []) {
@@ -1347,7 +1423,7 @@ async function renderApostas() {
   }
   const apostas = await api(`/apostas/boloes/${state.activeBolaoId}/minhas`);
   state.data.apostas = apostas;
-  const visibleApostas = sortedBetsForTab(apostas, state.apostasTab);
+  const visibleApostas = sortedBetsForTab(apostas, state.apostasTab, true);
   const pendingCount = apostas.filter((item) => betMatchesTab(item, 'pendentes')).length;
   const openCount = apostas.filter((item) => betMatchesTab(item, 'abertas')).length;
   const nextGame = sortedBetsForTab(apostas.filter((item) => item.podeAlterar), 'abertas')[0];
@@ -1359,6 +1435,7 @@ async function renderApostas() {
         <span>${escapeHtml(t('bets.openSummary', { count: openCount }))}</span>
         <span>${escapeHtml(nextGame ? t('bets.nextMatchSummary', { time: countdownText(nextGame.dataHora) }) : t('bets.noNextMatch'))}</span>
       </div>
+      ${renderBetFilters(apostas)}
       ${renderBetTabs(apostas)}
       <div class="list bets-list">${visibleApostas.map(renderBetCard).join('') || empty(t('bets.noneForTab'))}</div>
     </section>
@@ -1385,7 +1462,9 @@ function renderBetCard(aposta) {
   const resultLabel = result ? `${result.mandante} ${t('common.scoreSeparator')} ${result.visitante}` : t('bets.noOfficialResult');
   const points = Number(aposta.pontos || 0);
   const pointsValue = points > 0 ? `+${points}` : String(points);
-  const pointsLabel = aposta.pontuado ? t('bets.pointsValue', { points: pointsValue }) : t('bets.pointsPending');
+  const pointsLabel = hasBet
+    ? (aposta.pontuado ? t('bets.pointsValue', { points: pointsValue }) : t('bets.pointsPending'))
+    : t('bets.noPoints');
   const canViewGuesses = canViewPoolGuesses(aposta);
   const statusPills = [
     `<span class="pill bet-status-pill ${statusClass}" data-save-status>${escapeHtml(status)}</span>`,
@@ -1394,7 +1473,7 @@ function renderBetCard(aposta) {
     aposta.pontuado ? `<span class="pill bet-status-pill bet-status--result">${escapeHtml(t('bets.scored'))}</span>` : ''
   ].filter(Boolean).join('');
   const centerContent = finished
-    ? renderFinishedBetSummary(betLabel, resultLabel, pointsLabel, aposta.pontuado, pointsValue)
+    ? renderFinishedBetSummary(betLabel, resultLabel, pointsLabel, aposta.pontuado, pointsValue, hasBet)
     : `
       <div class="bet-card__scoreboard">
         ${renderBetStepper('mandante', left, canEdit, mandante)}
@@ -1413,14 +1492,11 @@ function renderBetCard(aposta) {
           ${centerContent}
           <div class="bet-card__team bet-card__team--away">${renderTeamName(aposta.visitante || { nome: visitante }, visitante)}</div>
         </div>
-        <details class="bet-card__details">
-          <summary>${escapeHtml(t('bets.details'))}</summary>
-          <p class="muted">${escapeHtml(matchStructureText(aposta))} · ${dateTime(aposta.dataHora)} · ${escapeHtml(aposta.estadio || '')}</p>
-          <p class="muted">${escapeHtml(t('bets.deadlineAt', { date: dateTime(aposta.prazoApostaAt) }))}</p>
-          ${result ? `<p class="muted">${escapeHtml(t('bets.officialScore', { home: result.mandante, away: result.visitante }))}</p>` : ''}
-        </details>
+        <div class="bet-card__match-date">
+          <span>${escapeHtml(dateTime(aposta.dataHora))}</span>
+        </div>
         <div class="bet-card__actions">
-          <button class="secondary" type="button" data-view-match-guesses="${escapeHtml(aposta.partidaId)}" ${canViewGuesses ? '' : 'disabled'} title="${escapeHtml(canViewGuesses ? t('bets.viewPoolGuesses') : t('bets.poolGuessesLocked'))}">
+          <button class="ghost bet-card__pool-button" type="button" data-view-match-guesses="${escapeHtml(aposta.partidaId)}" ${canViewGuesses ? '' : 'disabled'} title="${escapeHtml(canViewGuesses ? t('bets.viewPoolGuesses') : t('bets.poolGuessesLocked'))}">
             ${escapeHtml(t('bets.viewPoolGuesses'))}
           </button>
         </div>
@@ -1429,7 +1505,7 @@ function renderBetCard(aposta) {
   `;
 }
 
-function renderFinishedBetSummary(betLabel, resultLabel, pointsLabel, pontuado, pointsValue) {
+function renderFinishedBetSummary(betLabel, resultLabel, pointsLabel, pontuado, pointsValue, hasBet = true) {
   return `
     <div class="bet-result-summary" aria-label="${escapeHtml(t('bets.finishedSummary'))}">
       <div class="bet-result-summary__item">
@@ -1440,9 +1516,9 @@ function renderFinishedBetSummary(betLabel, resultLabel, pointsLabel, pontuado, 
         <span>${escapeHtml(t('bets.officialResult'))}</span>
         <strong>${escapeHtml(resultLabel)}</strong>
       </div>
-      <div class="bet-result-summary__points ${pontuado ? 'is-scored' : ''}">
+      <div class="bet-result-summary__points ${pontuado ? 'is-scored' : ''} ${!hasBet ? 'is-empty' : ''}">
         <span>${escapeHtml(t('bets.points'))}</span>
-        <strong>${escapeHtml(pontuado ? `${pointsValue} ${t('ranking.pointsAbbr')}` : pointsLabel)}</strong>
+        <strong>${escapeHtml(hasBet && pontuado ? `${pointsValue} ${t('ranking.pointsAbbr')}` : pointsLabel)}</strong>
       </div>
     </div>
   `;
@@ -1475,7 +1551,9 @@ function renderBetGuessesModal() {
 
 function renderPoolGuessRow(row) {
   const guess = row.palpite ? `${row.palpite.mandante} ${t('common.scoreSeparator')} ${row.palpite.visitante}` : t('bets.noGuess');
-  const points = row.pontuado ? t('bets.pointsValue', { points: Number(row.pontos || 0) > 0 ? `+${Number(row.pontos || 0)}` : Number(row.pontos || 0) }) : t('bets.pointsPending');
+  const points = row.palpite
+    ? (row.pontuado ? t('bets.pointsValue', { points: Number(row.pontos || 0) > 0 ? `+${Number(row.pontos || 0)}` : Number(row.pontos || 0) }) : t('bets.pointsPending'))
+    : t('bets.noPoints');
   return `
     <article class="pool-guess-row ${row.isMe ? 'is-me' : ''}">
       <div>
@@ -3010,6 +3088,15 @@ content.addEventListener('click', (event) => {
   const betStatusTab = event.target.closest('[data-bet-status-tab]');
   if (betStatusTab) {
     state.apostasTab = betStatusTab.dataset.betStatusTab || BET_STATUS_TABS[0].id;
+    navigate('apostas').then(() => {
+      document.querySelector(`[data-bet-status-tab="${CSS.escape(state.apostasTab)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    });
+    return;
+  }
+
+  const betFilterPeriod = event.target.closest('[data-bet-filter-period]');
+  if (betFilterPeriod) {
+    state.apostasFilters.periodo = betFilterPeriod.dataset.betFilterPeriod || 'todas';
     navigate('apostas');
     return;
   }
@@ -3260,6 +3347,15 @@ content.addEventListener('drop', (event) => {
   if (!input || !event.dataTransfer?.files?.length) return;
   input.files = event.dataTransfer.files;
   readTeamShieldFile(input);
+});
+
+content.addEventListener('change', (event) => {
+  const betFilter = event.target.closest('[data-bet-filter]');
+  if (!betFilter) return;
+  const name = betFilter.dataset.betFilter;
+  if (!name) return;
+  state.apostasFilters[name] = betFilter.value || '';
+  navigate('apostas');
 });
 
 content.addEventListener('submit', (event) => {

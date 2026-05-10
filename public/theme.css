@@ -1230,7 +1230,7 @@ select option {
   justify-content: center;
   padding: 18px;
   position: fixed;
-  z-index: 50;
+  z-index: 120;
 }
 
 .modal-card {
@@ -1625,7 +1625,8 @@ button[data-provider-toggle]:hover {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  min-width: min(460px, 100%);
+  max-width: 100%;
+  min-width: 0;
   padding: 12px;
 }
 
@@ -1656,7 +1657,7 @@ button[data-provider-toggle]:hover {
   font-size: 1.35rem;
   font-weight: 950;
   line-height: 1;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .bet-result-summary__points {
@@ -1669,7 +1670,16 @@ button[data-provider-toggle]:hover {
   font-size: 1.45rem;
   font-weight: 950;
   line-height: 1;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+.bet-result-summary__points.is-empty {
+  background: rgba(159, 188, 215, 0.06);
+  border-color: rgba(159, 188, 215, 0.14);
+}
+
+.bet-result-summary__points.is-empty strong {
+  color: var(--muted);
 }
 
 .bet-stepper {
@@ -1765,23 +1775,19 @@ button[data-provider-toggle]:hover {
   animation: savedPulse 0.42s ease;
 }
 
-.bet-card__details {
+.bet-card__match-date {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(159, 188, 215, 0.12);
+  border-radius: 14px;
   color: var(--muted);
-}
-
-.bet-card__details summary {
-  cursor: pointer;
-  font-size: 0.82rem;
+  display: flex;
+  font-size: 0.84rem;
   font-weight: 900;
-  list-style: none;
-}
-
-.bet-card__details summary::-webkit-details-marker {
-  display: none;
-}
-
-.bet-card__details p {
-  margin: 8px 0 0;
+  justify-content: center;
+  min-width: 0;
+  padding: 9px 10px;
+  text-align: center;
 }
 
 .bets-summary {
@@ -1801,6 +1807,41 @@ button[data-provider-toggle]:hover {
   font-weight: 850;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.bet-filters {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.bet-period-filter {
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding: 4px;
+}
+
+.bet-period-filter button {
+  white-space: nowrap;
+}
+
+.bet-filter-selects {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.bet-filter-select {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.bet-filter-select span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .bet-card__facts {
@@ -1830,9 +1871,35 @@ button[data-provider-toggle]:hover {
   justify-content: flex-end;
 }
 
+.bet-card__pool-button {
+  border-color: rgba(33, 212, 253, 0.22);
+  color: var(--accent-2);
+  min-height: 42px;
+}
+
+.bet-card__pool-button:hover:not(:disabled) {
+  background: rgba(33, 212, 253, 0.1);
+  box-shadow: 0 0 0 4px rgba(33, 212, 253, 0.05);
+}
+
 .pool-guesses-modal {
-  max-height: min(84vh, 720px);
+  max-height: min(calc(100vh - 32px), 720px);
+  width: min(720px, calc(100vw - 32px));
+}
+
+.pool-guesses-modal .card-title {
+  align-items: flex-start;
+}
+
+.pool-guesses-modal .card-title h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pool-guesses-list {
+  max-height: min(58vh, 440px);
   overflow: auto;
+  padding-right: 2px;
 }
 
 .pool-guesses-list {
@@ -2799,18 +2866,22 @@ button[data-reset-form]:not(.icon-action)::before {
     font-size: 1.3rem;
   }
 
-  .bet-card__details {
-    background: rgba(255, 255, 255, 0.035);
-    border-radius: 14px;
-    padding: 9px 10px;
+  .bet-card__match-date {
+    justify-content: flex-start;
+    text-align: left;
   }
 
   .bets-summary {
     grid-template-columns: 1fr;
   }
 
+  .bet-filter-selects {
+    grid-template-columns: 1fr;
+  }
+
   .bet-card__actions,
-  .bet-card__actions .secondary {
+  .bet-card__actions .secondary,
+  .bet-card__actions .ghost {
     width: 100%;
   }
 

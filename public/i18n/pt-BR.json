@@ -261,7 +261,15 @@
     "officialResult": "Resultado oficial",
     "points": "Pontos",
     "noOfficialResult": "Sem resultado oficial",
-    "finishedSummary": "Resumo da partida finalizada"
+    "finishedSummary": "Resumo da partida finalizada",
+    "noPoints": "Sem pontua??o",
+    "filters": {
+      "label": "Filtros de partidas",
+      "today": "Hoje",
+      "next": "Pr?ximas",
+      "all": "Todas",
+      "allItems": "Todos"
+    }
   },
   "games": {
     "homeTeam": "Mandante",
@@ -574,7 +582,8 @@
     "final": "Final",
     "regularSeason": "Temporada regular",
     "roundNumber": "Rodada {number}",
-    "matchesCount": "{count} partida(s)"
+    "matchesCount": "{count} partida(s)",
+    "phase": "Fase"
   },
   "accountActivation": {
     "title": "Ativar conta",
