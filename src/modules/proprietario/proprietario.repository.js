@@ -220,10 +220,47 @@ async function createDefaultBolaoRules(bolaoId, executor = query) {
   }
 }
 
+async function ensureDefaultSportContext(bolaoId, executor = query) {
+  await executor(
+    `
+      insert into competicoes (nome, codigo, provider, tipo_competicao, metadata)
+      values ('Competicao personalizada', 'CUSTOM', 'manual', 'customizada', '{"origem":"default"}'::jsonb)
+      on conflict do nothing
+    `
+  );
+
+  await executor(
+    `
+      insert into competicoes_temporadas (competicao_id, nome, ativo, metadata)
+      select id, 'Temporada padrao', true, '{"origem":"default"}'::jsonb
+      from competicoes
+      where provider = 'manual' and codigo = 'CUSTOM'
+      on conflict do nothing
+    `
+  );
+
+  await executor(
+    `
+      update boloes b
+      set
+        competicao_id = coalesce(b.competicao_id, c.id),
+        temporada_id = coalesce(b.temporada_id, t.id)
+      from competicoes c
+      join competicoes_temporadas t on t.competicao_id = c.id
+      where b.id = $1
+        and c.provider = 'manual'
+        and c.codigo = 'CUSTOM'
+        and t.nome = 'Temporada padrao'
+    `,
+    [bolaoId]
+  );
+}
+
 async function createBolaoWithDefaults(data) {
   return transaction(async (client) => {
     const executor = (text, params) => client.query(text, params);
     const bolao = await createBolao(data, executor);
+    await ensureDefaultSportContext(bolao.id, executor);
     await createDefaultBolaoRules(bolao.id, executor);
     return bolao;
   });
@@ -559,6 +596,7 @@ module.exports = {
   findBolaoBySlug,
   createBolao,
   createDefaultBolaoRules,
+  ensureDefaultSportContext,
   createBolaoWithDefaults,
   updateBolao,
   fecharBolao,

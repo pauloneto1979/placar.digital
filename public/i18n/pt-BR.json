@@ -553,5 +553,19 @@
     "finished": "Finalizadas",
     "canceled": "Canceladas",
     "inactive": "Inativas"
+  },
+  "sports": {
+    "competition": "Competição",
+    "season": "Temporada",
+    "group": "Grupo",
+    "round": "Rodada",
+    "groupStage": "Fase de grupos",
+    "last16": "Oitavas",
+    "quarterFinals": "Quartas",
+    "semifinal": "Semifinal",
+    "final": "Final",
+    "regularSeason": "Temporada regular",
+    "roundNumber": "Rodada {number}",
+    "matchesCount": "{count} partida(s)"
   }
 }

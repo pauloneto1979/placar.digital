@@ -553,5 +553,19 @@
     "finished": "Finalizados",
     "canceled": "Cancelados",
     "inactive": "Inactivos"
+  },
+  "sports": {
+    "competition": "Competición",
+    "season": "Temporada",
+    "group": "Grupo",
+    "round": "Jornada",
+    "groupStage": "Fase de grupos",
+    "last16": "Octavos",
+    "quarterFinals": "Cuartos",
+    "semifinal": "Semifinal",
+    "final": "Final",
+    "regularSeason": "Temporada regular",
+    "roundNumber": "Jornada {number}",
+    "matchesCount": "{count} partido(s)"
   }
 }

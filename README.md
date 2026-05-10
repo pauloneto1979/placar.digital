@@ -85,6 +85,37 @@ Módulos principais em `src/modules`:
 - `provedores_esportivos`
 - `email`
 
+## Estrutura esportiva multicampeonato
+
+O modelo esportivo evoluiu para suportar bolões de múltiplos campeonatos sem remover a estrutura antiga.
+
+Hierarquia atual:
+
+```text
+Competição
+→ Temporada
+→ Fase
+→ Grupo opcional
+→ Rodada opcional
+→ Partidas
+```
+
+Tabelas principais:
+
+- `competicoes`: cadastro reutilizável de campeonatos, com provider/código externo quando existir.
+- `competicoes_temporadas`: temporada/edição da competição, como Copa do Mundo 2026 ou Brasileirão 2026.
+- `fases`: permanece compatível com bolões existentes e passa a aceitar `temporada_id`, `codigo`, `tipo_fase` e `provider_stage`.
+- `grupos`: grupos opcionais por fase.
+- `rodadas`: rodadas/matchdays opcionais por fase.
+- `partidas`: passa a referenciar `competicao_id`, `temporada_id`, `fase_id`, `grupo_id` e `rodada_id`.
+
+Compatibilidade:
+
+- Bolões antigos recebem backfill para `Competição personalizada` e `Temporada padrão`.
+- Campos antigos continuam coexistindo.
+- O motor de pontuação e o ranking não foram alterados.
+- A importação football-data cria ou reutiliza competição, temporada, fase, grupo e rodada automaticamente quando esses dados vêm do provider.
+
 ## 3. Perfis e Permissões
 
 ### Proprietário
@@ -521,6 +552,8 @@ Migrations existentes:
 | `017_email_configuracoes.sql` | Configuração SMTP/e-mail. |
 | `018_partidas_football_data_match_id_por_bolao.sql` | Unicidade multi-tenant por bolão para partidas externas. |
 | `019_boloes_times.sql` | Vínculo multi-tenant entre bolões e times. |
+| `020_email_configuracoes_email_constraints.sql` | Constraints adicionais para configuração SMTP/e-mail. |
+| `021_estrutura_esportiva_multicampeonato.sql` | Estrutura de competição, temporada, grupos, rodadas e vínculos esportivos em partidas. |
 
 ### Migration 017
 
@@ -546,11 +579,29 @@ WHERE football_data_match_id IS NOT NULL
 
 ### Migration 019
 
-Cria a tabela `boloes_times` para controlar quais times pertencem a cada bol?o. A migration faz backfill dos bol?es existentes para preservar a opera??o atual, mas bol?es criados depois da migration iniciam sem times. Times passam a ser vinculados ao bol?o ao cadastrar manualmente ou ao importar partidas externas.
+Cria a tabela `boloes_times` para controlar quais times pertencem a cada bolão. A migration faz backfill dos bolões existentes para preservar a operação atual, mas bolões criados depois da migration iniciam sem times. Times passam a ser vinculados ao bolão ao cadastrar manualmente ou ao importar partidas externas.
 
-### Migration 019
+### Migration 021
 
-Cria a tabela `boloes_times` para controlar quais times pertencem a cada bol?o. A migration faz backfill dos bol?es existentes para preservar a opera??o atual, mas bol?es criados depois da migration iniciam sem times. Times passam a ser vinculados ao bol?o ao cadastrar manualmente ou ao importar partidas externas.
+Cria a estrutura esportiva multicampeonato:
+
+- `competicoes`
+- `competicoes_temporadas`
+- `grupos`
+- `rodadas`
+- novos campos esportivos em `boloes`, `fases` e `partidas`
+
+Backfill:
+
+- bolões existentes apontam para `Competição personalizada` e `Temporada padrão`;
+- fases existentes recebem `temporada_id`, `codigo` e `tipo_fase` quando possível;
+- partidas existentes herdam `competicao_id` e `temporada_id` do bolão.
+
+Regra de compatibilidade:
+
+- football-data preenche a nova estrutura nas importações novas;
+- dados antigos continuam funcionais mesmo sem grupo ou rodada;
+- a pontuação e o ranking permanecem usando as mesmas tabelas e regras.
 
 ## 18. Troubleshooting
 

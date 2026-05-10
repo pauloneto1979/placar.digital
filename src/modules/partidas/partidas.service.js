@@ -8,6 +8,14 @@ const { createRankingService } = require('../ranking/ranking.service');
 const STATUS = ['agendada', 'em_andamento', 'finalizada', 'cancelada', 'inativa'];
 const notificacoesService = createNotificacoesService(notificacoesRepository);
 const rankingService = createRankingService(rankingRepository);
+const FOOTBALL_STAGE_LABELS = {
+  REGULAR_SEASON: { nome: 'Temporada regular', tipo: 'pontos_corridos', ordem: 10 },
+  GROUP_STAGE: { nome: 'Fase de grupos', tipo: 'grupos', ordem: 20 },
+  LAST_16: { nome: 'Oitavas', tipo: 'oitavas', ordem: 30 },
+  QUARTER_FINALS: { nome: 'Quartas', tipo: 'quartas', ordem: 40 },
+  SEMI_FINALS: { nome: 'Semifinal', tipo: 'semifinal', ordem: 50 },
+  FINAL: { nome: 'Final', tipo: 'final', ordem: 60 }
+};
 
 function clean(v) { return typeof v === 'string' ? v.trim() : ''; }
 function intOrNull(v) { return v === undefined || v === null || v === '' ? null : Number(v); }
@@ -25,6 +33,61 @@ function mapExternalStatus(status) {
   if (['LIVE', 'IN_PLAY', 'PAUSED'].includes(value)) return 'em_andamento';
   if (['CANCELLED', 'POSTPONED', 'SUSPENDED', 'AWARDED'].includes(value)) return 'cancelada';
   return 'agendada';
+}
+
+function yearFromDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.getUTCFullYear();
+}
+
+function mapCompetitionType(type) {
+  const value = clean(type).toUpperCase();
+  if (value === 'LEAGUE') return 'pontos_corridos';
+  if (value === 'CUP') return 'mata_mata';
+  return 'misto';
+}
+
+function normalizeStageInfo(match) {
+  const faseRodada = match.faseRodada || {};
+  const stage = clean(match.stage || faseRodada.stage).toUpperCase();
+  if (!stage) return null;
+  const mapped = FOOTBALL_STAGE_LABELS[stage] || {
+    nome: stage.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase()),
+    tipo: 'outro',
+    ordem: 999
+  };
+  return {
+    codigo: stage,
+    nome: mapped.nome,
+    tipo: mapped.tipo,
+    ordem: mapped.ordem,
+    providerStage: stage
+  };
+}
+
+function normalizeGroupInfo(match) {
+  const faseRodada = match.faseRodada || {};
+  const group = clean(match.group || faseRodada.group);
+  if (!group) return null;
+  return {
+    codigo: group.toUpperCase().replace(/\s+/g, '_'),
+    nome: group,
+    providerGroup: group,
+    ordem: Number(group.match(/\d+/)?.[0] || 0)
+  };
+}
+
+function normalizeRoundInfo(match) {
+  const faseRodada = match.faseRodada || {};
+  const matchday = match.matchday ?? faseRodada.matchday;
+  const numero = Number(matchday);
+  if (!Number.isInteger(numero) || numero <= 0) return null;
+  return {
+    numero,
+    nome: `Rodada ${numero}`,
+    ordem: numero,
+    providerMatchday: String(numero)
+  };
 }
 
 function normalizeExternalTeam(team = {}) {
@@ -54,9 +117,38 @@ function normalizeExternalMatch(match, bolaoId) {
   const placarMandante = intOrNull(fullTime.home ?? fullTime.mandante ?? match.placarMandante);
   const placarVisitante = intOrNull(fullTime.away ?? fullTime.visitante ?? match.placarVisitante);
   const status = mapExternalStatus(match.status);
+  const competition = match.competition || {};
+  const season = match.season || {};
+  const anoInicio = yearFromDate(season.startDate || dataHora);
+  const anoFim = yearFromDate(season.endDate || dataHora) || anoInicio;
   return {
     bolaoId,
     footballDataMatchId: matchId,
+    competicao: competition.name || competition.code ? {
+      nome: clean(competition.name || competition.code),
+      codigo: clean(competition.code || competition.name).slice(0, 40),
+      provider: 'football-data',
+      providerCompetitionId: competition.id ? String(competition.id) : null,
+      tipoCompeticao: mapCompetitionType(competition.type),
+      metadata: {
+        emblem: competition.emblem || null,
+        type: competition.type || null
+      }
+    } : null,
+    temporada: competition.name || season.id || anoInicio ? {
+      nome: clean(season.nome || (competition.name && anoInicio ? `${competition.name} ${anoInicio}${anoFim && anoFim !== anoInicio ? `/${String(anoFim).slice(-2)}` : ''}` : '') || `Temporada ${anoInicio || ''}`),
+      anoInicio,
+      anoFim,
+      providerSeasonId: season.id ? String(season.id) : null,
+      metadata: {
+        startDate: season.startDate || null,
+        endDate: season.endDate || null,
+        currentMatchday: season.currentMatchday || null
+      }
+    } : null,
+    faseInfo: normalizeStageInfo(match),
+    grupoInfo: normalizeGroupInfo(match),
+    rodadaInfo: normalizeRoundInfo(match),
     mandante: normalizeExternalTeam(match.mandante || match.homeTeam),
     visitante: normalizeExternalTeam(match.visitante || match.awayTeam),
     dataHora,
@@ -158,7 +250,13 @@ function createPartidasService(repository, options = {}) {
     async update(bolaoId, id, body, auth, context) {
       await ensureCanAdminBolao(auth, bolaoId);
       const before = await ensure(id, bolaoId);
-      const data = payload(body, bolaoId);
+      const data = {
+        ...payload(body, bolaoId),
+        competicaoId: before.competicaoId,
+        temporadaId: before.temporadaId,
+        grupoId: before.grupoId,
+        rodadaId: before.rodadaId
+      };
       await validate(data);
       const after = await repository.update(id, data);
       await aplicarAlteracaoResultado(before, after, auth, context);
@@ -178,7 +276,11 @@ function createPartidasService(repository, options = {}) {
         ...before,
         ...changes,
         bolaoId: before.bolaoId,
+        competicaoId: before.competicaoId,
+        temporadaId: before.temporadaId,
         faseId: before.faseId,
+        grupoId: before.grupoId,
+        rodadaId: before.rodadaId,
         timeMandanteId: before.timeMandanteId,
         timeVisitanteId: before.timeVisitanteId,
         estadio: before.estadio,

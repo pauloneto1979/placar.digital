@@ -6,6 +6,10 @@ function mapPartida(row) {
     bolaoId: row.bolao_id,
     faseId: row.fase_id,
     fase: row.fase_nome,
+    grupo: row.grupo_nome,
+    rodada: row.rodada_nome,
+    competicao: row.competicao_nome,
+    temporada: row.temporada_nome,
     dataHora: row.inicio_at,
     estadio: row.estadio,
     mandante: {
@@ -48,6 +52,11 @@ async function getDashboard(bolaoId) {
   const result = await query(
     `
       select
+        b.competicao_id,
+        b.temporada_id,
+        c.nome as competicao_nome,
+        c.codigo as competicao_codigo,
+        s.nome as temporada_nome,
         (select count(*)::int from participantes where bolao_id = $1 and papel = 'apostador' and status <> 'removido') as participantes_total,
         (select count(*)::int from partidas where bolao_id = $1 and ativo = true) as partidas_total,
         (select count(*)::int from partidas where bolao_id = $1 and status in ('finalizada', 'encerrada')) as partidas_finalizadas,
@@ -70,6 +79,10 @@ async function getDashboard(bolaoId) {
           where provider = 'football-data'
           limit 1
         ) as sports_provider_sync_interval_seconds
+      from boloes b
+      left join competicoes c on c.id = b.competicao_id
+      left join competicoes_temporadas s on s.id = b.temporada_id
+      where b.id = $1
     `,
     [bolaoId]
   );
@@ -112,6 +125,10 @@ async function getJogosDoDia(bolaoId) {
       select
         p.*,
         f.nome as fase_nome,
+        g.nome as grupo_nome,
+        r.nome as rodada_nome,
+        c.nome as competicao_nome,
+        s.nome as temporada_nome,
         tm.nome as mandante_nome,
         tm.sigla as mandante_sigla,
         tm.codigo_fifa as mandante_codigo_fifa,
@@ -124,6 +141,10 @@ async function getJogosDoDia(bolaoId) {
         tv.bandeira_url as visitante_bandeira_url
       from partidas p
       left join fases f on f.id = p.fase_id
+      left join grupos g on g.id = p.grupo_id
+      left join rodadas r on r.id = p.rodada_id
+      left join competicoes c on c.id = p.competicao_id
+      left join competicoes_temporadas s on s.id = p.temporada_id
       join times tm on tm.id = p.time_mandante_id
       join times tv on tv.id = p.time_visitante_id
       where p.bolao_id = $1
@@ -141,6 +162,10 @@ async function listJogos(bolaoId, filters) {
       select
         p.*,
         f.nome as fase_nome,
+        g.nome as grupo_nome,
+        r.nome as rodada_nome,
+        c.nome as competicao_nome,
+        s.nome as temporada_nome,
         tm.nome as mandante_nome,
         tm.sigla as mandante_sigla,
         tm.codigo_fifa as mandante_codigo_fifa,
@@ -153,6 +178,10 @@ async function listJogos(bolaoId, filters) {
         tv.bandeira_url as visitante_bandeira_url
       from partidas p
       left join fases f on f.id = p.fase_id
+      left join grupos g on g.id = p.grupo_id
+      left join rodadas r on r.id = p.rodada_id
+      left join competicoes c on c.id = p.competicao_id
+      left join competicoes_temporadas s on s.id = p.temporada_id
       join times tm on tm.id = p.time_mandante_id
       join times tv on tv.id = p.time_visitante_id
       where p.bolao_id = $1
@@ -228,6 +257,10 @@ async function listMinhasApostas(bolaoId, participanteId) {
         p.placar_visitante as oficial_visitante,
         p.status as partida_status,
         f.nome as fase_nome,
+        g.nome as grupo_nome,
+        r.nome as rodada_nome,
+        c.nome as competicao_nome,
+        s.nome as temporada_nome,
         tm.nome as mandante_nome,
         tm.sigla as mandante_sigla,
         tm.codigo_fifa as mandante_codigo_fifa,
@@ -242,6 +275,10 @@ async function listMinhasApostas(bolaoId, participanteId) {
       left join apostas a on a.partida_id = p.id and a.participante_id = $2
       left join pontuacoes_apostas pa on pa.aposta_id = a.id
       left join fases f on f.id = p.fase_id
+      left join grupos g on g.id = p.grupo_id
+      left join rodadas r on r.id = p.rodada_id
+      left join competicoes c on c.id = p.competicao_id
+      left join competicoes_temporadas s on s.id = p.temporada_id
       join times tm on tm.id = p.time_mandante_id
       join times tv on tv.id = p.time_visitante_id
       where p.bolao_id = $1

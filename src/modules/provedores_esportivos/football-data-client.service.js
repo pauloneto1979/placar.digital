@@ -70,6 +70,13 @@ function mapMatch(match) {
       type: match.competition.type,
       emblem: match.competition.emblem
     } : null,
+    season: match.season ? {
+      id: match.season.id,
+      startDate: match.season.startDate,
+      endDate: match.season.endDate,
+      currentMatchday: match.season.currentMatchday,
+      winner: match.season.winner || null
+    } : null,
     status: match.status,
     utcDate: match.utcDate,
     mandante: {

@@ -35,6 +35,10 @@ function mapMinhaAposta(row, minutosAntecedencia) {
     apostaId: row.id,
     dataHora: row.inicio_at,
     fase: row.fase_nome,
+    grupo: row.grupo_nome,
+    rodada: row.rodada_nome,
+    competicao: row.competicao_nome,
+    temporada: row.temporada_nome,
     estadio: row.estadio,
     mandante: {
       nome: row.mandante_nome,
@@ -104,6 +108,15 @@ function createApostasService(repository) {
         partidasTotal: dashboard.partidas_total,
         partidasFinalizadas: dashboard.partidas_finalizadas,
         totalArrecadado: Number(dashboard.total_arrecadado),
+        competicao: dashboard.competicao_nome ? {
+          id: dashboard.competicao_id,
+          nome: dashboard.competicao_nome,
+          codigo: dashboard.competicao_codigo
+        } : null,
+        temporada: dashboard.temporada_nome ? {
+          id: dashboard.temporada_id,
+          nome: dashboard.temporada_nome
+        } : null,
         sportsSync: {
           provider: 'football-data',
           enabled: dashboard.sports_provider_enabled === true,

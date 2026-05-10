@@ -887,6 +887,7 @@ async function renderHome() {
   const gap = Math.max(0, leaderPoints - meusPontos);
   const totalArrecadado = Number(dashboard?.totalArrecadado || 0);
   const syncText = syncStatusText(dashboard?.sportsSync);
+  const competitionText = dashboardCompetitionText(dashboard || {});
   const apostasPorPartida = new Map(minhas.map((item) => [String(item.partidaId), item]));
   const palpitesPendentes = minhas.filter((item) => item.statusAposta === 'sem_aposta' && item.podeAlterar).length;
   const jogosOrdenados = [...jogos].sort((a, b) => new Date(gameDateValue(a)).getTime() - new Date(gameDateValue(b)).getTime());
@@ -905,6 +906,7 @@ async function renderHome() {
     <section class="dashboard-hero card">
       <div>
         <span class="pill">${escapeHtml(state.activeBolaoNome || t('common.pool'))}</span>
+        ${competitionText ? `<span class="pill">${escapeHtml(competitionText)}</span>` : ''}
         <h2>${escapeHtml(t('home.dashboardTitle'))}</h2>
         <p class="muted">${escapeHtml(t('home.dashboardSubtitle'))}</p>
       </div>
@@ -1095,6 +1097,37 @@ function competitionName(row) {
   return row.competition?.name || row.competition?.code || t('externalMatches.noCompetition');
 }
 
+function matchStructureParts(row = {}) {
+  return [
+    row.fase || row.faseNome,
+    row.grupo || row.grupoNome,
+    row.rodada || row.rodadaNome
+  ].filter(Boolean);
+}
+
+function matchStructureText(row = {}) {
+  const parts = matchStructureParts(row);
+  return parts.length ? parts.join(' · ') : t('common.game');
+}
+
+function dashboardCompetitionText(dashboard = {}) {
+  const parts = [dashboard.competicao?.nome, dashboard.temporada?.nome].filter(Boolean);
+  return parts.length ? parts.join(' · ') : '';
+}
+
+function externalStageLabel(stage) {
+  const key = String(stage || '').toUpperCase();
+  const labels = {
+    REGULAR_SEASON: 'sports.regularSeason',
+    GROUP_STAGE: 'sports.groupStage',
+    LAST_16: 'sports.last16',
+    QUARTER_FINALS: 'sports.quarterFinals',
+    SEMI_FINALS: 'sports.semifinal',
+    FINAL: 'sports.final'
+  };
+  return labels[key] ? t(labels[key]) : key.replace(/_/g, ' ');
+}
+
 function renderGameCard(game) {
   const mandante = game.mandante?.nome || game.mandante || game.timeMandante || t('games.homeTeam');
   const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || t('games.awayTeam');
@@ -1110,7 +1143,7 @@ function renderGameCard(game) {
           ${renderTeamName(game.visitante || { nome: visitante }, visitante)}
         </div>
         <div class="sports-match-card__meta">
-          <span>${escapeHtml(game.fase || game.faseNome || t('common.game'))}</span>
+          <span>${escapeHtml(matchStructureText(game))}</span>
           <span>${escapeHtml(dateTime(game.dataHora || game.inicioAt || game.inicio_at))}</span>
           <span>${escapeHtml(game.estadio || '')}</span>
         </div>
@@ -1226,7 +1259,11 @@ function renderExternalImportRow(row, importedIds, selectedIds) {
         <span class="sr-only">${escapeHtml(imported ? t('externalMatches.alreadyImported') : t('externalMatches.selectMatch'))}</span>
       </label>
       <span class="match-inline">${renderTeamName(row.mandante, row.mandante?.name, 'sm')}<span class="score score--inline">${escapeHtml(externalScore(row))}</span>${renderTeamName(row.visitante, row.visitante?.name, 'sm')}</span>
-      <span class="muted">${escapeHtml(`${competitionName(row)} - ${dateTime(row.utcDate)} - ${statusLabel(row.status)}`)}</span>
+      <span class="muted">${escapeHtml(`${competitionName(row)} - ${matchStructureText({
+        fase: row.faseRodada?.stage ? externalStageLabel(row.faseRodada.stage) : '',
+        grupo: row.faseRodada?.group,
+        rodada: row.faseRodada?.matchday ? t('sports.roundNumber', { number: row.faseRodada.matchday }) : ''
+      })} - ${dateTime(row.utcDate)} - ${statusLabel(row.status)}`)}</span>
       <span class="external-link-card__meta">
         <span class="pill">${escapeHtml(t('externalMatches.externalId', { id }))}</span>
         ${imported ? `<span class="pill">${escapeHtml(t('externalMatches.alreadyImported'))}</span>` : ''}
@@ -1378,7 +1415,7 @@ function renderBetCard(aposta) {
         </div>
         <details class="bet-card__details">
           <summary>${escapeHtml(t('bets.details'))}</summary>
-          <p class="muted">${escapeHtml(aposta.fase || t('common.game'))} · ${dateTime(aposta.dataHora)} · ${escapeHtml(aposta.estadio || '')}</p>
+          <p class="muted">${escapeHtml(matchStructureText(aposta))} · ${dateTime(aposta.dataHora)} · ${escapeHtml(aposta.estadio || '')}</p>
           <p class="muted">${escapeHtml(t('bets.deadlineAt', { date: dateTime(aposta.prazoApostaAt) }))}</p>
           ${result ? `<p class="muted">${escapeHtml(t('bets.officialScore', { home: result.mandante, away: result.visitante }))}</p>` : ''}
         </details>
@@ -1972,18 +2009,38 @@ async function renderPartidasAdmin() {
     state.partidasStatusTab = MATCH_STATUS_TABS[0].id;
   }
   const visibleRows = sortedMatchesForTab(rows, state.partidasStatusTab);
+  const renderGroupedMatches = (items) => {
+    if (!items.length) return empty(t('admin.noMatches'));
+    const groups = new Map();
+    items.forEach((row) => {
+      const fase = findById(fases, row.faseId)?.nome || row.faseNome || '';
+      const key = matchStructureText({ ...row, fase });
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(row);
+    });
+    return [...groups.entries()].map(([title, groupRows]) => `
+      <div class="match-group">
+        <div class="match-group__title">
+          <span>${escapeHtml(title)}</span>
+          <small>${escapeHtml(t('sports.matchesCount', { count: groupRows.length }))}</small>
+        </div>
+        ${groupRows.map(partidaRow).join('')}
+      </div>
+    `).join('');
+  };
   const partidaRow = (row) => {
     const mandante = findById(times, row.timeMandanteId) || { nome: row.timeMandanteId };
     const visitante = findById(times, row.timeVisitanteId) || { nome: row.timeVisitanteId };
     const score = row.placarMandante !== null && row.placarMandante !== undefined && row.placarVisitante !== null && row.placarVisitante !== undefined
       ? `${row.placarMandante} ${t('common.scoreSeparator')} ${row.placarVisitante}`
       : t('common.scoreSeparator');
-    const fase = findById(fases, row.faseId)?.nome || t('games.noPhase');
+    const fase = findById(fases, row.faseId)?.nome || row.faseNome || '';
+    const structure = matchStructureText({ ...row, fase });
     return `
       <article class="row-card">
         <div>
           <strong class="match-inline">${renderTeamName(mandante, mandante.nome, 'sm')}<span class="score score--inline">${escapeHtml(score)}</span>${renderTeamName(visitante, visitante.nome, 'sm')}</strong>
-          <p class="muted">${escapeHtml(`${fase} - ${dateTime(row.dataHora)} - ${row.estadio || t('games.noStadium')}`)}</p>
+          <p class="muted">${escapeHtml(`${structure} - ${dateTime(row.dataHora)} - ${row.estadio || t('games.noStadium')}`)}</p>
         </div>
         <div class="actions">
           <span class="pill">${escapeHtml(badgeLabel(row.status))}</span>
@@ -2029,7 +2086,7 @@ async function renderPartidasAdmin() {
     ${state.externalMatchImport.open ? renderExternalImportPanel(rows) : ''}
     <section class="card">
       ${renderMatchTabs(rows)}
-      <div class="list">${visibleRows.map(partidaRow).join('') || empty(t('admin.noMatches'))}</div>
+      <div class="list">${renderGroupedMatches(visibleRows)}</div>
     </section>
   `;
 }

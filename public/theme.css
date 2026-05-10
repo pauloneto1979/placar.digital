@@ -901,6 +901,32 @@ select option {
   grid-template-columns: 1fr;
 }
 
+.match-group {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.match-group__title {
+  align-items: center;
+  background: rgba(33, 212, 253, 0.06);
+  border: 1px solid rgba(33, 212, 253, 0.16);
+  border-radius: 999px;
+  color: var(--accent);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.86rem;
+  font-weight: 850;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 8px 12px;
+}
+
+.match-group__title small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .status-tabs {
   display: flex;
   gap: 10px;
