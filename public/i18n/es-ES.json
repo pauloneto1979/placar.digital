@@ -230,7 +230,32 @@
     "details": "Detalles",
     "officialScore": "Marcador oficial: {home} x {away}",
     "decreaseScore": "Disminuir marcador",
-    "increaseScore": "Aumentar marcador"
+    "increaseScore": "Aumentar marcador",
+    "tabsLabel": "Filtros de pronósticos",
+    "tabs": {
+      "pending": "Pendientes",
+      "open": "Abiertas",
+      "inProgress": "En curso",
+      "finished": "Finalizadas",
+      "all": "Todas"
+    },
+    "noneForTab": "No hay partidos en esta pestaña.",
+    "pendingSummary": "Tienes {count} pronósticos pendientes",
+    "openSummary": "{count} partidos abiertos para pronosticar",
+    "nextMatchSummary": "Próximo partido en {time}",
+    "noNextMatch": "No hay próximo partido abierto",
+    "noGuess": "Sin pronóstico",
+    "yourGuessValue": "Tu pronóstico: {value}",
+    "resultValue": "Resultado: {value}",
+    "pointsValue": "Puntos: {points}",
+    "pointsPending": "Puntos: esperando cálculo",
+    "scored": "Puntuado",
+    "deadlineAt": "Cierre de pronóstico: {date}",
+    "viewPoolGuesses": "Ver pronósticos del grupo",
+    "poolGuesses": "Pronósticos del grupo",
+    "poolGuessesLocked": "Los pronósticos del grupo estarán disponibles después del cierre.",
+    "noPoolGuesses": "No hay pronósticos disponibles para este partido.",
+    "youParticipant": "Tú — {name}"
   },
   "games": {
     "homeTeam": "Local",

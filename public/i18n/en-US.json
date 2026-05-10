@@ -230,7 +230,32 @@
     "details": "Details",
     "officialScore": "Official score: {home} x {away}",
     "decreaseScore": "Decrease score",
-    "increaseScore": "Increase score"
+    "increaseScore": "Increase score",
+    "tabsLabel": "Prediction filters",
+    "tabs": {
+      "pending": "Pending",
+      "open": "Open",
+      "inProgress": "In progress",
+      "finished": "Finished",
+      "all": "All"
+    },
+    "noneForTab": "No matches in this tab.",
+    "pendingSummary": "You have {count} pending predictions",
+    "openSummary": "{count} matches open for predictions",
+    "nextMatchSummary": "Next match in {time}",
+    "noNextMatch": "No upcoming open match",
+    "noGuess": "No prediction",
+    "yourGuessValue": "Your prediction: {value}",
+    "resultValue": "Result: {value}",
+    "pointsValue": "Points: {points}",
+    "pointsPending": "Points: waiting for calculation",
+    "scored": "Scored",
+    "deadlineAt": "Prediction deadline: {date}",
+    "viewPoolGuesses": "View pool predictions",
+    "poolGuesses": "Pool predictions",
+    "poolGuessesLocked": "Pool predictions are available after the deadline.",
+    "noPoolGuesses": "No predictions available for this match.",
+    "youParticipant": "You — {name}"
   },
   "games": {
     "homeTeam": "Home",

@@ -230,7 +230,32 @@
     "details": "Detalhes",
     "officialScore": "Placar oficial: {home} x {away}",
     "decreaseScore": "Diminuir placar",
-    "increaseScore": "Aumentar placar"
+    "increaseScore": "Aumentar placar",
+    "tabsLabel": "Filtros de palpites",
+    "tabs": {
+      "pending": "Pendentes",
+      "open": "Abertas",
+      "inProgress": "Em andamento",
+      "finished": "Finalizadas",
+      "all": "Todas"
+    },
+    "noneForTab": "Nenhuma partida nesta aba.",
+    "pendingSummary": "Você tem {count} palpites pendentes",
+    "openSummary": "{count} partidas abertas para aposta",
+    "nextMatchSummary": "Próxima partida em {time}",
+    "noNextMatch": "Nenhuma próxima partida aberta",
+    "noGuess": "Sem palpite",
+    "yourGuessValue": "Seu palpite: {value}",
+    "resultValue": "Resultado: {value}",
+    "pointsValue": "Pontos: {points}",
+    "pointsPending": "Pontos: aguardando cálculo",
+    "scored": "Pontuado",
+    "deadlineAt": "Prazo de aposta: {date}",
+    "viewPoolGuesses": "Ver palpites do bolão",
+    "poolGuesses": "Palpites do bolão",
+    "poolGuessesLocked": "Os palpites do bolão ficam disponíveis após o prazo encerrar.",
+    "noPoolGuesses": "Nenhum palpite disponível para esta partida.",
+    "youParticipant": "Você — {name}"
   },
   "games": {
     "homeTeam": "Mandante",

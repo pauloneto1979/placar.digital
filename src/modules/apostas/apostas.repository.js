@@ -220,6 +220,8 @@ async function listMinhasApostas(bolaoId, participanteId) {
         a.status,
         a.registrada_at,
         a.atualizado_at,
+        coalesce(pa.pontos, a.pontos_calculados, 0)::int as pontos_calculados,
+        pa.calculado_em,
         p.inicio_at,
         p.estadio,
         p.placar_mandante as oficial_mandante,
@@ -238,6 +240,7 @@ async function listMinhasApostas(bolaoId, participanteId) {
         tv.bandeira_url as visitante_bandeira_url
       from partidas p
       left join apostas a on a.partida_id = p.id and a.participante_id = $2
+      left join pontuacoes_apostas pa on pa.aposta_id = a.id
       left join fases f on f.id = p.fase_id
       join times tm on tm.id = p.time_mandante_id
       join times tv on tv.id = p.time_visitante_id
@@ -245,6 +248,32 @@ async function listMinhasApostas(bolaoId, participanteId) {
       order by p.inicio_at asc
     `,
     [bolaoId, participanteId]
+  );
+  return result.rows;
+}
+
+async function listPalpitesPartida(bolaoId, partidaId) {
+  const result = await query(
+    `
+      select
+        p.id as participante_id,
+        p.nome as participante_nome,
+        a.id as aposta_id,
+        a.placar_mandante,
+        a.placar_visitante,
+        a.status,
+        a.registrada_at,
+        coalesce(pa.pontos, a.pontos_calculados, 0)::int as pontos_calculados,
+        pa.calculado_em
+      from participantes p
+      left join apostas a on a.participante_id = p.id and a.partida_id = $2 and a.status <> 'cancelada'
+      left join pontuacoes_apostas pa on pa.aposta_id = a.id
+      where p.bolao_id = $1
+        and p.papel = 'apostador'
+        and p.status <> 'removido'
+      order by p.nome asc
+    `,
+    [bolaoId, partidaId]
   );
   return result.rows;
 }
@@ -275,5 +304,6 @@ module.exports = {
   findAposta,
   upsertAposta,
   listMinhasApostas,
+  listPalpitesPartida,
   getRegras
 };

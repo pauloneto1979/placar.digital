@@ -17,6 +17,13 @@ function canChangeBet(partida, minutosAntecedencia) {
   return Date.now() < limite;
 }
 
+function prazoApostaAt(partida, minutosAntecedencia) {
+  if (!partida?.inicio_at) return null;
+  const limite = new Date(partida.inicio_at).getTime() - minutosAntecedencia * 60000;
+  if (Number.isNaN(limite)) return null;
+  return new Date(limite).toISOString();
+}
+
 function mapMinhaAposta(row, minutosAntecedencia) {
   const partida = {
     inicio_at: row.inicio_at,
@@ -52,7 +59,28 @@ function mapMinhaAposta(row, minutosAntecedencia) {
       visitante: row.placar_visitante
     },
     statusAposta: row.status || 'sem_aposta',
+    statusPartida: row.partida_status,
+    prazoApostaAt: prazoApostaAt(partida, minutosAntecedencia),
+    pontos: Number(row.pontos_calculados || 0),
+    pontuado: Boolean(row.calculado_em),
     podeAlterar: canChangeBet(partida, minutosAntecedencia)
+  };
+}
+
+function mapPalpitePartida(row, auth) {
+  const hasBet = row.aposta_id && row.placar_mandante !== null && row.placar_visitante !== null;
+  return {
+    participanteId: row.participante_id,
+    participante: row.participante_nome,
+    isMe: auth.participanteId === row.participante_id,
+    apostaId: row.aposta_id || null,
+    palpite: hasBet ? {
+      mandante: row.placar_mandante,
+      visitante: row.placar_visitante
+    } : null,
+    status: row.status || 'sem_aposta',
+    pontos: Number(row.pontos_calculados || 0),
+    pontuado: Boolean(row.calculado_em)
   };
 }
 
@@ -121,6 +149,24 @@ function createApostasService(repository) {
       const minutos = await repository.getMinutosAntecedencia(bolaoId);
       const rows = await repository.listMinhasApostas(bolaoId, auth.participanteId);
       return rows.map((row) => mapMinhaAposta(row, minutos));
+    },
+
+    async palpitesPartida(bolaoId, partidaId, auth) {
+      await ensureCanViewBolao(auth, bolaoId);
+      const partida = await repository.findPartidaById(partidaId);
+      if (!partida || partida.bolao_id !== bolaoId) {
+        throw new HttpError(404, 'match_not_found', 'Partida nao encontrada neste bolao.');
+      }
+      const minutos = await repository.getMinutosAntecedencia(bolaoId);
+      if (canChangeBet(partida, minutos)) {
+        throw new HttpError(423, 'match_guesses_locked', 'Os palpites do bolao ficam visiveis apenas apos o encerramento do prazo.');
+      }
+      const rows = await repository.listPalpitesPartida(bolaoId, partidaId);
+      return {
+        partidaId,
+        prazoApostaAt: prazoApostaAt(partida, minutos),
+        palpites: rows.map((row) => mapPalpitePartida(row, auth))
+      };
     },
 
     async regras(bolaoId, auth) {

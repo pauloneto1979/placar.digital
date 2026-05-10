@@ -1554,7 +1554,7 @@ button[data-provider-toggle]:hover {
 }
 
 .bet-card__header {
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .bet-card__team {
@@ -1683,6 +1683,92 @@ button[data-provider-toggle]:hover {
 
 .bet-card__details p {
   margin: 8px 0 0;
+}
+
+.bets-summary {
+  background: rgba(5, 14, 23, 0.42);
+  border: 1px solid rgba(159, 188, 215, 0.13);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 12px;
+  padding: 10px;
+}
+
+.bets-summary span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 850;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bet-card__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bet-card__facts span,
+.pool-guess-score span,
+.pool-guess-score strong {
+  background: rgba(159, 188, 215, 0.07);
+  border: 1px solid rgba(159, 188, 215, 0.13);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding: 7px 10px;
+}
+
+.bet-card__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pool-guesses-modal {
+  max-height: min(84vh, 720px);
+  overflow: auto;
+}
+
+.pool-guesses-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.pool-guess-row {
+  align-items: center;
+  background: rgba(5, 14, 23, 0.54);
+  border: 1px solid rgba(159, 188, 215, 0.13);
+  border-radius: var(--radius-sm);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.pool-guess-row.is-me {
+  border-color: rgba(200, 255, 46, 0.34);
+  box-shadow: 0 0 22px rgba(200, 255, 46, 0.08);
+}
+
+.pool-guess-row > div {
+  min-width: 0;
+}
+
+.pool-guess-row strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.pool-guess-score {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 @keyframes statusPulse {
@@ -2595,6 +2681,24 @@ button[data-reset-form]:not(.icon-action)::before {
     background: rgba(255, 255, 255, 0.035);
     border-radius: 14px;
     padding: 9px 10px;
+  }
+
+  .bets-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .bet-card__actions,
+  .bet-card__actions .secondary {
+    width: 100%;
+  }
+
+  .pool-guess-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pool-guess-score {
+    justify-content: flex-start;
   }
 
   .form-actions button,

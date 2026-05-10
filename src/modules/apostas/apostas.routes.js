@@ -14,6 +14,7 @@ apostasRoutes.get('/boloes/:bolaoId/jogos', controller.jogos);
 apostasRoutes.post('/boloes/:bolaoId', controller.apostar);
 apostasRoutes.put('/boloes/:bolaoId', controller.apostar);
 apostasRoutes.get('/boloes/:bolaoId/minhas', controller.minhasApostas);
+apostasRoutes.get('/boloes/:bolaoId/partidas/:partidaId/palpites', controller.palpitesPartida);
 apostasRoutes.get('/boloes/:bolaoId/regras', controller.regras);
 
 module.exports = {
