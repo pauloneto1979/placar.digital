@@ -1365,13 +1365,6 @@ function renderBetCard(aposta) {
         ${renderBetStepper('visitante', right, canEdit, visitante)}
       </div>
     `;
-  const factsContent = finished ? '' : `
-    <div class="bet-card__facts">
-      <span>${escapeHtml(t('bets.yourGuessValue', { value: betLabel }))}</span>
-      ${result ? `<span>${escapeHtml(t('bets.resultValue', { value: resultLabel }))}</span>` : ''}
-      <span>${escapeHtml(pointsLabel)}</span>
-    </div>
-  `;
   return `
     <article class="match-card bet-card ${canEdit ? 'bet-card--open' : 'bet-card--locked'} ${finished ? 'bet-card--finished' : ''}" data-partida-id="${escapeHtml(aposta.partidaId)}">
       <div class="bet-card__content">
@@ -1383,7 +1376,6 @@ function renderBetCard(aposta) {
           ${centerContent}
           <div class="bet-card__team bet-card__team--away">${renderTeamName(aposta.visitante || { nome: visitante }, visitante)}</div>
         </div>
-        ${factsContent}
         <details class="bet-card__details">
           <summary>${escapeHtml(t('bets.details'))}</summary>
           <p class="muted">${escapeHtml(aposta.fase || t('common.game'))} · ${dateTime(aposta.dataHora)} · ${escapeHtml(aposta.estadio || '')}</p>
