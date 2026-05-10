@@ -1573,6 +1573,66 @@ button[data-provider-toggle]:hover {
   gap: 10px;
 }
 
+.bet-card--finished .bet-card__teams {
+  align-items: stretch;
+}
+
+.bet-result-summary {
+  align-items: stretch;
+  background: linear-gradient(180deg, rgba(5, 14, 23, 0.78), rgba(8, 21, 33, 0.64));
+  border: 1px solid rgba(33, 212, 253, 0.18);
+  border-radius: 18px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 18px 36px rgba(0, 0, 0, 0.18);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-width: min(460px, 100%);
+  padding: 12px;
+}
+
+.bet-result-summary__item,
+.bet-result-summary__points {
+  align-items: center;
+  background: rgba(159, 188, 215, 0.06);
+  border: 1px solid rgba(159, 188, 215, 0.12);
+  border-radius: 14px;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  min-width: 0;
+  padding: 10px;
+  text-align: center;
+}
+
+.bet-result-summary__item span,
+.bet-result-summary__points span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.bet-result-summary__item strong {
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.bet-result-summary__points {
+  background: rgba(200, 255, 46, 0.09);
+  border-color: rgba(200, 255, 46, 0.26);
+}
+
+.bet-result-summary__points strong {
+  color: var(--accent);
+  font-size: 1.45rem;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .bet-stepper {
   align-items: center;
   background: rgba(5, 14, 23, 0.62);
@@ -1708,6 +1768,10 @@ button[data-provider-toggle]:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.bet-card__facts--muted {
+  opacity: 0.72;
 }
 
 .bet-card__facts span,
@@ -2647,6 +2711,25 @@ button[data-reset-form]:not(.icon-action)::before {
     justify-content: stretch;
     padding: 10px 8px;
     width: 100%;
+  }
+
+  .bet-result-summary {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .bet-result-summary__item,
+  .bet-result-summary__points {
+    grid-template-columns: minmax(0, 1fr) auto;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .bet-result-summary__item strong,
+  .bet-result-summary__points strong {
+    font-size: 1.18rem;
+    justify-self: end;
   }
 
   .bet-stepper {

@@ -1335,6 +1335,7 @@ function renderBetCard(aposta) {
   const right = aposta.meuPalpite?.visitante ?? '';
   const hasBet = aposta.statusAposta && aposta.statusAposta !== 'sem_aposta';
   const result = officialScore(aposta);
+  const finished = Boolean(result) || isBetFinished(aposta);
   const status = result
     ? t('bets.resultConfirmed')
     : canEdit
@@ -1344,8 +1345,10 @@ function renderBetCard(aposta) {
   const mandante = aposta.mandante?.nome || aposta.mandante || t('games.homeTeam');
   const visitante = aposta.visitante?.nome || aposta.visitante || t('games.awayTeam');
   const betLabel = hasBet ? `${aposta.meuPalpite.mandante} ${t('common.scoreSeparator')} ${aposta.meuPalpite.visitante}` : t('bets.noGuess');
+  const resultLabel = result ? `${result.mandante} ${t('common.scoreSeparator')} ${result.visitante}` : t('bets.noOfficialResult');
   const points = Number(aposta.pontos || 0);
-  const pointsLabel = aposta.pontuado ? t('bets.pointsValue', { points: points > 0 ? `+${points}` : points }) : t('bets.pointsPending');
+  const pointsValue = points > 0 ? `+${points}` : String(points);
+  const pointsLabel = aposta.pontuado ? t('bets.pointsValue', { points: pointsValue }) : t('bets.pointsPending');
   const canViewGuesses = canViewPoolGuesses(aposta);
   const statusPills = [
     `<span class="pill bet-status-pill ${statusClass}" data-save-status>${escapeHtml(status)}</span>`,
@@ -1353,24 +1356,29 @@ function renderBetCard(aposta) {
     !canEdit ? `<span class="pill bet-status-pill bet-status--locked">${escapeHtml(t('bets.deadlineClosed'))}</span>` : '',
     aposta.pontuado ? `<span class="pill bet-status-pill bet-status--result">${escapeHtml(t('bets.scored'))}</span>` : ''
   ].filter(Boolean).join('');
+  const centerContent = finished
+    ? renderFinishedBetSummary(betLabel, resultLabel, pointsLabel, aposta.pontuado, pointsValue)
+    : `
+      <div class="bet-card__scoreboard">
+        ${renderBetStepper('mandante', left, canEdit, mandante)}
+        <span class="score bet-card__separator">${escapeHtml(t('common.scoreSeparator'))}</span>
+        ${renderBetStepper('visitante', right, canEdit, visitante)}
+      </div>
+    `;
   return `
-    <article class="match-card bet-card ${canEdit ? 'bet-card--open' : 'bet-card--locked'}" data-partida-id="${escapeHtml(aposta.partidaId)}">
+    <article class="match-card bet-card ${canEdit ? 'bet-card--open' : 'bet-card--locked'} ${finished ? 'bet-card--finished' : ''}" data-partida-id="${escapeHtml(aposta.partidaId)}">
       <div class="bet-card__content">
         <div class="bet-card__header">
           ${statusPills}
         </div>
         <div class="bet-card__teams">
           <div class="bet-card__team">${renderTeamName(aposta.mandante || { nome: mandante }, mandante)}</div>
-          <div class="bet-card__scoreboard">
-            ${renderBetStepper('mandante', left, canEdit, mandante)}
-            <span class="score bet-card__separator">${escapeHtml(t('common.scoreSeparator'))}</span>
-            ${renderBetStepper('visitante', right, canEdit, visitante)}
-          </div>
+          ${centerContent}
           <div class="bet-card__team bet-card__team--away">${renderTeamName(aposta.visitante || { nome: visitante }, visitante)}</div>
         </div>
-        <div class="bet-card__facts">
+        <div class="bet-card__facts ${finished ? 'bet-card__facts--muted' : ''}">
           <span>${escapeHtml(t('bets.yourGuessValue', { value: betLabel }))}</span>
-          ${result ? `<span>${escapeHtml(t('bets.resultValue', { value: `${result.mandante} ${t('common.scoreSeparator')} ${result.visitante}` }))}</span>` : ''}
+          ${result ? `<span>${escapeHtml(t('bets.resultValue', { value: resultLabel }))}</span>` : ''}
           <span>${escapeHtml(pointsLabel)}</span>
         </div>
         <details class="bet-card__details">
@@ -1386,6 +1394,25 @@ function renderBetCard(aposta) {
         </div>
       </div>
     </article>
+  `;
+}
+
+function renderFinishedBetSummary(betLabel, resultLabel, pointsLabel, pontuado, pointsValue) {
+  return `
+    <div class="bet-result-summary" aria-label="${escapeHtml(t('bets.finishedSummary'))}">
+      <div class="bet-result-summary__item">
+        <span>${escapeHtml(t('bets.yourGuess'))}</span>
+        <strong>${escapeHtml(betLabel)}</strong>
+      </div>
+      <div class="bet-result-summary__item">
+        <span>${escapeHtml(t('bets.officialResult'))}</span>
+        <strong>${escapeHtml(resultLabel)}</strong>
+      </div>
+      <div class="bet-result-summary__points ${pontuado ? 'is-scored' : ''}">
+        <span>${escapeHtml(t('bets.points'))}</span>
+        <strong>${escapeHtml(pontuado ? `${pointsValue} ${t('ranking.pointsAbbr')}` : pointsLabel)}</strong>
+      </div>
+    </div>
   `;
 }
 

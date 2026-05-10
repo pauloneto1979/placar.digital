@@ -255,7 +255,12 @@
     "poolGuesses": "Palpites do bolão",
     "poolGuessesLocked": "Os palpites do bolão ficam disponíveis após o prazo encerrar.",
     "noPoolGuesses": "Nenhum palpite disponível para esta partida.",
-    "youParticipant": "Você — {name}"
+    "youParticipant": "Você — {name}",
+    "yourGuess": "Seu palpite",
+    "officialResult": "Resultado oficial",
+    "points": "Pontos",
+    "noOfficialResult": "Sem resultado oficial",
+    "finishedSummary": "Resumo da partida finalizada"
   },
   "games": {
     "homeTeam": "Mandante",

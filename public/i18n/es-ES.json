@@ -255,7 +255,12 @@
     "poolGuesses": "Pronósticos del grupo",
     "poolGuessesLocked": "Los pronósticos del grupo estarán disponibles después del cierre.",
     "noPoolGuesses": "No hay pronósticos disponibles para este partido.",
-    "youParticipant": "Tú — {name}"
+    "youParticipant": "Tú — {name}",
+    "yourGuess": "Tu pronóstico",
+    "officialResult": "Resultado oficial",
+    "points": "Puntos",
+    "noOfficialResult": "Sin resultado oficial",
+    "finishedSummary": "Resumen del partido finalizado"
   },
   "games": {
     "homeTeam": "Local",

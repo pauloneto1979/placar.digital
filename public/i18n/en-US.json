@@ -255,7 +255,12 @@
     "poolGuesses": "Pool predictions",
     "poolGuessesLocked": "Pool predictions are available after the deadline.",
     "noPoolGuesses": "No predictions available for this match.",
-    "youParticipant": "You — {name}"
+    "youParticipant": "You — {name}",
+    "yourGuess": "Your prediction",
+    "officialResult": "Official result",
+    "points": "Points",
+    "noOfficialResult": "No official result",
+    "finishedSummary": "Finished match summary"
   },
   "games": {
     "homeTeam": "Home",
