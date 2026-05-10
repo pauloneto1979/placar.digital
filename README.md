@@ -467,6 +467,43 @@ Mensagem do teste:
 Seu serviço de envio de e-mail do Placar.digital foi configurado com sucesso.
 ```
 
+### Notificações transacionais por e-mail
+
+A primeira camada transacional usa o SMTP configurado no banco e fica em `src/modules/email`.
+
+Eventos implementados:
+
+- convite de participação no bolão;
+- ativação/definição de senha;
+- recuperação de senha;
+- confirmação de pagamento.
+
+Rotas públicas seguras:
+
+- `POST /api/v1/auth/recuperar-senha`
+- `POST /api/v1/auth/validar-token`
+- `POST /api/v1/auth/ativar-conta`
+- `POST /api/v1/auth/redefinir-senha`
+
+Tabelas:
+
+- `auth_tokens`: tokens seguros, com hash SHA-256, expiração obrigatória e uso único;
+- `email_templates`: templates por código e idioma, com fallback para `pt-BR`;
+- `notificacoes`: log/auditoria do envio por e-mail, com status, tentativas, erro e payload sanitizado.
+
+Regras de segurança:
+
+- tokens completos não são gravados em logs;
+- senhas nunca são enviadas por e-mail;
+- recuperação de senha não revela se o e-mail existe;
+- token expirado, inválido ou reutilizado é rejeitado;
+- SMTP e credenciais não são expostos nas respostas.
+
+Páginas auxiliares:
+
+- `/app/ativacao.html`
+- `/app/redefinir-senha.html`
+
 ## 16. Deploy
 
 Estado operacional conhecido:
@@ -554,6 +591,7 @@ Migrations existentes:
 | `019_boloes_times.sql` | Vínculo multi-tenant entre bolões e times. |
 | `020_email_configuracoes_email_constraints.sql` | Constraints adicionais para configuração SMTP/e-mail. |
 | `021_estrutura_esportiva_multicampeonato.sql` | Estrutura de competição, temporada, grupos, rodadas e vínculos esportivos em partidas. |
+| `022_notificacoes_email_transacionais.sql` | Tokens, templates e auditoria para notificações transacionais por e-mail. |
 
 ### Migration 017
 
@@ -602,6 +640,28 @@ Regra de compatibilidade:
 - football-data preenche a nova estrutura nas importações novas;
 - dados antigos continuam funcionais mesmo sem grupo ou rodada;
 - a pontuação e o ranking permanecem usando as mesmas tabelas e regras.
+
+### Migration 022
+
+Cria a base transacional de e-mails:
+
+- `auth_tokens`
+- `email_templates`
+- novos campos de auditoria em `notificacoes`
+
+Tokens:
+
+- são armazenados como hash SHA-256;
+- possuem expiração obrigatória;
+- são de uso único;
+- não devem aparecer completos em logs ou respostas.
+
+Templates iniciais:
+
+- `convite_bolao`
+- `ativacao_conta`
+- `recuperacao_senha`
+- `pagamento_confirmado`
 
 ## 18. Troubleshooting
 
@@ -703,7 +763,7 @@ Itens planejados, ainda não implementados:
 - Notificações push reais.
 - Integração WhatsApp.
 - Fila de envio de e-mails.
-- Templates HTML completos para e-mail.
+- Editor visual de templates de e-mail.
 - Integração PIX.
 - Melhorias de performance e cache.
 - Observabilidade estruturada.

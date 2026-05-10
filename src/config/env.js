@@ -5,6 +5,7 @@ const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: Number(process.env.PORT || 3001),
   apiPrefix: process.env.API_PREFIX || '/api/v1',
+  appBaseUrl: process.env.APP_BASE_URL || `http://localhost:${Number(process.env.PORT || 3001)}`,
   databaseUrl: process.env.DATABASE_URL || null,
   authTokenSecret: process.env.AUTH_TOKEN_SECRET || 'placar-digital-dev-secret',
   authTokenExpiresInSeconds: Number(process.env.AUTH_TOKEN_EXPIRES_IN_SECONDS || 86400),

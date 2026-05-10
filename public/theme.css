@@ -257,6 +257,19 @@ select option {
   display: none;
 }
 
+.auth-link {
+  color: var(--accent);
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  margin-top: 12px;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  color: var(--accent-2);
+}
+
 .message[data-tone="success"] {
   background: rgba(71, 245, 154, 0.08);
   border-color: rgba(71, 245, 154, 0.2);

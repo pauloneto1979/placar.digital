@@ -46,7 +46,8 @@
     "selectionSubtitle": "You have more than one linked pool. Select where you want to play now.",
     "openingPool": "Opening pool...",
     "selectionError": "Could not select the pool.",
-    "accessApp": "Access Placar.digital"
+    "accessApp": "Access Placar.digital",
+    "forgotPassword": "Forgot password"
   },
   "roles": {
     "proprietario": "Owner",
@@ -316,7 +317,14 @@
     "selectPool": "Select a pool to view notifications.",
     "title": "Notifications",
     "emptyMine": "You do not have notifications in this pool yet.",
-    "emptyAdmin": "There are no notifications registered for the selected pool."
+    "emptyAdmin": "There are no notifications registered for the selected pool.",
+    "invite": "Invite",
+    "activateAccount": "Activate account",
+    "resetPassword": "Reset password",
+    "tokenExpired": "Token expired",
+    "emailSent": "Email sent",
+    "paymentConfirmed": "Payment confirmed",
+    "invalidLink": "Invalid link"
   },
   "profile": {
     "myData": "My data",
@@ -567,5 +575,29 @@
     "regularSeason": "Regular season",
     "roundNumber": "Matchday {number}",
     "matchesCount": "{count} match(es)"
+  },
+  "accountActivation": {
+    "title": "Activate account",
+    "heading": "Activate account",
+    "subtitle": "Set your password to access Placar.digital.",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "submit": "Activate account",
+    "invalidLink": "Activation link is missing.",
+    "invalidOrExpired": "Invalid or expired link.",
+    "success": "Account activated successfully. You can now sign in.",
+    "genericError": "Could not complete the request."
+  },
+  "passwordReset": {
+    "title": "Reset password",
+    "heading": "Reset password",
+    "subtitle": "Enter your email or set a new password if you opened a recovery link.",
+    "requestSubmit": "Send recovery link",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm new password",
+    "submit": "Save new password",
+    "sending": "Sending link...",
+    "sent": "If the email is registered, we will send a recovery link.",
+    "success": "Password reset successfully. You can now sign in."
   }
 }

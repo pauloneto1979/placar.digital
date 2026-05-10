@@ -28,7 +28,8 @@ function payload(body, bolaoId) {
   return { bolaoId, participanteId, valor, status, formaPagamento, dataPagamento, observacao };
 }
 
-function createPagamentosService(repository) {
+function createPagamentosService(repository, options = {}) {
+  const transactionalEmailService = options.transactionalEmailService || null;
   async function ensurePayment(id, bolaoId) {
     const item = await repository.findById(id);
     if (!item || item.bolaoId !== bolaoId) throw new HttpError(404, 'payment_not_found', 'Pagamento nao encontrado.');
@@ -69,6 +70,18 @@ function createPagamentosService(repository) {
     return String(payload.status || payload.status_gateway || payload.payment_status || 'received').toLowerCase();
   }
 
+  async function enviarEmailPagamentoConfirmado(pagamento) {
+    if (!transactionalEmailService || !pagamento?.id) return;
+    try {
+      await transactionalEmailService.enviarPagamentoConfirmado(pagamento.id);
+    } catch (error) {
+      console.warn('[pagamentos] Falha ao enviar e-mail de pagamento confirmado.', {
+        pagamentoId: pagamento.id,
+        code: error.code || 'email_error'
+      });
+    }
+  }
+
   async function requestInfinitePayLink(payload) {
     const url = `${env.infinitePayApiUrl.replace(/\/$/, '')}/links`;
     const response = await fetch(url, {
@@ -105,24 +118,33 @@ function createPagamentosService(repository) {
       const data = payload(body, bolaoId);
       await ensureParticipant(bolaoId, data.participanteId);
       const pagamento = await repository.create(data);
-      if (pagamento.status === 'pago') await notificacoesService.gerarPagamentoConfirmado(pagamento.id);
+      if (pagamento.status === 'pago') {
+        await notificacoesService.gerarPagamentoConfirmado(pagamento.id);
+        await enviarEmailPagamentoConfirmado(pagamento);
+      }
       return pagamento;
     },
     async update(bolaoId, id, body, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
-      await ensurePayment(id, bolaoId);
+      const before = await ensurePayment(id, bolaoId);
       const data = payload(body, bolaoId);
       await ensureParticipant(bolaoId, data.participanteId);
       const pagamento = await repository.update(id, data);
-      if (pagamento.status === 'pago') await notificacoesService.gerarPagamentoConfirmado(pagamento.id);
+      if (before.status !== 'pago' && pagamento.status === 'pago') {
+        await notificacoesService.gerarPagamentoConfirmado(pagamento.id);
+        await enviarEmailPagamentoConfirmado(pagamento);
+      }
       return pagamento;
     },
     async updateStatus(bolaoId, id, status, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
-      await ensurePayment(id, bolaoId);
+      const before = await ensurePayment(id, bolaoId);
       if (!STATUS.includes(status)) throw new HttpError(400, 'invalid_payment_status', 'Status de pagamento invalido.');
       const pagamento = await repository.updateStatus(id, status);
-      if (pagamento.status === 'pago') await notificacoesService.gerarPagamentoConfirmado(pagamento.id);
+      if (before.status !== 'pago' && pagamento.status === 'pago') {
+        await notificacoesService.gerarPagamentoConfirmado(pagamento.id);
+        await enviarEmailPagamentoConfirmado(pagamento);
+      }
       return pagamento;
     },
     async gerarLinkInfinitePay(bolaoId, id, body, auth) {
@@ -185,6 +207,7 @@ function createPagamentosService(repository) {
 
         const updated = await repository.confirmInfinitePayPayment(pagamento.id, payload);
         await notificacoesService.gerarPagamentoConfirmado(updated.id);
+        await enviarEmailPagamentoConfirmado(updated);
         return { received: true, paid: true, pagamentoId: updated.id };
       }
 

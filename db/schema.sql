@@ -21,3 +21,4 @@
 \i db/migrations/019_boloes_times.sql
 \i db/migrations/020_email_configuracoes_email_constraints.sql
 \i db/migrations/021_estrutura_esportiva_multicampeonato.sql
+\i db/migrations/022_notificacoes_email_transacionais.sql

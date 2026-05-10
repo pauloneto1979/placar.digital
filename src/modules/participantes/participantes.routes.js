@@ -3,9 +3,12 @@ const { authMiddleware } = require('../../shared/middlewares/auth.middleware');
 const { createParticipantesController } = require('./participantes.controller');
 const participantesRepository = require('./participantes.repository');
 const { createParticipantesService } = require('./participantes.service');
+const { emailRepository, createTransactionalEmailService } = require('../email');
 
 const participantesRoutes = Router();
-const controller = createParticipantesController(createParticipantesService(participantesRepository));
+const controller = createParticipantesController(createParticipantesService(participantesRepository, {
+  transactionalEmailService: createTransactionalEmailService(emailRepository)
+}));
 
 participantesRoutes.use(authMiddleware);
 participantesRoutes.get('/', controller.status);

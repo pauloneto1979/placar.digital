@@ -53,7 +53,8 @@ function resolveLoginFlow(user, boloes) {
   };
 }
 
-function createAuthService(repository) {
+function createAuthService(repository, options = {}) {
+  const transactionalEmailService = options.transactionalEmailService || null;
   async function audit(data) {
     try {
       await repository.createAuditLog(data);
@@ -360,6 +361,34 @@ function createAuthService(repository) {
       });
 
       return { success: true };
+    },
+
+    async solicitarRecuperacaoSenha(payload) {
+      if (!transactionalEmailService) {
+        throw new HttpError(500, 'transactional_email_not_configured', 'Servico de e-mail transacional nao configurado.');
+      }
+      return transactionalEmailService.solicitarRecuperacaoSenha(payload);
+    },
+
+    async validarToken(payload) {
+      if (!transactionalEmailService) {
+        throw new HttpError(500, 'transactional_email_not_configured', 'Servico de e-mail transacional nao configurado.');
+      }
+      return transactionalEmailService.validarToken(payload.token);
+    },
+
+    async ativarConta(payload) {
+      if (!transactionalEmailService) {
+        throw new HttpError(500, 'transactional_email_not_configured', 'Servico de e-mail transacional nao configurado.');
+      }
+      return transactionalEmailService.ativarConta(payload);
+    },
+
+    async redefinirSenha(payload) {
+      if (!transactionalEmailService) {
+        throw new HttpError(500, 'transactional_email_not_configured', 'Servico de e-mail transacional nao configurado.');
+      }
+      return transactionalEmailService.redefinirSenha(payload);
     }
   };
 }

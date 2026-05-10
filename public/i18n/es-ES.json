@@ -46,7 +46,8 @@
     "selectionSubtitle": "Tienes más de una porra vinculada. Selecciona dónde quieres jugar ahora.",
     "openingPool": "Abriendo porra...",
     "selectionError": "No fue posible seleccionar la porra.",
-    "accessApp": "Acceder a Placar.digital"
+    "accessApp": "Acceder a Placar.digital",
+    "forgotPassword": "Olvidé mi contraseña"
   },
   "roles": {
     "proprietario": "Propietario",
@@ -316,7 +317,14 @@
     "selectPool": "Selecciona una porra para ver las notificaciones.",
     "title": "Notificaciones",
     "emptyMine": "Aún no tienes notificaciones en esta porra.",
-    "emptyAdmin": "No hay notificaciones registradas para la porra seleccionada."
+    "emptyAdmin": "No hay notificaciones registradas para la porra seleccionada.",
+    "invite": "Invitación",
+    "activateAccount": "Activar cuenta",
+    "resetPassword": "Restablecer contraseña",
+    "tokenExpired": "Token expirado",
+    "emailSent": "Email enviado",
+    "paymentConfirmed": "Pago confirmado",
+    "invalidLink": "Enlace inválido"
   },
   "profile": {
     "myData": "Mis datos",
@@ -567,5 +575,29 @@
     "regularSeason": "Temporada regular",
     "roundNumber": "Jornada {number}",
     "matchesCount": "{count} partido(s)"
+  },
+  "accountActivation": {
+    "title": "Activar cuenta",
+    "heading": "Activar cuenta",
+    "subtitle": "Define tu contraseña para acceder a Placar.digital.",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "submit": "Activar cuenta",
+    "invalidLink": "Falta el enlace de activación.",
+    "invalidOrExpired": "Enlace inválido o expirado.",
+    "success": "Cuenta activada correctamente. Ya puedes iniciar sesión.",
+    "genericError": "No fue posible completar la solicitud."
+  },
+  "passwordReset": {
+    "title": "Restablecer contraseña",
+    "heading": "Restablecer contraseña",
+    "subtitle": "Informa tu email o define una nueva contraseña si abriste un enlace de recuperación.",
+    "requestSubmit": "Enviar enlace de recuperación",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar nueva contraseña",
+    "submit": "Guardar nueva contraseña",
+    "sending": "Enviando enlace...",
+    "sent": "Si el email está registrado, enviaremos un enlace de recuperación.",
+    "success": "Contraseña restablecida correctamente. Ya puedes iniciar sesión."
   }
 }

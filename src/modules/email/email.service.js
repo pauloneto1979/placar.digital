@@ -55,6 +55,12 @@ function createTransportConfig(config) {
   };
 }
 
+function createFromAddress(config) {
+  return config.smtpFromName
+    ? `"${config.smtpFromName.replace(/"/g, '')}" <${config.smtpFromEmail}>`
+    : config.smtpFromEmail;
+}
+
 function friendlyMailError(error) {
   const code = error.code || error.responseCode || 'smtp_error';
   if (['EAUTH', 535, 534].includes(code)) {
@@ -104,9 +110,7 @@ function createEmailService(repository) {
       const { destino } = validateTestPayload(payload);
       const config = await getSecretConfig();
       const transporter = nodemailer.createTransport(createTransportConfig(config));
-      const from = config.smtpFromName
-        ? `"${config.smtpFromName.replace(/"/g, '')}" <${config.smtpFromEmail}>`
-        : config.smtpFromEmail;
+      const from = createFromAddress(config);
 
       for (let attempt = 1; attempt <= 2; attempt += 1) {
         try {
@@ -150,5 +154,8 @@ function createEmailService(repository) {
 }
 
 module.exports = {
-  createEmailService
+  createEmailService,
+  createTransportConfig,
+  createFromAddress,
+  friendlyMailError
 };

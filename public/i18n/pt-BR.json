@@ -46,7 +46,8 @@
     "selectionSubtitle": "Você possui mais de um bolão vinculado. Selecione onde quer jogar agora.",
     "openingPool": "Abrindo bolão...",
     "selectionError": "Não foi possível selecionar o bolão.",
-    "accessApp": "Acessar Placar.digital"
+    "accessApp": "Acessar Placar.digital",
+    "forgotPassword": "Esqueci minha senha"
   },
   "roles": {
     "proprietario": "Proprietário",
@@ -316,7 +317,14 @@
     "selectPool": "Selecione um bolão para visualizar as notificações.",
     "title": "Notificações",
     "emptyMine": "Você ainda não possui notificações neste bolão.",
-    "emptyAdmin": "Não há notificações registradas para o bolão selecionado."
+    "emptyAdmin": "Não há notificações registradas para o bolão selecionado.",
+    "invite": "Convite",
+    "activateAccount": "Ativar conta",
+    "resetPassword": "Redefinir senha",
+    "tokenExpired": "Token expirado",
+    "emailSent": "E-mail enviado",
+    "paymentConfirmed": "Pagamento confirmado",
+    "invalidLink": "Link inválido"
   },
   "profile": {
     "myData": "Meus dados",
@@ -567,5 +575,29 @@
     "regularSeason": "Temporada regular",
     "roundNumber": "Rodada {number}",
     "matchesCount": "{count} partida(s)"
+  },
+  "accountActivation": {
+    "title": "Ativar conta",
+    "heading": "Ativar conta",
+    "subtitle": "Defina sua senha para acessar o Placar.digital.",
+    "password": "Senha",
+    "confirmPassword": "Confirmar senha",
+    "submit": "Ativar conta",
+    "invalidLink": "Link de ativação ausente.",
+    "invalidOrExpired": "Link inválido ou expirado.",
+    "success": "Conta ativada com sucesso. Você já pode entrar.",
+    "genericError": "Não foi possível concluir a solicitação."
+  },
+  "passwordReset": {
+    "title": "Redefinir senha",
+    "heading": "Redefinir senha",
+    "subtitle": "Informe seu e-mail ou defina uma nova senha se você abriu um link de recuperação.",
+    "requestSubmit": "Enviar link de recuperação",
+    "newPassword": "Nova senha",
+    "confirmPassword": "Confirmar nova senha",
+    "submit": "Salvar nova senha",
+    "sending": "Enviando link...",
+    "sent": "Se o e-mail estiver cadastrado, enviaremos um link de recuperação.",
+    "success": "Senha redefinida com sucesso. Você já pode entrar."
   }
 }

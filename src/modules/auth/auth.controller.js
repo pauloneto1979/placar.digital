@@ -57,6 +57,38 @@ function createAuthController(service) {
       } catch (error) {
         next(error);
       }
+    },
+
+    async solicitarRecuperacaoSenha(req, res, next) {
+      try {
+        res.json(await service.solicitarRecuperacaoSenha(req.body, req.context));
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    async validarToken(req, res, next) {
+      try {
+        res.json(await service.validarToken(req.body));
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    async ativarConta(req, res, next) {
+      try {
+        res.json(await service.ativarConta(req.body, req.context));
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    async redefinirSenha(req, res, next) {
+      try {
+        res.json(await service.redefinirSenha(req.body, req.context));
+      } catch (error) {
+        next(error);
+      }
     }
   };
 }

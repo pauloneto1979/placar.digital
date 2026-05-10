@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title data-i18n="passwordReset.title">Redefinir senha</title>
+    <link rel="stylesheet" href="/app/theme.css">
+  </head>
+  <body class="login-page" data-token-flow="reset">
+    <main class="auth-card">
+      <img class="auth-logo" src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
+      <h1 class="auth-title" data-i18n="passwordReset.heading">Redefinir senha</h1>
+      <p class="auth-subtitle" data-i18n="passwordReset.subtitle">Informe seu e-mail ou defina uma nova senha se você abriu um link de recuperação.</p>
+      <form id="requestForm" class="auth-form">
+        <label><span data-i18n="auth.email">Email</span> <input name="email" type="email" autocomplete="email" required></label>
+        <button type="submit" data-i18n="passwordReset.requestSubmit">Enviar link de recuperação</button>
+      </form>
+      <form id="tokenForm" class="auth-form" hidden>
+        <label>
+          <span data-i18n="passwordReset.newPassword">Nova senha</span>
+          <span class="password-field">
+            <input name="novaSenha" type="password" autocomplete="new-password" required data-password-toggle-input>
+            <button class="ghost icon-action password-toggle" type="button" data-password-toggle aria-label="Mostrar senha" title="Mostrar senha"></button>
+          </span>
+        </label>
+        <label>
+          <span data-i18n="passwordReset.confirmPassword">Confirmar nova senha</span>
+          <span class="password-field">
+            <input name="confirmarNovaSenha" type="password" autocomplete="new-password" required data-password-toggle-input>
+            <button class="ghost icon-action password-toggle" type="button" data-password-toggle aria-label="Mostrar senha" title="Mostrar senha"></button>
+          </span>
+        </label>
+        <button type="submit" data-i18n="passwordReset.submit">Salvar nova senha</button>
+      </form>
+      <p id="message" class="auth-message"></p>
+      <a class="auth-link" href="/app/login.html" data-i18n="auth.loginHeading">Entrar</a>
+    </main>
+    <script src="/app/i18n/i18n.js"></script>
+    <script src="/app/account-token.js"></script>
+  </body>
+</html>

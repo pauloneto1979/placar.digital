@@ -3,9 +3,12 @@ const { authMiddleware } = require('../../shared/middlewares/auth.middleware');
 const { createPagamentosController } = require('./pagamentos.controller');
 const pagamentosRepository = require('./pagamentos.repository');
 const { createPagamentosService } = require('./pagamentos.service');
+const { emailRepository, createTransactionalEmailService } = require('../email');
 
 const pagamentosRoutes = Router();
-const controller = createPagamentosController(createPagamentosService(pagamentosRepository));
+const controller = createPagamentosController(createPagamentosService(pagamentosRepository, {
+  transactionalEmailService: createTransactionalEmailService(emailRepository)
+}));
 
 pagamentosRoutes.post('/webhooks/infinitepay', controller.webhookInfinitePay);
 pagamentosRoutes.use(authMiddleware);

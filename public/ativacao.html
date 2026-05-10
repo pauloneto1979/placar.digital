@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title data-i18n="accountActivation.title">Ativar conta</title>
+    <link rel="stylesheet" href="/app/theme.css">
+  </head>
+  <body class="login-page" data-token-flow="activation">
+    <main class="auth-card">
+      <img class="auth-logo" src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
+      <h1 class="auth-title" data-i18n="accountActivation.heading">Ativar conta</h1>
+      <p class="auth-subtitle" data-i18n="accountActivation.subtitle">Defina sua senha para acessar o Placar.digital.</p>
+      <form id="tokenForm" class="auth-form">
+        <label>
+          <span data-i18n="accountActivation.password">Senha</span>
+          <span class="password-field">
+            <input name="senha" type="password" autocomplete="new-password" required data-password-toggle-input>
+            <button class="ghost icon-action password-toggle" type="button" data-password-toggle aria-label="Mostrar senha" title="Mostrar senha"></button>
+          </span>
+        </label>
+        <label>
+          <span data-i18n="accountActivation.confirmPassword">Confirmar senha</span>
+          <span class="password-field">
+            <input name="confirmarSenha" type="password" autocomplete="new-password" required data-password-toggle-input>
+            <button class="ghost icon-action password-toggle" type="button" data-password-toggle aria-label="Mostrar senha" title="Mostrar senha"></button>
+          </span>
+        </label>
+        <button type="submit" data-i18n="accountActivation.submit">Ativar conta</button>
+      </form>
+      <p id="message" class="auth-message"></p>
+      <a class="auth-link" href="/app/login.html" data-i18n="auth.loginHeading">Entrar</a>
+    </main>
+    <script src="/app/i18n/i18n.js"></script>
+    <script src="/app/account-token.js"></script>
+  </body>
+</html>

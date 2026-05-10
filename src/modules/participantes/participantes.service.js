@@ -2,6 +2,7 @@ const { HttpError } = require('../../shared/errors/http-error');
 const { ensureCanAdminBolao } = require('../../shared/permissions/bolao-access');
 const { hashPassword } = require('../../shared/utils/password');
 const { assertBettorPassword } = require('../../shared/utils/password-policy');
+const crypto = require('crypto');
 
 const STATUS = ['convidado', 'ativo', 'bloqueado', 'removido'];
 
@@ -25,6 +26,7 @@ function payload(body, bolaoId) {
 
   const senhaInicial = clean(body.senhaInicial || body.senha_inicial || body.senha || body.password);
   const confirmarSenhaInicial = clean(body.confirmarSenhaInicial || body.confirmar_senha_inicial || body.confirmarSenha || body.confirmPassword);
+  const enviarConvite = body.enviarConvite === true || body.enviar_convite === true;
 
   if (senhaInicial && !confirmarSenhaInicial) {
     throw new HttpError(400, 'missing_bettor_password_confirmation', 'Confirme a senha do apostador.');
@@ -34,10 +36,11 @@ function payload(body, bolaoId) {
     throw new HttpError(400, 'bettor_password_confirmation_mismatch', 'A confirmacao da senha do apostador nao confere.');
   }
 
-  return { bolaoId, nome, email, telefone, status, senhaInicial };
+  return { bolaoId, nome, email, telefone, status, senhaInicial, enviarConvite };
 }
 
-function createParticipantesService(repository) {
+function createParticipantesService(repository, options = {}) {
+  const transactionalEmailService = options.transactionalEmailService || null;
   async function ensureResource(id, bolaoId) {
     const item = await repository.findById(id);
     if (!item || item.bolaoId !== bolaoId) throw new HttpError(404, 'participant_not_found', 'Participante nao encontrado.');
@@ -78,12 +81,16 @@ function createParticipantesService(repository) {
       };
     }
 
-    assertBettorPassword(data.senhaInicial);
+    const hasInitialPassword = Boolean(data.senhaInicial);
+    if (hasInitialPassword) {
+      assertBettorPassword(data.senhaInicial);
+    }
     const senhaTemporaria = data.senhaInicial;
     const usuario = await repository.createUsuarioApostador({
       nome: data.nome,
       email: data.email,
-      senhaHash: hashPassword(senhaTemporaria)
+      senhaHash: hashPassword(senhaTemporaria || crypto.randomBytes(24).toString('hex')),
+      ativo: hasInitialPassword
     });
 
     return {
@@ -91,6 +98,15 @@ function createParticipantesService(repository) {
       credencialCriada: true,
       senhaTemporaria: null
     };
+  }
+
+  async function tentarEnviarConvite(participante) {
+    if (!transactionalEmailService) return { sent: false, reason: 'transactional_email_not_configured' };
+    try {
+      return await transactionalEmailService.enviarConviteParticipante(participante.id);
+    } catch (error) {
+      return { sent: false, reason: error.code || error.message || 'email_error' };
+    }
   }
 
   function attachCredencialInfo(participante, credencial) {
@@ -119,8 +135,10 @@ function createParticipantesService(repository) {
       const data = payload(body, bolaoId);
       await ensureUniqueEmail(bolaoId, data.email);
       const credencial = await resolveCredencialApostador(data);
-      const participante = await repository.create({ ...data, usuarioId: credencial.usuario.id });
-      return attachCredencialInfo(participante, credencial);
+      const participante = await repository.create({ ...data, usuarioId: credencial.usuario.id, status: data.senhaInicial ? data.status : 'convidado' });
+      const result = attachCredencialInfo(participante, credencial);
+      const shouldInvite = !data.senhaInicial || data.enviarConvite;
+      return { ...result, emailConvite: shouldInvite ? await tentarEnviarConvite(participante) : null };
     },
     async update(bolaoId, id, body, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
@@ -129,7 +147,8 @@ function createParticipantesService(repository) {
       await ensureUniqueEmail(bolaoId, data.email, id);
       const credencial = await resolveCredencialApostador(data);
       const participante = await repository.update(id, { ...data, usuarioId: credencial.usuario.id });
-      return attachCredencialInfo(participante, credencial);
+      const result = attachCredencialInfo(participante, credencial);
+      return { ...result, emailConvite: data.enviarConvite ? await tentarEnviarConvite(participante) : null };
     },
     async updateStatus(bolaoId, id, body, auth) {
       await ensureCanAdminBolao(auth, bolaoId);

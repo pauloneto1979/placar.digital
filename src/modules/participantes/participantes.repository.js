@@ -62,10 +62,10 @@ async function createUsuarioApostador(data) {
   const result = await query(
     `
       insert into usuarios (nome, email, senha_hash, perfil_global, ativo)
-      values ($1, $2, $3, 'apostador', true)
+      values ($1, $2, $3, 'apostador', $4)
       returning id, nome, email, perfil_global, ativo
     `,
-    [data.nome, data.email, data.senhaHash]
+    [data.nome, data.email, data.senhaHash, data.ativo !== false]
   );
   return mapUsuario(result.rows[0]);
 }
