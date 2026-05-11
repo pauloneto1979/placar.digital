@@ -446,7 +446,8 @@
     "sendInvite": "Enviar invitación",
     "resendInvite": "Reenviar invitación",
     "inviteSent": "Invitación enviada por email.",
-    "inviteConfirmText": "Confirma el envío de la invitación de acceso a este apostador."
+    "inviteConfirmText": "Confirma el envío de la invitación de acceso a este apostador.",
+    "emailRequiredForInvite": "Informa un email para enviar la invitación."
   },
   "messages": {
     "noActivePool": "Ninguna porra activa encontrada para esta sesión.",
@@ -628,9 +629,9 @@
     "backToLogin": "Volver al login"
   },
   "accessStatus": {
-    "pendente": "Pendiente",
+    "pendente": "Sin acceso",
     "convite_enviado": "Invitación enviada",
     "acesso_ativo": "Acceso activo",
-    "expirado": "Expirado"
+    "expirado": "Invitación expirada"
   }
 }

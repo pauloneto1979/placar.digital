@@ -284,7 +284,9 @@ function nextGameContext(jogos = [], syncText = '') {
     const diff = new Date(gameDateValue(future)).getTime() - Date.now();
     return {
       label: diff <= 24 * 60 * 60 * 1000 ? t('home.nextKickoff') : t('home.nextGameAt'),
-      value: diff <= 24 * 60 * 60 * 1000 ? countdownText(gameDateValue(future)) : dateTime(gameDateValue(future)),
+      value: diff <= 24 * 60 * 60 * 1000 ? countdownText(gameDateValue(future)) : '',
+      dateValue: diff <= 24 * 60 * 60 * 1000 ? '' : dateOnly(gameDateValue(future)),
+      timeValue: diff <= 24 * 60 * 60 * 1000 ? '' : timeOnly(gameDateValue(future)),
       hint: syncText
     };
   }
@@ -294,6 +296,18 @@ function nextGameContext(jogos = [], syncText = '') {
     value: t('home.noScheduledGames'),
     hint: syncText
   };
+}
+
+function renderDashboardCountdownValue(context = {}) {
+  if (context.dateValue) {
+    return `
+      <strong class="dashboard-countdown__datetime">
+        <span>${escapeHtml(context.dateValue)}</span>
+        ${context.timeValue ? `<span>${escapeHtml(context.timeValue)}</span>` : ''}
+      </strong>
+    `;
+  }
+  return `<strong>${escapeHtml(context.value)}</strong>`;
 }
 
 function syncStatusText(sync) {
@@ -1124,7 +1138,7 @@ async function renderHome() {
       </div>
       <div class="dashboard-countdown">
         <span>${escapeHtml(heroGameContext.label)}</span>
-        <strong>${escapeHtml(heroGameContext.value)}</strong>
+        ${renderDashboardCountdownValue(heroGameContext)}
         <small>${escapeHtml(heroGameContext.hint)}</small>
       </div>
     </section>
@@ -2109,13 +2123,17 @@ function accessStatusTone(status) {
 }
 
 function participantInviteButton(row) {
+  const hasEmail = Boolean(String(row.email || '').trim());
   if (row.acessoStatus === 'acesso_ativo') {
-    return `<span class="pill bet-status-pill ${accessStatusTone(row.acessoStatus)}">${escapeHtml(accessStatusLabel(row.acessoStatus))}</span>`;
+    return `<span class="pill bet-status-pill participant-access-pill ${accessStatusTone(row.acessoStatus)}">${escapeHtml(accessStatusLabel(row.acessoStatus))}</span>`;
   }
   const label = row.acessoStatus === 'convite_enviado' || row.acessoStatus === 'expirado'
     ? t('admin.resendInvite')
     : t('admin.sendInvite');
-  return `<button class="ghost" type="button" data-open-participant-invite="${escapeHtml(row.id)}">${escapeHtml(label)}</button>`;
+  const disabledAttrs = hasEmail
+    ? `data-open-participant-invite="${escapeHtml(row.id)}"`
+    : `disabled aria-disabled="true" title="${escapeHtml(t('admin.emailRequiredForInvite'))}"`;
+  return `<button class="ghost participant-invite-button" type="button" ${disabledAttrs}>${escapeHtml(label)}</button>`;
 }
 
 function participantRow(row) {
@@ -2127,7 +2145,7 @@ function participantRow(row) {
         <p class="muted">${escapeHtml([row.email, row.telefone || ''].filter(Boolean).join(' · '))}</p>
         <div class="row-badges">
           <span class="pill">${escapeHtml(statusLabel(row.status))}</span>
-          <span class="pill bet-status-pill ${accessStatusTone(status)}">${escapeHtml(accessStatusLabel(status))}</span>
+          <span class="pill bet-status-pill participant-access-pill ${accessStatusTone(status)}">${escapeHtml(accessStatusLabel(status))}</span>
         </div>
       </div>
       <div class="actions">
@@ -3313,7 +3331,7 @@ async function sendParticipantInvite(participanteId) {
   });
   state.participantInviteModal = { open: false, loading: false, participante: null, error: '' };
   showMessage(t('admin.inviteSent'), 'success');
-  await navigate('participantes');
+  await renderParticipantesAdmin();
 }
 
 async function init() {

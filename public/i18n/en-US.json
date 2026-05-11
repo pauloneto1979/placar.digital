@@ -446,7 +446,8 @@
     "sendInvite": "Send invite",
     "resendInvite": "Resend invite",
     "inviteSent": "Invite sent by email.",
-    "inviteConfirmText": "Confirm sending the access invite to this bettor."
+    "inviteConfirmText": "Confirm sending the access invite to this bettor.",
+    "emailRequiredForInvite": "Add an email to send an invite."
   },
   "messages": {
     "noActivePool": "No active pool found for this session.",
@@ -628,9 +629,9 @@
     "backToLogin": "Back to login"
   },
   "accessStatus": {
-    "pendente": "Pending",
+    "pendente": "No access",
     "convite_enviado": "Invite sent",
     "acesso_ativo": "Active access",
-    "expirado": "Expired"
+    "expirado": "Invite expired"
   }
 }

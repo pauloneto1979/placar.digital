@@ -446,7 +446,8 @@
     "sendInvite": "Enviar convite",
     "resendInvite": "Reenviar convite",
     "inviteSent": "Convite enviado por e-mail.",
-    "inviteConfirmText": "Confirme o envio do convite de acesso para este apostador."
+    "inviteConfirmText": "Confirme o envio do convite de acesso para este apostador.",
+    "emailRequiredForInvite": "Informe o e-mail para enviar convite."
   },
   "messages": {
     "noActivePool": "Nenhum bolão ativo encontrado para esta sessão.",
@@ -628,9 +629,9 @@
     "backToLogin": "Voltar ao login"
   },
   "accessStatus": {
-    "pendente": "Pendente",
+    "pendente": "Sem acesso",
     "convite_enviado": "Convite enviado",
     "acesso_ativo": "Acesso ativo",
-    "expirado": "Expirado"
+    "expirado": "Convite expirado"
   }
 }

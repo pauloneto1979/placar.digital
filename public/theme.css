@@ -741,6 +741,23 @@ select option {
   line-height: 1;
 }
 
+.dashboard-countdown__datetime {
+  align-items: center;
+  display: inline-grid;
+  gap: 4px;
+  justify-items: center;
+  text-align: center;
+}
+
+.dashboard-countdown__datetime span {
+  color: var(--accent-2);
+  font-size: clamp(24px, 8vw, 38px);
+  font-weight: 950;
+  line-height: 1;
+  text-transform: none;
+  white-space: nowrap;
+}
+
 .dashboard-countdown small {
   color: var(--muted);
   font-size: 0.78rem;
@@ -2058,6 +2075,34 @@ button[data-provider-toggle]:hover {
 .participant-row .actions {
   align-items: center;
   flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.participant-access-pill {
+  font-weight: 850;
+}
+
+.participant-invite-button {
+  border-color: rgba(33, 212, 253, 0.34);
+  color: var(--accent-2);
+  font-weight: 900;
+  min-height: 40px;
+  padding-inline: 14px;
+}
+
+.participant-invite-button:not(:disabled) {
+  box-shadow: 0 0 0 1px rgba(33, 212, 253, 0.08), 0 0 18px rgba(33, 212, 253, 0.08);
+}
+
+.participant-invite-button:not(:disabled):hover {
+  border-color: rgba(33, 212, 253, 0.58);
+  box-shadow: 0 0 0 1px rgba(33, 212, 253, 0.16), 0 0 24px rgba(33, 212, 253, 0.16);
+}
+
+.participant-invite-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .pool-guesses-list {
