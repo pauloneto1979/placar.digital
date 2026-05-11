@@ -446,6 +446,39 @@ async function listAdministradoresBolao(bolaoId) {
   return result.rows.map(mapAdminVinculado);
 }
 
+async function listAdminBolaoLinksForUser(usuarioId) {
+  const result = await query(
+    `
+      select b.id, b.nome, b.status, b.ativo
+      from boloes_usuarios bu
+      join boloes b on b.id = bu.bolao_id
+      where bu.usuario_id = $1
+        and bu.perfil = 'administrador'
+        and bu.ativo = true
+      order by b.nome asc
+    `,
+    [usuarioId]
+  );
+
+  return result.rows.map(mapBolao);
+}
+
+async function listBoloesByIds(ids = []) {
+  const uniqueIds = [...new Set((ids || []).filter(Boolean))];
+  if (!uniqueIds.length) return [];
+  const result = await query(
+    `
+      select id, proprietario_id, nome, slug, descricao, data_inicio, data_fim, status, ativo, criado_at, atualizado_at
+      from boloes
+      where id = any($1::uuid[])
+      order by nome asc
+    `,
+    [uniqueIds]
+  );
+
+  return result.rows.map(mapBolao);
+}
+
 async function removerVinculoAdministrador(bolaoId, usuarioId) {
   const result = await query(
     `
@@ -609,6 +642,8 @@ module.exports = {
   updateUsuarioStatus,
   vincularAdministrador,
   listAdministradoresBolao,
+  listAdminBolaoLinksForUser,
+  listBoloesByIds,
   removerVinculoAdministrador,
   syncAdministradoresBolao,
   syncBoloesUsuarioAdministrador,

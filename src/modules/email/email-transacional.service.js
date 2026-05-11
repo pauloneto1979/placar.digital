@@ -45,6 +45,12 @@ async function appLink(repository, path, token) {
   return `${baseUrl}/app/${path}?token=${encodeURIComponent(token)}`;
 }
 
+async function appHomeLink(repository) {
+  const configuredUrl = await repository.getPublicAppUrl();
+  const baseUrl = normalizeBaseUrl(configuredUrl) || normalizeBaseUrl(env.appBaseUrl) || `http://localhost:${env.port}`;
+  return `${baseUrl}/app/login.html`;
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -54,10 +60,28 @@ function escapeHtml(value) {
     .replace(/'/g, '&#039;');
 }
 
+function stripHtml(value) {
+  return String(value || '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function renderTemplate(text, variables = {}) {
   return String(text || '').replace(/\{\{\s*([\w.]+)\s*\}\}/g, (match, key) => {
     return Object.prototype.hasOwnProperty.call(variables, key) ? escapeHtml(variables[key]) : '';
   });
+}
+
+function transactionalHeaders(tipoEvento) {
+  return {
+    'X-Placar-Digital': 'transactional',
+    'X-Placar-Digital-Event': String(tipoEvento || 'sistema').replace(/[^\w.-]/g, '_'),
+    'X-Auto-Response-Suppress': 'All',
+    'Auto-Submitted': 'auto-generated'
+  };
 }
 
 function baseEmailLayout(content) {
@@ -84,7 +108,7 @@ function baseEmailLayout(content) {
             <div class="brand">Placar.digital</div>
             ${content}
           </div>
-          <div class="footer">Mensagem transacional enviada pelo Placar.digital.</div>
+          <div class="footer">Você recebeu este e-mail porque possui vínculo com um bolão no Placar.digital.</div>
         </div>
       </body>
     </html>
@@ -150,7 +174,9 @@ function createTransactionalEmailService(repository, options = {}) {
     }
 
     const assunto = renderTemplate(template.assunto, variables);
-    const html = baseEmailLayout(renderTemplate(template.html, variables));
+    const renderedContent = renderTemplate(template.html, variables);
+    const html = baseEmailLayout(renderedContent);
+    const text = `${stripHtml(renderedContent)}\n\nVocê recebeu este e-mail porque possui vínculo com um bolão no Placar.digital.`;
     const log = await repository.createNotificationLog({
       usuarioId,
       bolaoId,
@@ -173,9 +199,11 @@ function createTransactionalEmailService(repository, options = {}) {
       const info = await transporter.sendMail({
         from: createFromAddress(config),
         to: destinatario,
-        replyTo: config.smtpReplyTo || undefined,
+        replyTo: config.smtpReplyTo || config.smtpFromEmail,
         subject: assunto,
-        html
+        text,
+        html,
+        headers: transactionalHeaders(tipoEvento)
       });
       await repository.markNotificationSent(log.id, { messageId: info.messageId || null });
       logger.info('[email] E-mail transacional enviado.', { tipoEvento, destinatario, messageId: info.messageId || null });
@@ -295,6 +323,34 @@ function createTransactionalEmailService(repository, options = {}) {
     });
   }
 
+  async function enviarAdministradorBolao({ evento, usuario, bolao, responsavelNome, dataHora }) {
+    if (!usuario?.email || !bolao?.nome) {
+      return { sent: false, reason: 'admin_pool_context_missing' };
+    }
+    const templateCode = evento === 'removido'
+      ? 'admin_removido_bolao'
+      : 'admin_vinculado_bolao';
+    return sendTemplate({
+      usuarioId: usuario.id,
+      bolaoId: bolao.id,
+      destinatario: usuario.email,
+      tipoEvento: templateCode,
+      templateCode,
+      variables: {
+        nome_admin: usuario.nome || usuario.email,
+        nome_bolao: bolao.nome,
+        responsavel: responsavelNome || 'Placar.digital',
+        data_hora: dateTime(dataHora || new Date()),
+        link: await appHomeLink(repository)
+      },
+      payload: {
+        bolaoId: bolao.id,
+        usuarioId: usuario.id,
+        evento
+      }
+    });
+  }
+
   return {
     createToken,
     enviarConviteParticipante,
@@ -302,7 +358,8 @@ function createTransactionalEmailService(repository, options = {}) {
     validarToken,
     ativarConta,
     redefinirSenha,
-    enviarPagamentoConfirmado
+    enviarPagamentoConfirmado,
+    enviarAdministradorBolao
   };
 }
 

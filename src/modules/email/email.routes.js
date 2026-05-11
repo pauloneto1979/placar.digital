@@ -12,6 +12,7 @@ emailRoutes.use(authMiddleware);
 emailRoutes.use(requirePerfilGlobal(['proprietario']));
 
 emailRoutes.get('/configuracao', controller.getConfiguracao);
+emailRoutes.get('/configuracao/senha', controller.getSenhaConfiguracao);
 emailRoutes.put('/configuracao', controller.salvarConfiguracao);
 emailRoutes.post('/teste', controller.enviarTeste);
 

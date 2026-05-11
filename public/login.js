@@ -6,10 +6,22 @@ const i18n = window.PlacarI18n;
 const t = (key, params, fallback) => i18n.t(key, params, fallback);
 const EYE_OPEN = '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5c5 0 8.7 4.4 9.7 5.8a2 2 0 0 1 0 2.4C20.7 14.6 17 19 12 19s-8.7-4.4-9.7-5.8a2 2 0 0 1 0-2.4C3.3 9.4 7 5 12 5Zm0 2c-4 0-7.1 3.5-8 5 0 0 3.4 5 8 5s8-5 8-5c-.9-1.5-4-5-8-5Zm0 2.5A2.5 2.5 0 1 1 12 14a2.5 2.5 0 0 1 0-5Z"/></svg></span>';
 const EYE_CLOSED = '<span class="button-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4.4 3 16.6 16.6-1.4 1.4-3-3A10.2 10.2 0 0 1 12 19c-5 0-8.7-4.4-9.7-5.8a2 2 0 0 1 0-2.4 18.5 18.5 0 0 1 3.1-3.3L3 4.4 4.4 3Zm2.5 5.9A16 16 0 0 0 4 12s3.4 5 8 5c1.1 0 2.1-.2 3-.6l-2-2a2.5 2.5 0 0 1-3.4-3.4L6.9 8.9ZM12 5c5 0 8.7 4.4 9.7 5.8a2 2 0 0 1 0 2.4 17.6 17.6 0 0 1-2.2 2.5l-3.1-3.1A2.5 2.5 0 0 0 13 9.5L10.7 7.2c.4-.1.8-.2 1.3-.2Zm0 2c-.1 0-.2 0-.3.1L14 9.4a2.5 2.5 0 0 1 .6.6l3.4 3.4A12 12 0 0 0 20 12s-3.4-5-8-5Z"/></svg></span>';
+let messageTimer = null;
 
-function showMessage(text, tone = 'warning') {
+function showMessage(text, tone = 'warning', autoHide = false) {
+  window.clearTimeout(messageTimer);
+  message.classList.remove('is-hiding');
   message.textContent = text;
   message.dataset.tone = tone;
+  if (autoHide) {
+    messageTimer = window.setTimeout(() => {
+      message.classList.add('is-hiding');
+      window.setTimeout(() => {
+        message.textContent = '';
+        message.classList.remove('is-hiding');
+      }, 260);
+    }, 4200);
+  }
 }
 
 function syncLocaleControl() {
@@ -63,7 +75,7 @@ i18n.ready.then(() => {
   const loginMessage = sessionStorage.getItem('placar.loginMessage');
   if (loginMessage) {
     sessionStorage.removeItem('placar.loginMessage');
-    showMessage(loginMessage, 'success');
+    showMessage(loginMessage, 'success', true);
   }
 
   localeSelect.addEventListener('change', () => {

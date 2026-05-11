@@ -406,7 +406,9 @@ Rotas principais:
 InfinitePay:
 
 - Integração preparada com Checkout.
-- Usa `order_nsu` com ID interno do pagamento.
+- confirmação de pagamento;
+- administrador associado a bolão;
+- administrador removido/desassociado de bolão.
 - Salva gateway, URL de checkout, status gateway e payload do webhook.
 - Ao confirmar pagamento aprovado, marca pagamento como pago e gera notificação `PAGAMENTO_CONFIRMADO`.
 
@@ -426,6 +428,7 @@ Tabela:
 Rotas protegidas apenas para proprietário:
 
 - `GET /api/v1/email/configuracao`
+- `GET /api/v1/email/configuracao/senha`
 - `PUT /api/v1/email/configuracao`
 - `POST /api/v1/email/teste`
 
@@ -447,8 +450,8 @@ Características:
 - Usa `nodemailer`.
 - Carrega configuração do banco em runtime.
 - Não depende exclusivamente de `.env`.
-- Senha SMTP não retorna completa ao frontend.
-- Senha é exibida mascarada.
+- Senha SMTP é exibida mascarada por padrão.
+- A senha completa só é retornada por rota protegida de proprietário quando o botão de visualizar é acionado.
 - Campo vazio ou mascarado não apaga senha já salva.
 - Teste de envio valida conexão, autenticação e envio.
 - Compatível com HostGator SMTP:
@@ -476,7 +479,9 @@ Eventos implementados:
 - convite de participação no bolão;
 - ativação/definição de senha;
 - recuperação de senha;
-- confirmação de pagamento.
+- confirmação de pagamento;
+- administrador associado a bolão;
+- administrador removido/desassociado de bolão.
 
 Rotas públicas seguras:
 
@@ -594,6 +599,8 @@ Migrations existentes:
 | `020_email_configuracoes_email_constraints.sql` | Constraints adicionais para configuração SMTP/e-mail. |
 | `021_estrutura_esportiva_multicampeonato.sql` | Estrutura de competição, temporada, grupos, rodadas e vínculos esportivos em partidas. |
 | `022_notificacoes_email_transacionais.sql` | Tokens, templates e auditoria para notificações transacionais por e-mail. |
+| `023_corrigir_templates_email_utf8.sql` | Corrige textos UTF-8 dos templates transacionais. |
+| `024_admin_bolao_email_templates.sql` | Templates de e-mail para associação e remoção de administradores em bolões. |
 
 ### Migration 017
 
@@ -742,7 +749,9 @@ Verificar:
 - `INFINITEPAY_HANDLE`
 - status do pagamento;
 - payload do webhook;
-- `order_nsu` igual ao ID interno do pagamento.
+- confirmação de pagamento;
+- administrador associado a bolão;
+- administrador removido/desassociado de bolão.
 
 ### Permissões de bolão
 

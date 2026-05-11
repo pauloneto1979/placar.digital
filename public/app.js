@@ -30,6 +30,12 @@
     rodada: '',
     grupo: ''
   },
+  jogosFilters: {
+    periodo: 'todas',
+    fase: '',
+    rodada: '',
+    grupo: ''
+  },
   betGuessesModal: {
     open: false,
     loading: false,
@@ -43,6 +49,10 @@
     loading: false,
     participante: null,
     error: ''
+  },
+  emailConfigSecret: {
+    visible: false,
+    value: ''
   },
   mobileMoreOpen: false
 };
@@ -134,6 +144,7 @@ const PROFILE_FORM_KINDS = new Set(['meuPerfil', 'minhaSenha']);
 const routes = [
   { id: 'home', labelKey: 'nav.home', subtitleKey: 'subtitles.home' },
   { id: 'apostas', labelKey: 'nav.apostas', subtitleKey: 'subtitles.apostas', roles: ['apostador'] },
+  { id: 'palpites-partida', labelKey: 'bets.matchGuessesTitle', subtitleKey: 'subtitles.apostas', roles: ['apostador'], hidden: true },
   { id: 'ranking', labelKey: 'nav.ranking', subtitleKey: 'subtitles.ranking' },
   { id: 'jogos', labelKey: 'nav.jogos', subtitleKey: 'subtitles.jogos', roles: ['proprietario', 'administrador'] },
   { id: 'regras', labelKey: 'nav.regras', subtitleKey: 'subtitles.regras' },
@@ -184,6 +195,10 @@ function syncLocaleControl() {
   }
 }
 
+function isMobileViewport() {
+  return window.matchMedia?.('(max-width: 760px)').matches || window.innerWidth <= 760;
+}
+
 function roleLabelText() {
   return t(`roles.${state.user.perfilGlobal}`, {}, t('common.session'));
 }
@@ -202,6 +217,20 @@ function currency(value, currencyCode = 'BRL') {
 function dateTime(value) {
   if (!value) return t('common.noDate');
   return new Date(value).toLocaleString(i18n.getLocale(), { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function dateOnly(value) {
+  if (!value) return t('common.noDate');
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return t('common.noDate');
+  return date.toLocaleDateString(i18n.getLocale(), { dateStyle: 'short' });
+}
+
+function timeOnly(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString(i18n.getLocale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 function gameDateValue(game) {
@@ -663,6 +692,36 @@ function betMatchesFilters(aposta) {
   return true;
 }
 
+function gameSortValue(game) {
+  return new Date(gameDateValue(game) || 0).getTime() || 0;
+}
+
+function isGameFinished(game) {
+  return Boolean(officialScore(game)) || BET_FINISHED_STATUSES.includes(normalizedStatus(game.status));
+}
+
+function gameMatchesFilters(game) {
+  const filters = state.jogosFilters || {};
+  const period = filters.periodo || 'todas';
+  const matchDate = localDateKey(gameDateValue(game));
+  const today = localDateKey(new Date());
+  if (period === 'hoje' && matchDate !== today) return false;
+  if (period === 'proximas' && (isGameFinished(game) || gameSortValue(game) < Date.now())) return false;
+  if (filters.fase && String(game.fase || game.faseNome || '') !== filters.fase) return false;
+  if (filters.rodada && String(game.rodada || game.rodadaNome || '') !== filters.rodada) return false;
+  if (filters.grupo && String(game.grupo || game.grupoNome || '') !== filters.grupo) return false;
+  return true;
+}
+
+function sortedGames(rows = []) {
+  return [...rows].filter(gameMatchesFilters).sort((a, b) => {
+    const aFinished = isGameFinished(a);
+    const bFinished = isGameFinished(b);
+    if (aFinished !== bFinished) return aFinished ? 1 : -1;
+    return aFinished ? gameSortValue(b) - gameSortValue(a) : gameSortValue(a) - gameSortValue(b);
+  });
+}
+
 function betSortValue(aposta) {
   return new Date(aposta.dataHora || 0).getTime() || 0;
 }
@@ -705,6 +764,38 @@ function renderBetFilters(rows = []) {
       <div class="segmented bet-period-filter">
         ${BET_PERIOD_FILTERS.map((item) => `
           <button type="button" class="${(filters.periodo || 'todas') === item.id ? 'active' : ''}" data-bet-filter-period="${escapeHtml(item.id)}">
+            ${escapeHtml(t(item.labelKey))}
+          </button>
+        `).join('')}
+      </div>
+      <div class="bet-filter-selects">
+        ${select('fase', 'sports.phase', fases)}
+        ${select('rodada', 'sports.round', rodadas)}
+        ${select('grupo', 'sports.group', grupos)}
+      </div>
+    </div>
+  `;
+}
+
+function renderGameFilters(rows = []) {
+  const filters = state.jogosFilters || {};
+  const fases = uniqueBetFilterValues(rows, ['fase', 'faseNome']);
+  const rodadas = uniqueBetFilterValues(rows, ['rodada', 'rodadaNome']);
+  const grupos = uniqueBetFilterValues(rows, ['grupo', 'grupoNome']);
+  const select = (name, labelKey, values) => values.length ? `
+    <label class="bet-filter-select">
+      <span>${escapeHtml(t(labelKey))}</span>
+      <select data-game-filter="${escapeHtml(name)}">
+        <option value="">${escapeHtml(t('bets.filters.allItems'))}</option>
+        ${values.map((value) => `<option value="${escapeHtml(value)}" ${filters[name] === value ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}
+      </select>
+    </label>
+  ` : '';
+  return `
+    <div class="bet-filters game-filters" aria-label="${escapeHtml(t('bets.filters.label'))}">
+      <div class="segmented bet-period-filter">
+        ${BET_PERIOD_FILTERS.map((item) => `
+          <button type="button" class="${(filters.periodo || 'todas') === item.id ? 'active' : ''}" data-game-filter-period="${escapeHtml(item.id)}">
             ${escapeHtml(t(item.labelKey))}
           </button>
         `).join('')}
@@ -1109,6 +1200,8 @@ function renderDashboardGameCard(game, bet) {
   const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || t('games.awayTeam');
   const date = gameDateValue(game);
   const inProgress = isInProgressStatus(game.status);
+  const dateLabel = dateOnly(date);
+  const timeLabel = timeOnly(date);
   return `
     <article class="dashboard-game dashboard-game--premium">
       <div class="dashboard-game__teams">
@@ -1117,7 +1210,7 @@ function renderDashboardGameCard(game, bet) {
         ${renderTeamName(game.visitante || { nome: visitante }, visitante)}
       </div>
       <div class="dashboard-game__meta">
-        <span>${escapeHtml(dateTime(date))}</span>
+        <span class="dashboard-game__datetime"><strong>${escapeHtml(dateLabel)}</strong>${timeLabel ? `<strong>${escapeHtml(timeLabel)}</strong>` : ''}</span>
         <span>${escapeHtml(statusLabel(game.status))}</span>
         <span class="pill bet-status-pill ${dashboardGuessTone(bet)}">${escapeHtml(dashboardGuessStatus(bet))}</span>
       </div>
@@ -1491,7 +1584,7 @@ async function renderApostas() {
       ${renderBetTabs(apostas)}
       <div class="list bets-list">${visibleApostas.map(renderBetCard).join('') || empty(t('bets.noneForTab'))}</div>
     </section>
-    ${renderBetGuessesModal()}
+    ${isMobileViewport() ? '' : renderBetGuessesModal()}
   `;
 }
 
@@ -1578,7 +1671,7 @@ function renderFinishedBetSummary(betLabel, resultLabel, pointsLabel, pontuado, 
 
 function renderBetGuessesModal() {
   const modal = state.betGuessesModal;
-  if (!modal.open) return '';
+  if (!modal.open || isMobileViewport()) return '';
   const title = modal.partida
     ? `${modal.partida.mandante?.nome || t('games.homeTeam')} ${t('common.scoreSeparator')} ${modal.partida.visitante?.nome || t('games.awayTeam')}`
     : t('bets.poolGuesses');
@@ -1598,6 +1691,58 @@ function renderBetGuessesModal() {
         ${body}
       </section>
     </div>
+  `;
+}
+
+function renderMatchGuessesHeader(partida) {
+  if (!partida) return '';
+  const mandante = partida.mandante?.nome || partida.mandante || t('games.homeTeam');
+  const visitante = partida.visitante?.nome || partida.visitante || t('games.awayTeam');
+  const result = officialScore(partida);
+  return `
+    <div class="match-guesses-hero">
+      <div class="match-guesses-hero__teams">
+        ${renderTeamName(partida.mandante || { nome: mandante }, mandante)}
+        <span class="score score--inline">${escapeHtml(t('common.scoreSeparator'))}</span>
+        ${renderTeamName(partida.visitante || { nome: visitante }, visitante)}
+      </div>
+      <div class="match-guesses-hero__meta">
+        <span>${escapeHtml(dateTime(partida.dataHora))}</span>
+        <span class="pill bet-status-pill">${escapeHtml(statusLabel(partida.statusPartida || partida.status))}</span>
+        ${result ? `<span class="pill bet-status-pill bet-status--result">${escapeHtml(t('bets.officialResult'))}: ${escapeHtml(result.mandante)} ${escapeHtml(t('common.scoreSeparator'))} ${escapeHtml(result.visitante)}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+async function renderMatchGuessesView() {
+  const modal = state.betGuessesModal;
+  if (!modal.partidaId) {
+    content.innerHTML = `
+      <section class="card match-guesses-page">
+        <div class="card-title">
+          <h2>${escapeHtml(t('bets.matchGuessesTitle'))}</h2>
+          <button class="ghost" type="button" data-back-to-bets>${escapeHtml(t('common.back'))}</button>
+        </div>
+        ${empty(t('bets.noPoolGuesses'))}
+      </section>
+    `;
+    return;
+  }
+  const body = modal.loading
+    ? `<div class="app-loading-inline">${escapeHtml(t('common.loading'))}</div>`
+    : modal.error
+      ? `<p class="message card-message" data-tone="error">${escapeHtml(modal.error)}</p>`
+      : `<div class="pool-guesses-list pool-guesses-list--page">${modal.palpites.map(renderPoolGuessRow).join('') || empty(t('bets.noPoolGuesses'))}</div>`;
+  content.innerHTML = `
+    <section class="card match-guesses-page">
+      <div class="card-title match-guesses-page__title">
+        <h2>${escapeHtml(t('bets.matchGuessesTitle'))}</h2>
+        <button class="ghost" type="button" data-back-to-bets>${escapeHtml(t('common.back'))}</button>
+      </div>
+      ${renderMatchGuessesHeader(modal.partida)}
+      ${body}
+    </section>
   `;
 }
 
@@ -1647,7 +1792,14 @@ async function renderJogos() {
     api(`/apostas/boloes/${state.activeBolaoId}/jogos`),
     api(`/apostas/boloes/${state.activeBolaoId}/dashboard`).catch(() => null)
   ]);
-  content.innerHTML = `<section class="card"><div class="card-title"><h2>${escapeHtml(t('games.title'))}</h2><span class="pill sync-pill">${escapeHtml(syncStatusText(dashboard?.sportsSync))}</span></div><div class="list">${jogos.map(renderGameCard).join('') || empty(t('games.none'))}</div></section>`;
+  const visibleJogos = sortedGames(jogos);
+  content.innerHTML = `
+    <section class="card">
+      <div class="card-title"><h2>${escapeHtml(t('games.title'))}</h2><span class="pill sync-pill">${escapeHtml(syncStatusText(dashboard?.sportsSync))}</span></div>
+      ${renderGameFilters(jogos)}
+      <div class="list">${visibleJogos.map(renderGameCard).join('') || empty(t('games.none'))}</div>
+    </section>
+  `;
 }
 
 async function renderRegras() {
@@ -1799,6 +1951,13 @@ function renderUsuarioEditorModal(row, boloes) {
             <legend>${escapeHtml(t('owner.linkedPools'))}</legend>
             <p class="muted">${escapeHtml(t('owner.linkedPoolsHelp'))}</p>
             ${renderCheckboxGroup('bolaoIds', boloes || [], row.bolaoIds || [], t('owner.noPools'))}
+            <label class="modern-checkbox admin-notify-checkbox">
+              <input type="checkbox" name="notificarAdministrador" ${isAdmin ? 'checked' : 'disabled'}>
+              <span class="modern-checkbox__box" aria-hidden="true"></span>
+              <span class="modern-checkbox__text">
+                <strong>${escapeHtml(t('owner.notifyAdminByEmail'))}</strong>
+              </span>
+            </label>
           </fieldset>
           <div class="form-actions">
             ${submitIconButton('save', t('owner.saveUser'))}
@@ -2432,6 +2591,9 @@ async function renderConfiguracoesOwner() {
 function renderEmailConfigSection(config) {
   const statusKey = config.configured ? (config.smtpEnabled ? 'email.statusEnabled' : 'email.statusConfigured') : 'email.statusNotConfigured';
   const passwordMask = config.smtpPasswordMasked || '';
+  const secretState = state.emailConfigSecret || {};
+  const passwordVisible = Boolean(secretState.visible && secretState.value);
+  const passwordValue = passwordVisible ? secretState.value : passwordMask;
   return `
     <section class="card">
       <div class="card-title">
@@ -2457,8 +2619,13 @@ function renderEmailConfigSection(config) {
         <label>${escapeHtml(t('email.smtpUser'))}
           <input name="smtpUser" required value="${escapeHtml(config.smtpUser || '')}">
         </label>
-        <label>${escapeHtml(t('email.smtpPassword'))}
-          <input name="smtpPassword" type="password" autocomplete="new-password" value="${escapeHtml(passwordMask)}" data-password-mask="${escapeHtml(passwordMask)}" placeholder="${escapeHtml(t('email.passwordPlaceholder'))}">
+        <label class="token-field">${escapeHtml(t('email.smtpPassword'))}
+          <span class="token-control-row email-password-row">
+            <span class="token-input-group">
+              <input name="smtpPassword" type="${passwordVisible ? 'text' : 'password'}" autocomplete="new-password" value="${escapeHtml(passwordValue)}" data-password-mask="${escapeHtml(passwordMask)}" data-password-secret="${escapeHtml(secretState.value || '')}" placeholder="${escapeHtml(t('email.passwordPlaceholder'))}">
+            </span>
+            ${iconOnlyButton(passwordVisible ? 'eyeOff' : 'eye', passwordVisible ? t('common.hidePassword') : t('common.showPassword'), `data-email-password-toggle ${config.smtpPasswordConfigured || secretState.value ? '' : 'disabled'}`)}
+          </span>
         </label>
         <label>${escapeHtml(t('email.fromName'))}
           <input name="smtpFromName" required value="${escapeHtml(config.smtpFromName || 'Placar.digital')}">
@@ -2737,6 +2904,7 @@ async function moveRulePriority(regraId, direction) {
 const renderers = {
   home: renderHome,
   apostas: renderApostas,
+  'palpites-partida': renderMatchGuessesView,
   ranking: renderRanking,
   jogos: renderJogos,
   regras: renderRegras,
@@ -2855,7 +3023,8 @@ async function submitCrud(kind, form) {
   if (kind === 'emailConfiguracao') {
     clearFormMessage(kind);
     const passwordMask = form.elements.smtpPassword?.dataset.passwordMask || '';
-    if (!data.smtpPassword || data.smtpPassword === passwordMask) delete data.smtpPassword;
+    const currentPassword = form.elements.smtpPassword?.dataset.passwordSecret || '';
+    if (!data.smtpPassword || data.smtpPassword === passwordMask || data.smtpPassword === currentPassword) delete data.smtpPassword;
     data.smtpPort = Number(data.smtpPort || 0);
     data.smtpSecure = data.smtpSecure === 'true';
     data.smtpEnabled = data.smtpEnabled === 'true';
@@ -2863,6 +3032,7 @@ async function submitCrud(kind, form) {
       method: 'PUT',
       body: JSON.stringify(data)
     });
+    state.emailConfigSecret = { visible: false, value: '' };
     state.formMessages.emailConfiguracao = { text: t('email.saved'), tone: 'success' };
     await navigate(state.route);
     return;
@@ -2983,6 +3153,7 @@ async function submitCrud(kind, form) {
       throw new Error(t('security.passwordConfirmationMismatch'));
     }
     delete data.confirmarSenha;
+    data.notificarAdministrador = data.notificarAdministrador !== undefined;
   }
 
   if (kind === 'participantes') {
@@ -3086,19 +3257,20 @@ function toggleAllExternalImportSelection() {
 
 async function openMatchGuesses(partidaId) {
   const partida = (state.data.apostas || []).find((item) => String(item.partidaId) === String(partidaId)) || null;
+  const mobile = isMobileViewport();
   state.betGuessesModal = {
-    open: true,
+    open: !mobile,
     loading: true,
     partidaId,
     partida,
     palpites: [],
     error: ''
   };
-  await renderApostas();
+  await navigate(mobile ? 'palpites-partida' : 'apostas');
   try {
     const result = await api(`/apostas/boloes/${state.activeBolaoId}/partidas/${partidaId}/palpites`);
     state.betGuessesModal = {
-      open: true,
+      open: !mobile,
       loading: false,
       partidaId,
       partida,
@@ -3107,7 +3279,7 @@ async function openMatchGuesses(partidaId) {
     };
   } catch (error) {
     state.betGuessesModal = {
-      open: true,
+      open: !mobile,
       loading: false,
       partidaId,
       partida,
@@ -3115,7 +3287,7 @@ async function openMatchGuesses(partidaId) {
       error: error.message || t('messages.apiError')
     };
   }
-  await renderApostas();
+  await navigate(mobile ? 'palpites-partida' : 'apostas');
 }
 
 function closeMatchGuesses() {
@@ -3241,9 +3413,21 @@ content.addEventListener('click', (event) => {
     return;
   }
 
+  const gameFilterPeriod = event.target.closest('[data-game-filter-period]');
+  if (gameFilterPeriod) {
+    state.jogosFilters.periodo = gameFilterPeriod.dataset.gameFilterPeriod || 'todas';
+    navigate('jogos');
+    return;
+  }
+
   const viewMatchGuesses = event.target.closest('[data-view-match-guesses]');
   if (viewMatchGuesses && !viewMatchGuesses.disabled) {
     openMatchGuesses(viewMatchGuesses.dataset.viewMatchGuesses).catch((error) => showMessage(error.message, 'error'));
+    return;
+  }
+
+  if (event.target.closest('[data-back-to-bets]')) {
+    closeMatchGuesses();
     return;
   }
 
@@ -3387,6 +3571,23 @@ content.addEventListener('click', (event) => {
     return;
   }
 
+  const emailPasswordToggle = event.target.closest('[data-email-password-toggle]');
+  if (emailPasswordToggle) {
+    const current = state.emailConfigSecret || {};
+    if (current.visible) {
+      state.emailConfigSecret = { ...current, visible: false };
+      navigate(state.route);
+      return;
+    }
+    api('/email/configuracao/senha')
+      .then((result) => {
+        state.emailConfigSecret = { value: result.smtpPassword || '', visible: true };
+        return navigate(state.route);
+      })
+      .catch((error) => setFormMessage('emailConfiguracao', error.message, 'error'));
+    return;
+  }
+
   const shieldRemove = event.target.closest('[data-team-shield-remove]');
   if (shieldRemove) {
     event.preventDefault();
@@ -3527,11 +3728,21 @@ content.addEventListener('drop', (event) => {
 
 content.addEventListener('change', (event) => {
   const betFilter = event.target.closest('[data-bet-filter]');
-  if (!betFilter) return;
-  const name = betFilter.dataset.betFilter;
-  if (!name) return;
-  state.apostasFilters[name] = betFilter.value || '';
-  navigate('apostas');
+  if (betFilter) {
+    const name = betFilter.dataset.betFilter;
+    if (!name) return;
+    state.apostasFilters[name] = betFilter.value || '';
+    navigate('apostas');
+    return;
+  }
+
+  const gameFilter = event.target.closest('[data-game-filter]');
+  if (gameFilter) {
+    const name = gameFilter.dataset.gameFilter;
+    if (!name) return;
+    state.jogosFilters[name] = gameFilter.value || '';
+    navigate('jogos');
+  }
 });
 
 content.addEventListener('submit', (event) => {
@@ -3609,6 +3820,7 @@ content.addEventListener('input', (event) => {
     if (status) status.textContent = t('bets.cannotIdentifyMatch');
     return;
   }
+
   if (Number(input.value) < 0) input.value = '0';
   if (status) {
     status.textContent = t('bets.saving');

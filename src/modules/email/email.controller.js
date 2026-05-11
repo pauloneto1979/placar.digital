@@ -8,6 +8,15 @@ function createEmailController(service) {
       }
     },
 
+    async getSenhaConfiguracao(req, res, next) {
+      try {
+        res.set('Cache-Control', 'no-store');
+        res.json(await service.getSenhaConfiguracao());
+      } catch (error) {
+        next(error);
+      }
+    },
+
     async salvarConfiguracao(req, res, next) {
       try {
         res.json(await service.salvarConfiguracao(req.body));

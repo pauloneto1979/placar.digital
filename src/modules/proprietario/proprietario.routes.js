@@ -4,9 +4,12 @@ const { requirePerfilGlobal } = require('../../shared/middlewares/role.middlewar
 const repository = require('./proprietario.repository');
 const { createProprietarioController } = require('./proprietario.controller');
 const { createProprietarioService } = require('./proprietario.service');
+const { emailRepository, createTransactionalEmailService } = require('../email');
 
 const proprietarioRoutes = Router();
-const proprietarioService = createProprietarioService(repository);
+const proprietarioService = createProprietarioService(repository, {
+  transactionalEmailService: createTransactionalEmailService(emailRepository)
+});
 const proprietarioController = createProprietarioController(proprietarioService);
 const onlyProprietario = requirePerfilGlobal(['proprietario']);
 

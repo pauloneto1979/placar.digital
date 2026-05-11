@@ -76,7 +76,15 @@ function mapConfigRows(rows) {
   };
 }
 
-function createProprietarioService(repository) {
+function shouldNotifyAdministrator(payload = {}) {
+  if (payload.notificarAdministrador === false || payload.notificarAdministrador === 'false') return false;
+  if (payload.notifyAdministrator === false || payload.notifyAdministrator === 'false') return false;
+  return true;
+}
+
+function createProprietarioService(repository, options = {}) {
+  const transactionalEmailService = options.transactionalEmailService || null;
+
   async function audit(auth, context, data) {
     try {
       await repository.createAuditLog({
@@ -87,6 +95,39 @@ function createProprietarioService(repository) {
       });
     } catch (error) {
       console.error('Falha ao registrar auditoria do proprietario:', error.message);
+    }
+  }
+
+  async function notifyAdminBolao({ evento, usuario, bolao, auth, enabled = true }) {
+    if (!enabled || !transactionalEmailService?.enviarAdministradorBolao) return;
+    try {
+      const responsavel = auth?.usuarioId ? await repository.findUsuarioById(auth.usuarioId).catch(() => null) : null;
+      await transactionalEmailService.enviarAdministradorBolao({
+        evento,
+        usuario,
+        bolao,
+        responsavelNome: responsavel?.nome || responsavel?.email || 'Placar.digital',
+        dataHora: new Date()
+      });
+    } catch (error) {
+      console.warn('[proprietario] Falha ao notificar administrador por e-mail.', {
+        evento,
+        usuarioId: usuario?.id,
+        bolaoId: bolao?.id,
+        code: error.code || error.message || 'email_error'
+      });
+    }
+  }
+
+  async function notifyAdminBolaoChanges({ usuario, addedIds = [], removedIds = [], auth, enabled = true }) {
+    if (!enabled || (!addedIds.length && !removedIds.length)) return;
+    const boloes = await repository.listBoloesByIds([...addedIds, ...removedIds]);
+    const byId = new Map(boloes.map((bolao) => [String(bolao.id), bolao]));
+    for (const bolaoId of addedIds) {
+      await notifyAdminBolao({ evento: 'vinculado', usuario, bolao: byId.get(String(bolaoId)), auth, enabled });
+    }
+    for (const bolaoId of removedIds) {
+      await notifyAdminBolao({ evento: 'removido', usuario, bolao: byId.get(String(bolaoId)), auth, enabled });
     }
   }
 
@@ -275,6 +316,13 @@ function createProprietarioService(repository) {
         const bolaoIds = normalizeIdList(payload.bolaoIds || payload.bolao_ids);
         await ensureBoloesAtivos(bolaoIds);
         await repository.syncBoloesUsuarioAdministrador(usuario.id, bolaoIds);
+        await notifyAdminBolaoChanges({
+          usuario,
+          addedIds: bolaoIds,
+          removedIds: [],
+          auth,
+          enabled: shouldNotifyAdministrator(payload)
+        });
       }
 
       await audit(auth, context, {
@@ -289,6 +337,8 @@ function createProprietarioService(repository) {
 
     async updateUsuario(id, payload, auth, context) {
       const existing = await ensureUsuarioSistema(id);
+      const previousLinks = await repository.listAdminBolaoLinksForUser(id);
+      const previousLinkIds = previousLinks.map((bolao) => String(bolao.id));
       const nome = normalizeText(payload.nome || existing.nome);
       const email = normalizeEmail(payload.email || existing.email);
       const perfil = payload.perfil || payload.perfil_global || existing.perfil;
@@ -318,13 +368,27 @@ function createProprietarioService(repository) {
         senhaHash
       });
       const hasBolaoIdsPayload = payload.bolaoIds !== undefined || payload.bolao_ids !== undefined;
+      let addedLinkIds = [];
+      let removedLinkIds = [];
       if (perfil === 'administrador' && hasBolaoIdsPayload) {
         const bolaoIds = normalizeIdList(payload.bolaoIds || payload.bolao_ids);
         await ensureBoloesAtivos(bolaoIds);
         await repository.syncBoloesUsuarioAdministrador(id, bolaoIds);
+        const nextIds = bolaoIds.map(String);
+        addedLinkIds = nextIds.filter((bolaoId) => !previousLinkIds.includes(bolaoId));
+        removedLinkIds = previousLinkIds.filter((bolaoId) => !nextIds.includes(bolaoId));
       } else if (perfil !== 'administrador') {
         await repository.syncBoloesUsuarioAdministrador(id, []);
+        removedLinkIds = previousLinkIds;
       }
+
+      await notifyAdminBolaoChanges({
+        usuario,
+        addedIds: addedLinkIds,
+        removedIds: removedLinkIds,
+        auth,
+        enabled: shouldNotifyAdministrator(payload)
+      });
 
       await audit(auth, context, {
         entidade: 'usuarios',
@@ -359,7 +423,7 @@ function createProprietarioService(repository) {
     },
 
     async vincularAdministrador(bolaoId, payload, auth, context) {
-      await ensureBolaoExists(bolaoId);
+      const bolao = await ensureBolaoExists(bolaoId);
       const usuarioId = payload.usuarioId || payload.usuario_id;
       const usuario = await ensureUsuarioSistema(usuarioId);
 
@@ -371,8 +435,20 @@ function createProprietarioService(repository) {
         throw new HttpError(422, 'inactive_admin_link', 'Nao e possivel vincular administrador inativo.');
       }
 
+      const previousLinks = await repository.listAdminBolaoLinksForUser(usuarioId);
+      const wasLinked = previousLinks.some((item) => String(item.id) === String(bolaoId));
       await repository.vincularAdministrador(bolaoId, usuarioId);
       const administradores = await repository.listAdministradoresBolao(bolaoId);
+
+      if (!wasLinked) {
+        await notifyAdminBolao({
+          evento: 'vinculado',
+          usuario,
+          bolao,
+          auth,
+          enabled: shouldNotifyAdministrator(payload)
+        });
+      }
 
       await audit(auth, context, {
         bolaoId,
@@ -393,7 +469,8 @@ function createProprietarioService(repository) {
     },
 
     async removerVinculoAdministrador(bolaoId, usuarioId, auth, context) {
-      await ensureBolaoExists(bolaoId);
+      const bolao = await ensureBolaoExists(bolaoId);
+      const usuario = await ensureUsuarioSistema(usuarioId);
       const removed = await repository.removerVinculoAdministrador(bolaoId, usuarioId);
 
       if (!removed) {
@@ -408,6 +485,14 @@ function createProprietarioService(repository) {
           bolaoId,
           usuarioId
         }
+      });
+
+      await notifyAdminBolao({
+        evento: 'removido',
+        usuario,
+        bolao,
+        auth,
+        enabled: shouldNotifyAdministrator({})
       });
 
       return { removed: true };

@@ -30,7 +30,8 @@
     "more": "Mais",
     "cancel": "Cancelar",
     "showPassword": "Mostrar senha",
-    "hidePassword": "Ocultar senha"
+    "hidePassword": "Ocultar senha",
+    "back": "Voltar"
   },
   "auth": {
     "loginTitle": "Placar.digital - Login",
@@ -274,7 +275,8 @@
       "next": "Próximas",
       "all": "Todas",
       "allItems": "Todos"
-    }
+    },
+    "matchGuessesTitle": "Palpites da partida"
   },
   "games": {
     "homeTeam": "Mandante",
@@ -384,7 +386,8 @@
     "newPassword": "Nova senha",
     "confirmNewPassword": "Confirmar nova senha",
     "publicAppUrl": "URL pública do app",
-    "publicAppUrlHelp": "Endereço usado nos links enviados por e-mail."
+    "publicAppUrlHelp": "Endereço usado nos links enviados por e-mail.",
+    "notifyAdminByEmail": "Notificar administrador por e-mail"
   },
   "admin": {
     "participants": "Participantes",
@@ -571,7 +574,8 @@
     "saved": "Configuração de e-mail salva.",
     "testSent": "E-mail de teste enviado com sucesso.",
     "lastUpdate": "Atualizado em {date}",
-    "noPreviousConfig": "Nenhuma configuração salva ainda."
+    "noPreviousConfig": "Nenhuma configuração salva ainda.",
+    "smtpPasswordCopied": "Senha SMTP copiada."
   },
   "matchTabs": {
     "label": "Filtros de partidas",
@@ -620,7 +624,7 @@
     "sent": "Se o e-mail estiver cadastrado, enviaremos as instruções.",
     "success": "Senha redefinida com sucesso. Você já pode entrar.",
     "requestSubtitle": "Informe seu e-mail para receber o link de recuperação.",
-    "resetSubtitle": "Defina sua nova senha para recuperar o acesso.",
+    "resetSubtitle": "Informe sua nova senha.",
     "backToLogin": "Voltar ao login"
   },
   "accessStatus": {

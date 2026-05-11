@@ -249,6 +249,28 @@ select option {
   color: var(--warning);
   min-height: 22px;
   padding: 10px 12px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.auth-message.is-hiding {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.auth-message[data-tone="success"],
+.message[data-tone="success"] {
+  background: rgba(42, 245, 152, 0.08);
+  border-color: rgba(42, 245, 152, 0.22);
+  color: var(--success);
+}
+
+.auth-message[data-tone="error"],
+.message[data-tone="error"] {
+  background: rgba(255, 93, 108, 0.08);
+  border-color: rgba(255, 93, 108, 0.22);
+  color: var(--danger);
 }
 
 .auth-message:empty,
@@ -743,7 +765,8 @@ select option {
 
 .stat-card strong.stat-card__money {
   color: var(--cyan);
-  font-size: clamp(24px, 6vw, 42px);
+  font-size: clamp(24px, 5vw, 40px);
+  min-width: max-content;
   white-space: nowrap;
 }
 
@@ -799,6 +822,23 @@ select option {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.dashboard-game__datetime {
+  align-items: center;
+  display: inline-grid;
+  gap: 2px;
+  justify-items: center;
+  min-width: 86px;
+  text-align: center;
+}
+
+.dashboard-game__datetime strong {
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 900;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 .dashboard-game__countdown {
@@ -1467,6 +1507,14 @@ select option {
   min-height: 40px;
 }
 
+.email-password-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.admin-notify-checkbox {
+  margin-top: 10px;
+}
+
 .email-test-form {
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1922,6 +1970,50 @@ button[data-provider-toggle]:hover {
   max-height: min(58vh, 440px);
   overflow: auto;
   padding-right: 2px;
+}
+
+.match-guesses-page {
+  display: grid;
+  gap: 16px;
+}
+
+.match-guesses-page__title {
+  align-items: center;
+}
+
+.match-guesses-hero {
+  background: rgba(5, 14, 23, 0.54);
+  border: 1px solid rgba(33, 212, 253, 0.14);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.match-guesses-hero__teams {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.match-guesses-hero__teams .team-name:last-child {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.match-guesses-hero__meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.pool-guesses-list--page {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .participant-invite-modal {
@@ -2486,6 +2578,10 @@ button[data-reset-form]:not(.icon-action)::before {
 
   .dashboard-kpis {
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  }
+
+  .dashboard-kpis .stat-card:has(.stat-card__money) {
+    grid-column: span 2;
   }
 
   .external-linking-grid {

@@ -30,7 +30,8 @@
     "more": "More",
     "cancel": "Cancel",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "back": "Back"
   },
   "auth": {
     "loginTitle": "Placar.digital - Login",
@@ -274,7 +275,8 @@
       "next": "Upcoming",
       "all": "All",
       "allItems": "All"
-    }
+    },
+    "matchGuessesTitle": "Match predictions"
   },
   "games": {
     "homeTeam": "Home",
@@ -384,7 +386,8 @@
     "newPassword": "New password",
     "confirmNewPassword": "Confirm new password",
     "publicAppUrl": "Public app URL",
-    "publicAppUrlHelp": "Address used in links sent by email."
+    "publicAppUrlHelp": "Address used in links sent by email.",
+    "notifyAdminByEmail": "Notify administrator by email"
   },
   "admin": {
     "participants": "Participants",
@@ -571,7 +574,8 @@
     "saved": "Email configuration saved.",
     "testSent": "Test email sent successfully.",
     "lastUpdate": "Updated at {date}",
-    "noPreviousConfig": "No configuration saved yet."
+    "noPreviousConfig": "No configuration saved yet.",
+    "smtpPasswordCopied": "SMTP password copied."
   },
   "matchTabs": {
     "label": "Match filters",
@@ -620,7 +624,7 @@
     "sent": "If the email is registered, we will send the instructions.",
     "success": "Password reset successfully. You can now sign in.",
     "requestSubtitle": "Enter your email to receive the recovery link.",
-    "resetSubtitle": "Set your new password to recover access.",
+    "resetSubtitle": "Enter your new password.",
     "backToLogin": "Back to login"
   },
   "accessStatus": {

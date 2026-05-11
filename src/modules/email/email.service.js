@@ -4,6 +4,11 @@ const { maskSecret, validateConfigPayload, validateTestPayload } = require('./em
 
 const TEST_SUBJECT = 'Teste de configuracao de e-mail';
 const TEST_TEXT = 'Seu servico de envio de e-mail do Placar.digital foi configurado com sucesso.';
+const MAIL_HEADERS = {
+  'X-Placar-Digital': 'transactional',
+  'X-Auto-Response-Suppress': 'All',
+  'Auto-Submitted': 'auto-generated'
+};
 
 function sanitize(config) {
   if (!config) {
@@ -93,6 +98,14 @@ function createEmailService(repository) {
       return sanitize(await repository.getLatest({ includeSecret: true }));
     },
 
+    async getSenhaConfiguracao() {
+      const config = await repository.getLatest({ includeSecret: true });
+      if (!config || !config.smtpPassword) {
+        throw new HttpError(404, 'email_password_not_configured', 'Senha SMTP nao configurada.');
+      }
+      return { smtpPassword: config.smtpPassword };
+    },
+
     async salvarConfiguracao(payload) {
       const existing = await repository.getLatest({ includeSecret: true });
       const existingForValidation = existing ? { ...existing, smtpPasswordMasked: maskSecret(existing.smtpPassword) } : null;
@@ -118,10 +131,11 @@ function createEmailService(repository) {
           const info = await transporter.sendMail({
             from,
             to: destino,
-            replyTo: config.smtpReplyTo || undefined,
+            replyTo: config.smtpReplyTo || config.smtpFromEmail,
             subject: TEST_SUBJECT,
             text: TEST_TEXT,
-            html: `<p>${TEST_TEXT}</p>`
+            html: `<p>${TEST_TEXT}</p>`,
+            headers: MAIL_HEADERS
           });
           console.info('[email] E-mail de teste enviado.', {
             providerName: config.providerName,
