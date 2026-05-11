@@ -1145,7 +1145,7 @@ async function renderHome() {
         <strong>${escapeHtml(gap)}</strong>
         <p>${escapeHtml(gap ? t('home.pointsBehindLeader', { points: gap }) : t('home.youAreLeader'))}</p>
       </article>
-      <article class="card stat-card">
+      <article class="card stat-card stat-card--money">
         <span>${escapeHtml(t('home.collected'))}</span>
         <strong class="stat-card__money">${escapeHtml(money(totalArrecadado))}</strong>
         <p>${escapeHtml(t('home.collectedHint'))}</p>

@@ -763,7 +763,12 @@ select option {
   overflow-wrap: anywhere;
 }
 
-.stat-card strong.stat-card__money {
+.stat-card--money {
+  flex: 1 1 260px;
+  min-width: min(100%, 240px);
+}
+
+.stat-card--money .stat-card__money {
   color: var(--cyan);
   font-size: clamp(24px, 5vw, 40px);
   min-width: max-content;
@@ -2580,7 +2585,7 @@ button[data-reset-form]:not(.icon-action)::before {
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   }
 
-  .dashboard-kpis .stat-card:has(.stat-card__money) {
+  .dashboard-kpis .stat-card--money {
     grid-column: span 2;
   }
 
