@@ -258,7 +258,7 @@ select option {
 }
 
 .auth-link {
-  color: var(--accent);
+  color: var(--muted);
   display: inline-flex;
   font-weight: 800;
   justify-content: center;
@@ -268,6 +268,7 @@ select option {
 
 .auth-link:hover {
   color: var(--accent-2);
+  text-shadow: 0 0 18px rgba(33, 212, 253, 0.18);
 }
 
 .auth-link--right {
@@ -743,6 +744,7 @@ select option {
 .stat-card strong.stat-card__money {
   color: var(--cyan);
   font-size: clamp(24px, 6vw, 42px);
+  white-space: nowrap;
 }
 
 .stat-card p {
@@ -1821,13 +1823,27 @@ button[data-provider-toggle]:hover {
 }
 
 .bet-period-filter {
+  background: rgba(5, 14, 23, 0.44);
+  border: 1px solid rgba(159, 188, 215, 0.13);
+  border-radius: 999px;
   justify-content: flex-start;
   overflow-x: auto;
   padding: 4px;
 }
 
 .bet-period-filter button {
+  background: transparent;
+  border: 1px solid transparent;
+  box-shadow: none;
+  color: var(--muted);
+  min-height: 38px;
   white-space: nowrap;
+}
+
+.bet-period-filter button.active {
+  background: rgba(33, 212, 253, 0.1);
+  border-color: rgba(33, 212, 253, 0.24);
+  color: var(--text);
 }
 
 .bet-filter-selects {
@@ -1889,6 +1905,7 @@ button[data-provider-toggle]:hover {
 
 .pool-guesses-modal {
   max-height: min(calc(100vh - 32px), 720px);
+  overflow: hidden;
   width: min(720px, calc(100vw - 32px));
 }
 
@@ -1905,6 +1922,37 @@ button[data-provider-toggle]:hover {
   max-height: min(58vh, 440px);
   overflow: auto;
   padding-right: 2px;
+}
+
+.participant-invite-modal {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.invite-confirm {
+  background: rgba(5, 14, 23, 0.54);
+  border: 1px solid rgba(159, 188, 215, 0.13);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 14px;
+}
+
+.invite-confirm p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.row-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.participant-row .actions {
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .pool-guesses-list {
@@ -2897,6 +2945,30 @@ button[data-reset-form]:not(.icon-action)::before {
 
   .pool-guess-score {
     justify-content: flex-start;
+  }
+
+  .modal-backdrop:has(.pool-guesses-modal) {
+    align-items: flex-end;
+    padding: 12px 12px calc(94px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pool-guesses-modal {
+    border-radius: 26px 26px 18px 18px;
+    max-height: min(76vh, calc(100vh - 124px));
+    width: calc(100vw - 24px);
+  }
+
+  .pool-guesses-modal .card-title {
+    background: linear-gradient(180deg, rgba(15, 29, 41, 0.98), rgba(15, 29, 41, 0.88));
+    margin: -2px -2px 8px;
+    padding-bottom: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .pool-guesses-list {
+    max-height: min(56vh, calc(100vh - 240px));
   }
 
   .form-actions button,

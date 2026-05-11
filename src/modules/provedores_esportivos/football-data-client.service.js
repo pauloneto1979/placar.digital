@@ -79,6 +79,8 @@ function mapMatch(match) {
     } : null,
     status: match.status,
     utcDate: match.utcDate,
+    venue: match.venue || '',
+    estadio: match.venue || '',
     mandante: {
       id: match.homeTeam?.id || null,
       name: match.homeTeam?.name || '',

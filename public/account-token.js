@@ -13,7 +13,10 @@ function showMessage(text) {
   message.textContent = text || '';
 }
 
-function redirectToLogin(delay = 1600) {
+function redirectToLogin(delay = 1600, loginMessage = '') {
+  if (loginMessage) {
+    sessionStorage.setItem('placar.loginMessage', loginMessage);
+  }
   window.setTimeout(() => {
     window.location.href = '/app/login.html';
   }, delay);
@@ -90,7 +93,7 @@ i18n.ready.then(async () => {
       await postJson('/auth/recuperar-senha', Object.fromEntries(new FormData(requestForm)));
       showMessage(t('passwordReset.sent'));
       requestForm.reset();
-      redirectToLogin();
+      redirectToLogin(1600, t('passwordReset.sent'));
     } catch (error) {
       showMessage(error.message);
     }
@@ -108,7 +111,7 @@ i18n.ready.then(async () => {
         showMessage(t('passwordReset.success'));
       }
       tokenForm.reset();
-      redirectToLogin();
+      redirectToLogin(1600, flow === 'activation' ? t('accountActivation.success') : t('passwordReset.success'));
     } catch (error) {
       showMessage(error.message);
     }

@@ -193,7 +193,12 @@
     "bet": "Predict",
     "viewGames": "View games",
     "noGames": "No games registered.",
-    "collectedHint": "Confirmed payments in the active pool"
+    "collectedHint": "Confirmed payments in the active pool",
+    "gameInProgress": "Game in progress",
+    "gamesInProgress": "Games in progress",
+    "gamesInProgressCount": "{count} live games",
+    "nextGameAt": "Next game at",
+    "noScheduledGames": "No scheduled games"
   },
   "ranking": {
     "full": "Full ranking",
@@ -277,7 +282,7 @@
     "title": "Games and results",
     "none": "No games registered.",
     "noPhase": "no phase",
-    "noStadium": "no stadium"
+    "noStadium": "Stadium not provided"
   },
   "rules": {
     "selectPool": "Select a pool to view the rules.",
@@ -386,7 +391,7 @@
     "phone": "Phone",
     "initialPassword": "Initial password",
     "optional": "Optional",
-    "requiredForNewCredential": "Required for a new credential",
+    "requiredForNewCredential": "Optional; leave blank to send an invite",
     "confirmInitialPassword": "Confirm initial password",
     "saveParticipant": "Save participant",
     "noParticipants": "No participant registered.",
@@ -434,7 +439,11 @@
     "badgeUrl": "Badge URL",
     "removeShieldUpload": "Remove badge upload",
     "matchTeamsRequired": "Select home and away teams.",
-    "matchTeamsDifferent": "Home and away teams must be different."
+    "matchTeamsDifferent": "Home and away teams must be different.",
+    "sendInvite": "Send invite",
+    "resendInvite": "Resend invite",
+    "inviteSent": "Invite sent by email.",
+    "inviteConfirmText": "Confirm sending the access invite to this bettor."
   },
   "messages": {
     "noActivePool": "No active pool found for this session.",
@@ -613,5 +622,11 @@
     "requestSubtitle": "Enter your email to receive the recovery link.",
     "resetSubtitle": "Set your new password to recover access.",
     "backToLogin": "Back to login"
+  },
+  "accessStatus": {
+    "pendente": "Pending",
+    "convite_enviado": "Invite sent",
+    "acesso_ativo": "Active access",
+    "expirado": "Expired"
   }
 }

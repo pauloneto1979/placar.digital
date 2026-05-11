@@ -86,6 +86,23 @@ async function listByFootballDataMatchIds(matchIds) {
   );
   return result.rows.map(map);
 }
+async function listLinkedForFootballDataSync() {
+  const result = await query(
+    `
+      select *
+      from partidas
+      where football_data_match_id is not null
+        and (
+          resultado_confirmado is distinct from true
+          or status <> 'finalizada'
+        )
+        and inicio_at >= now() - interval '7 days'
+        and inicio_at <= now() + interval '10 days'
+      order by inicio_at asc
+    `
+  );
+  return result.rows.map(map);
+}
 async function findByFootballDataMatchId(matchId, bolaoId = null) {
   const result = bolaoId
     ? await query(
@@ -576,4 +593,4 @@ async function createAuditLog(data) {
     [data.usuarioId, data.bolaoId, data.entidade, data.entidadeId, data.acao, JSON.stringify(data.dadosAnteriores), JSON.stringify(data.dadosNovos), data.ip || null, data.userAgent || null]
   );
 }
-module.exports = { listByBolao, findById, listByFootballDataMatchIds, findByFootballDataMatchId, faseBelongsToBolao, timeAtivo, timeAtivoNoBolao, create, update, updateExternalLink, importExternalMatches, createAuditLog };
+module.exports = { listByBolao, findById, listByFootballDataMatchIds, listLinkedForFootballDataSync, findByFootballDataMatchId, faseBelongsToBolao, timeAtivo, timeAtivoNoBolao, create, update, updateExternalLink, importExternalMatches, createAuditLog };

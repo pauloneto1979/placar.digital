@@ -283,7 +283,7 @@ function createPartidasService(repository, options = {}) {
         rodadaId: before.rodadaId,
         timeMandanteId: before.timeMandanteId,
         timeVisitanteId: before.timeVisitanteId,
-        estadio: before.estadio,
+        estadio: changes.estadio || before.estadio,
         ativo: changes.status === 'inativa' ? false : before.ativo !== false,
         footballDataMatchId: before.footballDataMatchId
       };

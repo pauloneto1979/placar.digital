@@ -193,7 +193,12 @@
     "bet": "Apostar",
     "viewGames": "Ver jogos",
     "noGames": "Nenhum jogo cadastrado.",
-    "collectedHint": "Pagamentos confirmados no bolão ativo"
+    "collectedHint": "Pagamentos confirmados no bolão ativo",
+    "gameInProgress": "Jogo em andamento",
+    "gamesInProgress": "Jogos em andamento",
+    "gamesInProgressCount": "{count} jogos ao vivo",
+    "nextGameAt": "Próximo jogo em",
+    "noScheduledGames": "Sem jogos agendados"
   },
   "ranking": {
     "full": "Ranking completo",
@@ -262,11 +267,11 @@
     "points": "Pontos",
     "noOfficialResult": "Sem resultado oficial",
     "finishedSummary": "Resumo da partida finalizada",
-    "noPoints": "Sem pontua??o",
+    "noPoints": "Sem pontuação",
     "filters": {
       "label": "Filtros de partidas",
       "today": "Hoje",
-      "next": "Pr?ximas",
+      "next": "Próximas",
       "all": "Todas",
       "allItems": "Todos"
     }
@@ -277,7 +282,7 @@
     "title": "Jogos e resultados",
     "none": "Nenhum jogo cadastrado.",
     "noPhase": "sem fase",
-    "noStadium": "sem estádio"
+    "noStadium": "Estádio não informado"
   },
   "rules": {
     "selectPool": "Selecione um bolão para visualizar as regras.",
@@ -378,15 +383,15 @@
     "linkedPoolsHelp": "Marque os bolões que este administrador pode acessar.",
     "newPassword": "Nova senha",
     "confirmNewPassword": "Confirmar nova senha",
-    "publicAppUrl": "URL p?blica do app",
-    "publicAppUrlHelp": "Endere?o usado nos links enviados por e-mail."
+    "publicAppUrl": "URL pública do app",
+    "publicAppUrlHelp": "Endereço usado nos links enviados por e-mail."
   },
   "admin": {
     "participants": "Participantes",
     "phone": "Telefone",
     "initialPassword": "Senha inicial",
     "optional": "Opcional",
-    "requiredForNewCredential": "Obrigatória para nova credencial",
+    "requiredForNewCredential": "Opcional; deixe vazio para enviar convite",
     "confirmInitialPassword": "Confirmar senha inicial",
     "saveParticipant": "Salvar participante",
     "noParticipants": "Nenhum participante cadastrado.",
@@ -434,7 +439,11 @@
     "badgeUrl": "URL do brasão",
     "removeShieldUpload": "Remover upload do brasão",
     "matchTeamsRequired": "Selecione mandante e visitante.",
-    "matchTeamsDifferent": "Mandante e visitante devem ser times diferentes."
+    "matchTeamsDifferent": "Mandante e visitante devem ser times diferentes.",
+    "sendInvite": "Enviar convite",
+    "resendInvite": "Reenviar convite",
+    "inviteSent": "Convite enviado por e-mail.",
+    "inviteConfirmText": "Confirme o envio do convite de acesso para este apostador."
   },
   "messages": {
     "noActivePool": "Nenhum bolão ativo encontrado para esta sessão.",
@@ -608,10 +617,16 @@
     "confirmPassword": "Confirmar nova senha",
     "submit": "Salvar nova senha",
     "sending": "Enviando link...",
-    "sent": "Se o e-mail estiver cadastrado, enviaremos as instru??es.",
+    "sent": "Se o e-mail estiver cadastrado, enviaremos as instruções.",
     "success": "Senha redefinida com sucesso. Você já pode entrar.",
-    "requestSubtitle": "Informe seu e-mail para receber o link de recupera??o.",
+    "requestSubtitle": "Informe seu e-mail para receber o link de recuperação.",
     "resetSubtitle": "Defina sua nova senha para recuperar o acesso.",
     "backToLogin": "Voltar ao login"
+  },
+  "accessStatus": {
+    "pendente": "Pendente",
+    "convite_enviado": "Convite enviado",
+    "acesso_ativo": "Acesso ativo",
+    "expirado": "Expirado"
   }
 }

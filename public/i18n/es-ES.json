@@ -193,7 +193,12 @@
     "bet": "Apostar",
     "viewGames": "Ver juegos",
     "noGames": "Ningún juego registrado.",
-    "collectedHint": "Pagos confirmados en la porra activa"
+    "collectedHint": "Pagos confirmados en la porra activa",
+    "gameInProgress": "Partido en curso",
+    "gamesInProgress": "Partidos en curso",
+    "gamesInProgressCount": "{count} partidos en vivo",
+    "nextGameAt": "Próximo partido en",
+    "noScheduledGames": "Sin partidos programados"
   },
   "ranking": {
     "full": "Ranking completo",
@@ -262,11 +267,11 @@
     "points": "Puntos",
     "noOfficialResult": "Sin resultado oficial",
     "finishedSummary": "Resumen del partido finalizado",
-    "noPoints": "Sin puntuaci?n",
+    "noPoints": "Sin puntuación",
     "filters": {
       "label": "Filtros de partidos",
       "today": "Hoy",
-      "next": "Pr?ximas",
+      "next": "Próximas",
       "all": "Todas",
       "allItems": "Todos"
     }
@@ -277,7 +282,7 @@
     "title": "Juegos y resultados",
     "none": "Ningún juego registrado.",
     "noPhase": "sin fase",
-    "noStadium": "sin estadio"
+    "noStadium": "Estadio no informado"
   },
   "rules": {
     "selectPool": "Selecciona una porra para ver las reglas.",
@@ -378,8 +383,8 @@
     "linkedPoolsHelp": "Marca las porras a las que este administrador puede acceder.",
     "newPassword": "Nueva contraseña",
     "confirmNewPassword": "Confirmar nueva contraseña",
-    "publicAppUrl": "URL p?blica de la app",
-    "publicAppUrlHelp": "Direcci?n usada en los enlaces enviados por email."
+    "publicAppUrl": "URL pública de la app",
+    "publicAppUrlHelp": "Dirección usada en los enlaces enviados por email."
   },
   "admin": {
     "participants": "Participantes",
@@ -425,7 +430,7 @@
     "awayScore": "Marcador visitante",
     "saveMatch": "Guardar partido",
     "noMatches": "Ningún partido registrado.",
-    "requiredForNewCredential": "Obligatoria para nueva credencial",
+    "requiredForNewCredential": "Opcional; deja vacío para enviar invitación",
     "confirmInitialPassword": "Confirmar contraseña inicial",
     "shieldUpload": "Subir escudo",
     "shieldUploadHelp": "PNG, JPG, WEBP o SVG hasta 512 KB. La URL del escudo se completará automáticamente.",
@@ -434,7 +439,11 @@
     "badgeUrl": "URL del escudo",
     "removeShieldUpload": "Quitar carga del escudo",
     "matchTeamsRequired": "Selecciona local y visitante.",
-    "matchTeamsDifferent": "Local y visitante deben ser equipos diferentes."
+    "matchTeamsDifferent": "Local y visitante deben ser equipos diferentes.",
+    "sendInvite": "Enviar invitación",
+    "resendInvite": "Reenviar invitación",
+    "inviteSent": "Invitación enviada por email.",
+    "inviteConfirmText": "Confirma el envío de la invitación de acceso a este apostador."
   },
   "messages": {
     "noActivePool": "Ninguna porra activa encontrada para esta sesión.",
@@ -608,10 +617,16 @@
     "confirmPassword": "Confirmar nueva contraseña",
     "submit": "Guardar nueva contraseña",
     "sending": "Enviando enlace...",
-    "sent": "Si el email est? registrado, enviaremos las instrucciones.",
+    "sent": "Si el email está registrado, enviaremos las instrucciones.",
     "success": "Contraseña restablecida correctamente. Ya puedes iniciar sesión.",
-    "requestSubtitle": "Informa tu email para recibir el enlace de recuperaci?n.",
-    "resetSubtitle": "Define tu nueva contrase?a para recuperar el acceso.",
+    "requestSubtitle": "Informa tu email para recibir el enlace de recuperación.",
+    "resetSubtitle": "Define tu nueva contraseña para recuperar el acceso.",
     "backToLogin": "Volver al login"
+  },
+  "accessStatus": {
+    "pendente": "Pendiente",
+    "convite_enviado": "Invitación enviada",
+    "acesso_ativo": "Acceso activo",
+    "expirado": "Expirado"
   }
 }

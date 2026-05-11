@@ -9,6 +9,9 @@ function map(row) {
     email: row.email,
     telefone: row.telefone,
     status: row.status,
+    acessoStatus: row.acesso_status || null,
+    conviteExpiracao: row.convite_expiracao || null,
+    conviteEnviadoAt: row.convite_enviado_at || null,
     criadoAt: row.criado_at,
     atualizadoAt: row.atualizado_at
   };
@@ -26,7 +29,31 @@ function mapUsuario(row) {
 
 async function listByBolao(bolaoId) {
   const result = await query(
-    'select * from participantes where bolao_id = $1 and papel = $2 order by nome asc',
+    `
+      select
+        p.*,
+        convite.expiracao as convite_expiracao,
+        convite.created_at as convite_enviado_at,
+        case
+          when u.ativo = true and p.status = 'ativo' then 'acesso_ativo'
+          when convite.id is null then 'pendente'
+          when convite.utilizado_em is not null then 'acesso_ativo'
+          when convite.expiracao <= now() then 'expirado'
+          else 'convite_enviado'
+        end as acesso_status
+      from participantes p
+      left join usuarios u on u.id = p.usuario_id
+      left join lateral (
+        select id, expiracao, utilizado_em, created_at
+        from auth_tokens
+        where tipo = 'convite'
+          and metadata->>'participanteId' = p.id::text
+        order by created_at desc
+        limit 1
+      ) convite on true
+      where p.bolao_id = $1 and p.papel = $2
+      order by p.nome asc
+    `,
     [bolaoId, 'apostador']
   );
   return result.rows.map(map);

@@ -15,6 +15,16 @@ function scoreValue(value) {
   return value === undefined || value === null ? null : Number(value);
 }
 
+function providerErrorMessage(bodyText) {
+  if (!bodyText) return '';
+  try {
+    const body = JSON.parse(bodyText);
+    return body.message || body.error || body.detail || '';
+  } catch {
+    return bodyText.slice(0, 240);
+  }
+}
+
 function dateTimeMs(value) {
   const time = new Date(value).getTime();
   return Number.isNaN(time) ? null : time;
@@ -42,6 +52,7 @@ function mapFootballDataMatch(match) {
     resultadoConfirmado: finishedWithScore,
     finishedWithoutScore: status === 'finalizada' && !finishedWithScore,
     dataHora: match.utcDate || null,
+    estadio: match.venue || '',
     homeTeamName: match.homeTeam?.name || '',
     awayTeamName: match.awayTeam?.name || ''
   };
@@ -62,6 +73,7 @@ function hasRelevantChange(partida, external) {
   if (external.finishedWithoutScore) return false;
   if (partida.resultadoConfirmado && !external.resultadoConfirmado) return false;
   if (external.dataHora && dateTimeMs(partida.dataHora) !== dateTimeMs(external.dataHora)) return true;
+  if (external.estadio && partida.estadio !== external.estadio) return true;
   if (partida.status !== external.status) return true;
   if (external.resultadoConfirmado && partida.placarMandante !== external.placarMandante) return true;
   if (external.resultadoConfirmado && partida.placarVisitante !== external.placarVisitante) return true;
@@ -72,6 +84,7 @@ function hasRelevantChange(partida, external) {
 function buildChanges(partida, external) {
   return {
     dataHora: external.dataHora || partida.dataHora,
+    estadio: external.estadio || partida.estadio,
     status: external.status,
     placarMandante: external.resultadoConfirmado ? external.placarMandante : partida.placarMandante,
     placarVisitante: external.resultadoConfirmado ? external.placarVisitante : partida.placarVisitante,
@@ -83,26 +96,69 @@ function createFootballDataSyncService(factory, options = {}) {
   const logger = options.logger || console;
   let running = false;
 
-  async function fetchMatches(config) {
+  function isoDate(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+  }
+
+  function addDays(dateText, days) {
+    const [year, month, day] = dateText.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day + days));
+    return date.toISOString().slice(0, 10);
+  }
+
+  function syncWindow(partidas = []) {
+    const dates = partidas
+      .map((partida) => isoDate(partida.dataHora))
+      .filter(Boolean)
+      .sort();
+    if (!dates.length) return null;
+    const dateFrom = dates[0];
+    const maxDateTo = addDays(dateFrom, 9);
+    const dateTo = dates.filter((date) => date <= maxDateTo).pop();
+    return { dateFrom, dateTo: dateTo || dateFrom };
+  }
+
+  async function fetchMatches(config, window = null) {
     const baseUrl = String(config.baseUrl || '').replace(/\/$/, '');
-    const response = await fetch(`${baseUrl}/matches`, {
+    const params = new URLSearchParams();
+    if (window?.dateFrom) params.set('dateFrom', window.dateFrom);
+    if (window?.dateTo) params.set('dateTo', window.dateTo);
+    const url = `${baseUrl}/matches${params.toString() ? `?${params.toString()}` : ''}`;
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'X-Auth-Token': config.apiToken
       }
     });
 
+    const bodyText = await response.text().catch(() => '');
+    const providerMessage = providerErrorMessage(bodyText);
+
     if (response.status === 429) {
-      logger.warn('[football-data] Rate limit atingido ao sincronizar partidas. Nova tentativa ocorrera no proximo ciclo permitido.');
+      logger.warn('[football-data] Rate limit atingido ao sincronizar partidas. Nova tentativa ocorrera no proximo ciclo permitido.', {
+        url,
+        status: response.status,
+        message: providerMessage
+      });
       return { rateLimited: true, matches: [] };
     }
 
     if (!response.ok) {
-      logger.warn(`[football-data] Erro ao sincronizar partidas. Status HTTP: ${response.status}.`);
+      logger.warn('[football-data] Erro ao sincronizar partidas.', {
+        url,
+        status: response.status,
+        message: providerMessage
+      });
       return { failed: true, matches: [] };
     }
 
-    const body = await response.json().catch(() => ({}));
+    let body = {};
+    try {
+      body = bodyText ? JSON.parse(bodyText) : {};
+    } catch {
+      body = {};
+    }
     return {
       matches: Array.isArray(body.matches) ? body.matches : []
     };
@@ -121,7 +177,8 @@ function createFootballDataSyncService(factory, options = {}) {
       if (active.provider !== FOOTBALL_DATA_PROVIDER) return { skipped: true, reason: 'unsupported_provider' };
       if (!shouldRun(active.config, now)) return { skipped: true, reason: 'sync_interval' };
 
-      const result = await fetchMatches(active.config);
+      const syncCandidates = await partidasRepository.listLinkedForFootballDataSync();
+      const result = await fetchMatches(active.config, syncWindow(syncCandidates));
       if (result.rateLimited) return { skipped: true, reason: 'rate_limited' };
       if (result.failed) return { skipped: true, reason: 'provider_error' };
 

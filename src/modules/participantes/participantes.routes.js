@@ -16,5 +16,6 @@ participantesRoutes.get('/boloes/:bolaoId', controller.list);
 participantesRoutes.post('/boloes/:bolaoId', controller.create);
 participantesRoutes.put('/boloes/:bolaoId/:id', controller.update);
 participantesRoutes.patch('/boloes/:bolaoId/:id/status', controller.updateStatus);
+participantesRoutes.post('/boloes/:bolaoId/:id/convite', controller.sendInvite);
 
 module.exports = { participantesRoutes };

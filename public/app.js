@@ -38,6 +38,12 @@
     palpites: [],
     error: ''
   },
+  participantInviteModal: {
+    open: false,
+    loading: false,
+    participante: null,
+    error: ''
+  },
   mobileMoreOpen: false
 };
 
@@ -131,7 +137,7 @@ const routes = [
   { id: 'ranking', labelKey: 'nav.ranking', subtitleKey: 'subtitles.ranking' },
   { id: 'jogos', labelKey: 'nav.jogos', subtitleKey: 'subtitles.jogos', roles: ['proprietario', 'administrador'] },
   { id: 'regras', labelKey: 'nav.regras', subtitleKey: 'subtitles.regras' },
-  { id: 'notificacoes', labelKey: 'nav.notificacoes', subtitleKey: 'subtitles.notificacoes' },
+  { id: 'notificacoes', labelKey: 'nav.notificacoes', subtitleKey: 'subtitles.notificacoes', roles: ['proprietario', 'administrador'] },
   { id: 'participantes', labelKey: 'nav.participantes', subtitleKey: 'subtitles.participantes', admin: true },
   { id: 'pagamentos', labelKey: 'nav.pagamentos', subtitleKey: 'subtitles.pagamentos', admin: true },
   { id: 'fases', labelKey: 'nav.fases', subtitleKey: 'subtitles.fases', admin: true },
@@ -222,6 +228,43 @@ function countdownText(value) {
   if (days > 0) return t('home.countdownDays', { days, hours });
   if (hours > 0) return t('home.countdownHours', { hours, minutes });
   return t('home.countdownMinutes', { minutes });
+}
+
+function isInProgressStatus(status) {
+  return BET_IN_PROGRESS_STATUSES.includes(normalizedStatus(status));
+}
+
+function nextGameContext(jogos = [], syncText = '') {
+  const ordered = [...jogos].sort((a, b) => new Date(gameDateValue(a)).getTime() - new Date(gameDateValue(b)).getTime());
+  const inProgress = ordered.filter((game) => isInProgressStatus(game.status));
+  if (inProgress.length) {
+    return {
+      label: inProgress.length > 1 ? t('home.gamesInProgress') : t('home.gameInProgress'),
+      value: inProgress.length > 1 ? t('home.gamesInProgressCount', { count: inProgress.length }) : statusLabel(inProgress[0].status),
+      hint: syncText
+    };
+  }
+
+  const future = ordered.find((game) => {
+    const time = new Date(gameDateValue(game)).getTime();
+    const status = normalizedStatus(game.status);
+    return !Number.isNaN(time) && time > Date.now() && !BET_FINISHED_STATUSES.includes(status) && !['cancelada', 'inativa'].includes(status);
+  });
+
+  if (future) {
+    const diff = new Date(gameDateValue(future)).getTime() - Date.now();
+    return {
+      label: diff <= 24 * 60 * 60 * 1000 ? t('home.nextKickoff') : t('home.nextGameAt'),
+      value: diff <= 24 * 60 * 60 * 1000 ? countdownText(gameDateValue(future)) : dateTime(gameDateValue(future)),
+      hint: syncText
+    };
+  }
+
+  return {
+    label: t('home.nextGame'),
+    value: t('home.noScheduledGames'),
+    hint: syncText
+  };
 }
 
 function syncStatusText(sync) {
@@ -679,10 +722,11 @@ function renderBetTabs(rows = []) {
   if (!BET_STATUS_TABS.some((tab) => tab.id === state.apostasTab)) {
     state.apostasTab = BET_STATUS_TABS[0].id;
   }
+  const filteredRows = rows.filter(betMatchesFilters);
   return `
     <div class="status-tabs bet-tabs" role="tablist" aria-label="${escapeHtml(t('bets.tabsLabel'))}">
       ${BET_STATUS_TABS.map((tab) => {
-        const count = rows.filter((row) => betMatchesTab(row, tab.id)).length;
+        const count = filteredRows.filter((row) => betMatchesTab(row, tab.id)).length;
         const active = tab.id === state.apostasTab;
         return `
           <button class="status-tab ${active ? 'active' : ''}" type="button" role="tab" aria-selected="${active ? 'true' : 'false'}" data-bet-status-tab="${escapeHtml(tab.id)}">
@@ -973,6 +1017,7 @@ async function renderHome() {
     return !score && !['finalizada', 'cancelada', 'inativa'].includes(status);
   });
   const proximoJogo = proximosJogos[0] || jogosOrdenados.find((game) => !officialScore(game));
+  const heroGameContext = nextGameContext(jogosOrdenados, syncText);
   const resultados = jogosOrdenados
     .filter((game) => officialScore(game))
     .sort((a, b) => new Date(gameDateValue(b)).getTime() - new Date(gameDateValue(a)).getTime())
@@ -987,9 +1032,9 @@ async function renderHome() {
         <p class="muted">${escapeHtml(t('home.dashboardSubtitle'))}</p>
       </div>
       <div class="dashboard-countdown">
-        <span>${escapeHtml(t('home.nextKickoff'))}</span>
-        <strong>${escapeHtml(countdownText(gameDateValue(proximoJogo)))}</strong>
-        <small>${escapeHtml(syncText)}</small>
+        <span>${escapeHtml(heroGameContext.label)}</span>
+        <strong>${escapeHtml(heroGameContext.value)}</strong>
+        <small>${escapeHtml(heroGameContext.hint)}</small>
       </div>
     </section>
 
@@ -1063,6 +1108,7 @@ function renderDashboardGameCard(game, bet) {
   const mandante = game.mandante?.nome || game.mandante || game.timeMandante || t('games.homeTeam');
   const visitante = game.visitante?.nome || game.visitante || game.timeVisitante || t('games.awayTeam');
   const date = gameDateValue(game);
+  const inProgress = isInProgressStatus(game.status);
   return `
     <article class="dashboard-game dashboard-game--premium">
       <div class="dashboard-game__teams">
@@ -1076,8 +1122,8 @@ function renderDashboardGameCard(game, bet) {
         <span class="pill bet-status-pill ${dashboardGuessTone(bet)}">${escapeHtml(dashboardGuessStatus(bet))}</span>
       </div>
       <div class="dashboard-game__countdown">
-        <span>${escapeHtml(t('home.nextKickoff'))}</span>
-        <strong>${escapeHtml(countdownText(date))}</strong>
+        <span>${escapeHtml(inProgress ? t('home.gameInProgress') : t('home.nextKickoff'))}</span>
+        <strong>${escapeHtml(inProgress ? statusLabel(game.status) : countdownText(date))}</strong>
       </div>
     </article>
   `;
@@ -1187,7 +1233,12 @@ function matchStructureText(row = {}) {
 }
 
 function dashboardCompetitionText(dashboard = {}) {
-  const parts = [dashboard.competicao?.nome, dashboard.temporada?.nome].filter(Boolean);
+  const competition = dashboard.competicao?.nomeCurto || dashboard.competicao?.nomeExibicao || dashboard.competicao?.nome || '';
+  let season = dashboard.temporada?.nomeCurto || dashboard.temporada?.nomeExibicao || dashboard.temporada?.nome || '';
+  if (competition && season.toLowerCase().startsWith(competition.toLowerCase())) {
+    season = season.slice(competition.length).replace(/^[-–—·\s]+/, '').trim();
+  }
+  const parts = [competition, season].filter(Boolean);
   return parts.length ? parts.join(' · ') : '';
 }
 
@@ -1221,7 +1272,7 @@ function renderGameCard(game) {
         <div class="sports-match-card__meta">
           <span>${escapeHtml(matchStructureText(game))}</span>
           <span>${escapeHtml(dateTime(game.dataHora || game.inicioAt || game.inicio_at))}</span>
-          <span>${escapeHtml(game.estadio || '')}</span>
+          <span>${escapeHtml(game.estadio || t('games.noStadium'))}</span>
         </div>
       </div>
       <span class="pill bet-status-pill ${hasScore ? 'bet-status--result' : 'bet-status--pending'}">${escapeHtml(statusLabel(game.status))}</span>
@@ -1423,10 +1474,11 @@ async function renderApostas() {
   }
   const apostas = await api(`/apostas/boloes/${state.activeBolaoId}/minhas`);
   state.data.apostas = apostas;
+  const filteredApostas = apostas.filter(betMatchesFilters);
   const visibleApostas = sortedBetsForTab(apostas, state.apostasTab, true);
-  const pendingCount = apostas.filter((item) => betMatchesTab(item, 'pendentes')).length;
-  const openCount = apostas.filter((item) => betMatchesTab(item, 'abertas')).length;
-  const nextGame = sortedBetsForTab(apostas.filter((item) => item.podeAlterar), 'abertas')[0];
+  const pendingCount = filteredApostas.filter((item) => betMatchesTab(item, 'pendentes')).length;
+  const openCount = filteredApostas.filter((item) => betMatchesTab(item, 'abertas')).length;
+  const nextGame = sortedBetsForTab(filteredApostas.filter((item) => item.podeAlterar), 'abertas')[0];
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>${escapeHtml(t('bets.myGuesses'))}</h2><span class="pill">${escapeHtml(t('bets.autosave'))}</span></div>
@@ -1884,6 +1936,79 @@ async function renderUsuariosOwner() {
   `;
 }
 
+function accessStatusLabel(status) {
+  return t(`accessStatus.${status}`, {}, statusLabel(status));
+}
+
+function accessStatusTone(status) {
+  return ({
+    acesso_ativo: 'bet-status--saved',
+    convite_enviado: 'bet-status--info',
+    expirado: 'bet-status--locked',
+    pendente: 'bet-status--pending'
+  })[status] || 'bet-status--pending';
+}
+
+function participantInviteButton(row) {
+  if (row.acessoStatus === 'acesso_ativo') {
+    return `<span class="pill bet-status-pill ${accessStatusTone(row.acessoStatus)}">${escapeHtml(accessStatusLabel(row.acessoStatus))}</span>`;
+  }
+  const label = row.acessoStatus === 'convite_enviado' || row.acessoStatus === 'expirado'
+    ? t('admin.resendInvite')
+    : t('admin.sendInvite');
+  return `<button class="ghost" type="button" data-open-participant-invite="${escapeHtml(row.id)}">${escapeHtml(label)}</button>`;
+}
+
+function participantRow(row) {
+  const status = row.acessoStatus || 'pendente';
+  return `
+    <article class="row-card participant-row">
+      <div>
+        <strong>${escapeHtml(row.nome)}</strong>
+        <p class="muted">${escapeHtml([row.email, row.telefone || ''].filter(Boolean).join(' · '))}</p>
+        <div class="row-badges">
+          <span class="pill">${escapeHtml(statusLabel(row.status))}</span>
+          <span class="pill bet-status-pill ${accessStatusTone(status)}">${escapeHtml(accessStatusLabel(status))}</span>
+        </div>
+      </div>
+      <div class="actions">
+        ${participantInviteButton(row)}
+        <button class="secondary" type="button" data-edit-kind="participantes" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderParticipantInviteModal() {
+  const modal = state.participantInviteModal;
+  if (!modal.open || !modal.participante) return '';
+  const row = modal.participante;
+  const actionLabel = row.acessoStatus === 'convite_enviado' || row.acessoStatus === 'expirado'
+    ? t('admin.resendInvite')
+    : t('admin.sendInvite');
+  return `
+    <div class="modal-backdrop" data-close-participant-invite>
+      <section class="modal-card participant-invite-modal" data-modal-card>
+        <div class="card-title">
+          <h2>${escapeHtml(actionLabel)}</h2>
+          <button class="ghost icon-action" type="button" data-close-participant-invite aria-label="${escapeHtml(t('common.close'))}" title="${escapeHtml(t('common.close'))}">&times;</button>
+        </div>
+        <div class="invite-confirm">
+          <p>${escapeHtml(t('admin.inviteConfirmText'))}</p>
+          <strong>${escapeHtml(row.nome)}</strong>
+          <span>${escapeHtml(row.email)}</span>
+          <span class="pill">${escapeHtml(state.activeBolaoNome || t('common.pool'))}</span>
+        </div>
+        ${modal.error ? `<p class="message card-message" data-tone="error">${escapeHtml(modal.error)}</p>` : ''}
+        <div class="form-actions">
+          <button class="ghost" type="button" data-close-participant-invite>${escapeHtml(t('common.cancel'))}</button>
+          <button type="button" data-confirm-participant-invite="${escapeHtml(row.id)}" ${modal.loading ? 'disabled' : ''}>${escapeHtml(modal.loading ? t('common.loading') : actionLabel)}</button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 async function renderParticipantesAdmin() {
   const rows = await api(`/participantes/boloes/${state.activeBolaoId}`);
   state.data.participantes = rows;
@@ -1911,7 +2036,8 @@ async function renderParticipantesAdmin() {
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('participantes', row, row.nome, `${row.email} ${row.telefone || ''}`, row.status)).join('') || empty(t('admin.noParticipants'))}</div></section>
+    <section class="card"><div class="list">${rows.map(participantRow).join('') || empty(t('admin.noParticipants'))}</div></section>
+    ${renderParticipantInviteModal()}
   `;
 }
 
@@ -2278,9 +2404,8 @@ async function renderConfiguracoesOwner() {
       <div class="card-title"><h2>${escapeHtml(t('owner.generalSettings'))}</h2><span class="pill">${escapeHtml(t('common.platform'))}</span></div>
       <form class="form-card" data-crud-form="configuracoesGerais">
         <label>${escapeHtml(t('owner.sessionTime'))} <input name="tempoSessao" type="number" min="1" value="${escapeHtml(config.tempoSessao || '')}"></label>
-        <label>${escapeHtml(t('owner.senderEmail'))} <input name="emailRemetente" type="email" value="${escapeHtml(config.emailRemetente || '')}"></label>
         <label>${escapeHtml(t('owner.publicAppUrl'))}
-          <input name="publicAppUrl" type="url" placeholder="http://admerp.com.br:3002" value="${escapeHtml(config.publicAppUrl || '')}">
+          <input name="publicAppUrl" type="url" placeholder="https://dominio:porta" value="${escapeHtml(config.publicAppUrl || '')}">
           <small>${escapeHtml(t('owner.publicAppUrlHelp'))}</small>
         </label>
         <label>${escapeHtml(t('owner.notificationsActive'))}
@@ -2861,9 +2986,6 @@ async function submitCrud(kind, form) {
   }
 
   if (kind === 'participantes') {
-    if (!id) {
-      ensureRequiredPassword(data.senhaInicial, 'security.bettorPasswordRequired');
-    }
     if ((data.senhaInicial || data.confirmarSenhaInicial) && (data.senhaInicial || '') !== (data.confirmarSenhaInicial || '')) {
       throw new Error(t('security.passwordConfirmationMismatch'));
     }
@@ -3008,6 +3130,20 @@ function closeMatchGuesses() {
   navigate('apostas');
 }
 
+async function sendParticipantInvite(participanteId) {
+  const participante = findById(state.data.participantes || [], participanteId);
+  if (!participante) return;
+  state.participantInviteModal = { open: true, loading: true, participante, error: '' };
+  await renderParticipantesAdmin();
+  await api(`/participantes/boloes/${state.activeBolaoId}/${participanteId}/convite`, {
+    method: 'POST',
+    body: JSON.stringify({})
+  });
+  state.participantInviteModal = { open: false, loading: false, participante: null, error: '' };
+  showMessage(t('admin.inviteSent'), 'success');
+  await navigate('participantes');
+}
+
 async function init() {
   if (!state.token) {
     redirectLogin();
@@ -3119,6 +3255,42 @@ content.addEventListener('click', (event) => {
 
   if (event.target.closest('button[data-close-bet-guesses]')) {
     closeMatchGuesses();
+    return;
+  }
+
+  const openParticipantInvite = event.target.closest('[data-open-participant-invite]');
+  if (openParticipantInvite) {
+    const participante = findById(state.data.participantes || [], openParticipantInvite.dataset.openParticipantInvite);
+    if (participante) {
+      state.participantInviteModal = { open: true, loading: false, participante, error: '' };
+      navigate('participantes');
+    }
+    return;
+  }
+
+  const closeParticipantInvite = event.target.closest('[data-close-participant-invite]');
+  if (closeParticipantInvite && !event.target.closest('[data-modal-card]')) {
+    state.participantInviteModal = { open: false, loading: false, participante: null, error: '' };
+    navigate('participantes');
+    return;
+  }
+
+  if (event.target.closest('button[data-close-participant-invite]')) {
+    state.participantInviteModal = { open: false, loading: false, participante: null, error: '' };
+    navigate('participantes');
+    return;
+  }
+
+  const confirmParticipantInvite = event.target.closest('[data-confirm-participant-invite]');
+  if (confirmParticipantInvite) {
+    sendParticipantInvite(confirmParticipantInvite.dataset.confirmParticipantInvite).catch((error) => {
+      state.participantInviteModal = {
+        ...state.participantInviteModal,
+        loading: false,
+        error: error.message || t('messages.apiError')
+      };
+      navigate('participantes');
+    });
     return;
   }
 

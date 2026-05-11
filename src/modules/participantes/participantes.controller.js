@@ -14,6 +14,9 @@ function createParticipantesController(service) {
     },
     async updateStatus(req, res, next) {
       try { res.json(await service.updateStatus(req.params.bolaoId, req.params.id, req.body, req.auth)); } catch (error) { next(error); }
+    },
+    async sendInvite(req, res, next) {
+      try { res.json(await service.sendInvite(req.params.bolaoId, req.params.id, req.auth)); } catch (error) { next(error); }
     }
   };
 }
