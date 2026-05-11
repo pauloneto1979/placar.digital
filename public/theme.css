@@ -746,7 +746,7 @@ select option {
 .dashboard-kpis {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
 }
 
 .stat-card {
@@ -764,14 +764,18 @@ select option {
 }
 
 .stat-card--money {
-  flex: 1 1 260px;
-  min-width: min(100%, 240px);
+  grid-column: span 2;
+  min-width: 0;
 }
 
 .stat-card--money .stat-card__money {
   color: var(--cyan);
-  font-size: clamp(24px, 5vw, 40px);
-  min-width: max-content;
+  font-size: clamp(20px, 3.8vw, 38px);
+  letter-spacing: 0;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: clip;
   white-space: nowrap;
 }
 
@@ -2585,10 +2589,6 @@ button[data-reset-form]:not(.icon-action)::before {
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   }
 
-  .dashboard-kpis .stat-card--money {
-    grid-column: span 2;
-  }
-
   .external-linking-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2696,6 +2696,10 @@ button[data-reset-form]:not(.icon-action)::before {
 
   .dashboard-kpis {
     grid-template-columns: 1fr;
+  }
+
+  .stat-card--money {
+    grid-column: span 1;
   }
 
   .dashboard-game__teams,
