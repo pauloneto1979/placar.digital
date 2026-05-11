@@ -377,7 +377,9 @@
     "noLinkedPools": "Sem bolões vinculados",
     "linkedPoolsHelp": "Marque os bolões que este administrador pode acessar.",
     "newPassword": "Nova senha",
-    "confirmNewPassword": "Confirmar nova senha"
+    "confirmNewPassword": "Confirmar nova senha",
+    "publicAppUrl": "URL p?blica do app",
+    "publicAppUrlHelp": "Endere?o usado nos links enviados por e-mail."
   },
   "admin": {
     "participants": "Participantes",
@@ -606,7 +608,10 @@
     "confirmPassword": "Confirmar nova senha",
     "submit": "Salvar nova senha",
     "sending": "Enviando link...",
-    "sent": "Se o e-mail estiver cadastrado, enviaremos um link de recuperação.",
-    "success": "Senha redefinida com sucesso. Você já pode entrar."
+    "sent": "Se o e-mail estiver cadastrado, enviaremos as instru??es.",
+    "success": "Senha redefinida com sucesso. Você já pode entrar.",
+    "requestSubtitle": "Informe seu e-mail para receber o link de recupera??o.",
+    "resetSubtitle": "Defina sua nova senha para recuperar o acesso.",
+    "backToLogin": "Voltar ao login"
   }
 }

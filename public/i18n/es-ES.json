@@ -377,7 +377,9 @@
     "noLinkedPools": "Sin porras vinculadas",
     "linkedPoolsHelp": "Marca las porras a las que este administrador puede acceder.",
     "newPassword": "Nueva contraseña",
-    "confirmNewPassword": "Confirmar nueva contraseña"
+    "confirmNewPassword": "Confirmar nueva contraseña",
+    "publicAppUrl": "URL p?blica de la app",
+    "publicAppUrlHelp": "Direcci?n usada en los enlaces enviados por email."
   },
   "admin": {
     "participants": "Participantes",
@@ -606,7 +608,10 @@
     "confirmPassword": "Confirmar nueva contraseña",
     "submit": "Guardar nueva contraseña",
     "sending": "Enviando enlace...",
-    "sent": "Si el email está registrado, enviaremos un enlace de recuperación.",
-    "success": "Contraseña restablecida correctamente. Ya puedes iniciar sesión."
+    "sent": "Si el email est? registrado, enviaremos las instrucciones.",
+    "success": "Contraseña restablecida correctamente. Ya puedes iniciar sesión.",
+    "requestSubtitle": "Informa tu email para recibir el enlace de recuperaci?n.",
+    "resetSubtitle": "Define tu nueva contrase?a para recuperar el acceso.",
+    "backToLogin": "Volver al login"
   }
 }

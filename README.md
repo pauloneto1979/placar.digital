@@ -504,6 +504,8 @@ Páginas auxiliares:
 - `/app/ativacao.html`
 - `/app/redefinir-senha.html`
 
+Links enviados por e-mail usam a URL pública configurada em `Configurações > Configurações gerais > URL pública do app`. Se essa configuração estiver vazia, o sistema usa o fallback `APP_BASE_URL` do `.env`.
+
 ## 16. Deploy
 
 Estado operacional conhecido:

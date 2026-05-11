@@ -7,6 +7,7 @@ const STATUS_BOLOES = ['ativo', 'fechado', 'inativo'];
 const CONFIG_KEYS = {
   tempoSessao: 'sessao.tempo_segundos',
   emailRemetente: 'email.remetente',
+  publicAppUrl: 'app.url_publica',
   notificacoesAtivas: 'notificacoes.ativas',
   gatewayPagamento: 'pagamentos.gateway'
 };
@@ -17,6 +18,17 @@ function normalizeText(value) {
 
 function normalizeEmail(value) {
   return normalizeText(value).toLowerCase();
+}
+
+function normalizePublicUrl(value) {
+  return normalizeText(value).replace(/\/+$/g, '');
+}
+
+function assertPublicUrl(value) {
+  if (!value) return;
+  if (!/^https?:\/\/[^/]+/i.test(value)) {
+    throw new HttpError(400, 'invalid_public_app_url', 'URL publica do app deve iniciar com http:// ou https://.');
+  }
 }
 
 function normalizeIdList(value) {
@@ -58,6 +70,7 @@ function mapConfigRows(rows) {
   return {
     tempoSessao: byKey[CONFIG_KEYS.tempoSessao]?.valor ?? null,
     emailRemetente: byKey[CONFIG_KEYS.emailRemetente]?.valor ?? null,
+    publicAppUrl: byKey[CONFIG_KEYS.publicAppUrl]?.valor ?? null,
     notificacoesAtivas: byKey[CONFIG_KEYS.notificacoesAtivas]?.valor ?? null,
     gatewayPagamento: byKey[CONFIG_KEYS.gatewayPagamento]?.valor ?? null
   };
@@ -425,6 +438,12 @@ function createProprietarioService(repository) {
         }
 
         updates.push(repository.upsertConfiguracaoGeral(CONFIG_KEYS.emailRemetente, emailRemetente, 'Email usado como remetente da plataforma.'));
+      }
+
+      if (payload.publicAppUrl !== undefined || payload.urlPublicaApp !== undefined || payload.appBaseUrl !== undefined) {
+        const publicAppUrl = normalizePublicUrl(payload.publicAppUrl ?? payload.urlPublicaApp ?? payload.appBaseUrl);
+        assertPublicUrl(publicAppUrl);
+        updates.push(repository.upsertConfiguracaoGeral(CONFIG_KEYS.publicAppUrl, publicAppUrl, 'URL publica usada em links enviados por email.'));
       }
 
       if (payload.notificacoesAtivas !== undefined) {

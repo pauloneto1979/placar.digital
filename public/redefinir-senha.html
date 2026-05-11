@@ -10,7 +10,7 @@
     <main class="auth-card">
       <img class="auth-logo" src="/app/logo-placar-digital.jpeg" alt="Placar.digital">
       <h1 class="auth-title" data-i18n="passwordReset.heading">Redefinir senha</h1>
-      <p class="auth-subtitle" data-i18n="passwordReset.subtitle">Informe seu e-mail ou defina uma nova senha se você abriu um link de recuperação.</p>
+      <p id="flowSubtitle" class="auth-subtitle" data-i18n="passwordReset.requestSubtitle">Informe seu e-mail para receber o link de recuperação.</p>
       <form id="requestForm" class="auth-form">
         <label><span data-i18n="auth.email">Email</span> <input name="email" type="email" autocomplete="email" required></label>
         <button type="submit" data-i18n="passwordReset.requestSubmit">Enviar link de recuperação</button>
@@ -33,7 +33,7 @@
         <button type="submit" data-i18n="passwordReset.submit">Salvar nova senha</button>
       </form>
       <p id="message" class="auth-message"></p>
-      <a class="auth-link" href="/app/login.html" data-i18n="auth.loginHeading">Entrar</a>
+      <a class="auth-link" href="/app/login.html" data-i18n="passwordReset.backToLogin">Voltar ao login</a>
     </main>
     <script src="/app/i18n/i18n.js"></script>
     <script src="/app/account-token.js"></script>

@@ -34,8 +34,15 @@ function expirationFor(tipo) {
   return new Date(Date.now() + minutes * 60000).toISOString();
 }
 
-function appLink(path, token) {
-  return `${String(env.appBaseUrl || '').replace(/\/$/, '')}/app/${path}?token=${encodeURIComponent(token)}`;
+function normalizeBaseUrl(value) {
+  const url = clean(value).replace(/\/+$/g, '');
+  return /^https?:\/\//i.test(url) ? url : '';
+}
+
+async function appLink(repository, path, token) {
+  const configuredUrl = await repository.getPublicAppUrl();
+  const baseUrl = normalizeBaseUrl(configuredUrl) || normalizeBaseUrl(env.appBaseUrl) || `http://localhost:${env.port}`;
+  return `${baseUrl}/app/${path}?token=${encodeURIComponent(token)}`;
 }
 
 function escapeHtml(value) {
@@ -189,7 +196,7 @@ function createTransactionalEmailService(repository, options = {}) {
       participanteId: context.participante_id,
       bolaoId: context.bolao_id
     });
-    const link = appLink('ativacao.html', rawToken);
+    const link = await appLink(repository, 'ativacao.html', rawToken);
     return sendTemplate({
       usuarioId: context.usuario_id,
       bolaoId: context.bolao_id,
@@ -215,7 +222,7 @@ function createTransactionalEmailService(repository, options = {}) {
       return { success: true };
     }
     const { rawToken } = await createToken(user.id, 'recuperacao_senha', {});
-    const link = appLink('redefinir-senha.html', rawToken);
+    const link = await appLink(repository, 'redefinir-senha.html', rawToken);
     await sendTemplate({
       usuarioId: user.id,
       destinatario: user.email,

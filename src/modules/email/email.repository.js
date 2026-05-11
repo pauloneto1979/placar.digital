@@ -91,6 +91,19 @@ async function upsert(data) {
   return map(result.rows[0], { includeSecret: true });
 }
 
+async function getPublicAppUrl() {
+  const result = await query(
+    `
+      select valor
+      from configuracoes_gerais
+      where chave = 'app.url_publica'
+        and ativo = true
+      limit 1
+    `
+  );
+  return result.rows[0]?.valor || null;
+}
+
 async function getTemplate(codigo, idioma = 'pt-BR') {
   const result = await query(
     `
@@ -295,6 +308,7 @@ async function markNotificationError(id, erro, payload = {}) {
 module.exports = {
   getLatest,
   upsert,
+  getPublicAppUrl,
   getTemplate,
   createAuthToken,
   findAuthToken,

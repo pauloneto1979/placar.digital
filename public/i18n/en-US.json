@@ -377,7 +377,9 @@
     "noLinkedPools": "No linked pools",
     "linkedPoolsHelp": "Select the pools this administrator can access.",
     "newPassword": "New password",
-    "confirmNewPassword": "Confirm new password"
+    "confirmNewPassword": "Confirm new password",
+    "publicAppUrl": "Public app URL",
+    "publicAppUrlHelp": "Address used in links sent by email."
   },
   "admin": {
     "participants": "Participants",
@@ -606,7 +608,10 @@
     "confirmPassword": "Confirm new password",
     "submit": "Save new password",
     "sending": "Sending link...",
-    "sent": "If the email is registered, we will send a recovery link.",
-    "success": "Password reset successfully. You can now sign in."
+    "sent": "If the email is registered, we will send the instructions.",
+    "success": "Password reset successfully. You can now sign in.",
+    "requestSubtitle": "Enter your email to receive the recovery link.",
+    "resetSubtitle": "Set your new password to recover access.",
+    "backToLogin": "Back to login"
   }
 }

@@ -2279,6 +2279,10 @@ async function renderConfiguracoesOwner() {
       <form class="form-card" data-crud-form="configuracoesGerais">
         <label>${escapeHtml(t('owner.sessionTime'))} <input name="tempoSessao" type="number" min="1" value="${escapeHtml(config.tempoSessao || '')}"></label>
         <label>${escapeHtml(t('owner.senderEmail'))} <input name="emailRemetente" type="email" value="${escapeHtml(config.emailRemetente || '')}"></label>
+        <label>${escapeHtml(t('owner.publicAppUrl'))}
+          <input name="publicAppUrl" type="url" placeholder="http://admerp.com.br:3002" value="${escapeHtml(config.publicAppUrl || '')}">
+          <small>${escapeHtml(t('owner.publicAppUrlHelp'))}</small>
+        </label>
         <label>${escapeHtml(t('owner.notificationsActive'))}
           <select name="notificacoesAtivas">
             <option value="true" ${config.notificacoesAtivas !== false ? 'selected' : ''}>${escapeHtml(t('common.yes'))}</option>

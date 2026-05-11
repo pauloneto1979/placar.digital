@@ -536,6 +536,7 @@ async function listConfiguracoesGerais() {
       where chave in (
         'sessao.tempo_segundos',
         'email.remetente',
+        'app.url_publica',
         'notificacoes.ativas',
         'pagamentos.gateway'
       )
