@@ -18,6 +18,7 @@ function mapBolao(row) {
 }
 
 function mapUsuario(row) {
+  const deleteCounts = row.delete_counts || {};
   return {
     id: row.id,
     nome: row.nome,
@@ -26,6 +27,8 @@ function mapUsuario(row) {
     ativo: row.ativo,
     status: row.ativo ? 'ativo' : 'inativo',
     bolaoIds: row.bolao_ids || [],
+    podeExcluir: row.pode_excluir === undefined ? undefined : Boolean(row.pode_excluir),
+    deleteCounts,
     ultimoLoginAt: row.ultimo_login_at,
     criadoAt: row.criado_at,
     atualizadoAt: row.atualizado_at
@@ -311,6 +314,8 @@ async function listUsuarios() {
         u.perfil_global,
         u.ativo,
         coalesce(links.bolao_ids, '{}'::uuid[]) as bolao_ids,
+        coalesce(delete_info.delete_counts, '{}'::jsonb) as delete_counts,
+        coalesce(delete_info.pode_excluir, false) as pode_excluir,
         u.ultimo_login_at,
         u.criado_at,
         u.atualizado_at
@@ -323,6 +328,48 @@ async function listUsuarios() {
           and bu.perfil = 'administrador'
           and bu.ativo = true
       ) links on true
+      left join lateral (
+        select
+          jsonb_build_object(
+            'boloesProprietario', (select count(*) from boloes b where b.proprietario_id = u.id),
+            'participantes', (select count(*) from participantes p where p.usuario_id = u.id),
+            'apostas', (
+              select count(*)
+              from apostas a
+              join participantes p on p.id = a.participante_id
+              where p.usuario_id = u.id
+            ),
+            'pagamentos', (
+              select count(*)
+              from pagamentos pg
+              join participantes p on p.id = pg.participante_id
+              where p.usuario_id = u.id
+            ),
+            'administracao', (select count(*) from boloes_usuarios bu where bu.usuario_id = u.id),
+            'notificacoes', (select count(*) from notificacoes n where n.usuario_id = u.id),
+            'auditoria', (select count(*) from auditoria_logs al where al.usuario_id = u.id),
+            'convitesUtilizados', (select count(*) from auth_tokens at where at.usuario_id = u.id and at.utilizado_em is not null)
+          ) as delete_counts,
+          not exists (select 1 from boloes b where b.proprietario_id = u.id)
+          and not exists (select 1 from participantes p where p.usuario_id = u.id)
+          and not exists (
+            select 1
+            from apostas a
+            join participantes p on p.id = a.participante_id
+            where p.usuario_id = u.id
+          )
+          and not exists (
+            select 1
+            from pagamentos pg
+            join participantes p on p.id = pg.participante_id
+            where p.usuario_id = u.id
+          )
+          and not exists (select 1 from boloes_usuarios bu where bu.usuario_id = u.id)
+          and not exists (select 1 from notificacoes n where n.usuario_id = u.id)
+          and not exists (select 1 from auditoria_logs al where al.usuario_id = u.id)
+          and not exists (select 1 from auth_tokens at where at.usuario_id = u.id and at.utilizado_em is not null)
+          as pode_excluir
+      ) delete_info on true
       where u.perfil_global in ('proprietario', 'administrador')
       order by u.nome asc
     `
@@ -403,6 +450,70 @@ async function updateUsuarioStatus(id, ativo) {
   );
 
   return result.rows[0] ? mapUsuario(result.rows[0]) : null;
+}
+
+async function countActiveOwners(exceptId = null) {
+  const result = await query(
+    `
+      select count(*)::int as total
+      from usuarios
+      where perfil_global = 'proprietario'
+        and ativo = true
+        and ($1::uuid is null or id <> $1::uuid)
+    `,
+    [exceptId]
+  );
+
+  return Number(result.rows[0]?.total || 0);
+}
+
+async function getUsuarioDeleteInfo(id) {
+  const result = await query(
+    `
+      select
+        jsonb_build_object(
+          'boloesProprietario', (select count(*) from boloes b where b.proprietario_id = u.id),
+          'participantes', (select count(*) from participantes p where p.usuario_id = u.id),
+          'apostas', (
+            select count(*)
+            from apostas a
+            join participantes p on p.id = a.participante_id
+            where p.usuario_id = u.id
+          ),
+          'pagamentos', (
+            select count(*)
+            from pagamentos pg
+            join participantes p on p.id = pg.participante_id
+            where p.usuario_id = u.id
+          ),
+          'administracao', (select count(*) from boloes_usuarios bu where bu.usuario_id = u.id),
+          'notificacoes', (select count(*) from notificacoes n where n.usuario_id = u.id),
+          'auditoria', (select count(*) from auditoria_logs al where al.usuario_id = u.id),
+          'convitesUtilizados', (select count(*) from auth_tokens at where at.usuario_id = u.id and at.utilizado_em is not null)
+        ) as delete_counts
+      from usuarios u
+      where u.id = $1
+      limit 1
+    `,
+    [id]
+  );
+
+  if (!result.rows[0]) return null;
+  const counts = result.rows[0].delete_counts || {};
+  return {
+    deleteCounts: counts,
+    podeExcluir: Object.values(counts).every((value) => Number(value || 0) === 0)
+  };
+}
+
+async function deleteUsuario(id) {
+  return transaction(async (client) => {
+    const executor = (text, params) => client.query(text, params);
+    await executor('delete from auth_tokens where usuario_id = $1 and utilizado_em is null', [id]);
+    await executor('delete from boloes_usuarios where usuario_id = $1', [id]);
+    const result = await executor('delete from usuarios where id = $1 returning id', [id]);
+    return result.rowCount > 0;
+  });
 }
 
 async function vincularAdministrador(bolaoId, usuarioId) {
@@ -640,6 +751,9 @@ module.exports = {
   createUsuario,
   updateUsuario,
   updateUsuarioStatus,
+  countActiveOwners,
+  getUsuarioDeleteInfo,
+  deleteUsuario,
   vincularAdministrador,
   listAdministradoresBolao,
   listAdminBolaoLinksForUser,

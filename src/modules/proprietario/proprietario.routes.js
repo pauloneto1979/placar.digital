@@ -25,6 +25,7 @@ proprietarioRoutes.get('/usuarios', proprietarioController.listUsuarios);
 proprietarioRoutes.post('/usuarios', proprietarioController.createUsuario);
 proprietarioRoutes.put('/usuarios/:id', proprietarioController.updateUsuario);
 proprietarioRoutes.patch('/usuarios/:id/status', proprietarioController.updateUsuarioStatus);
+proprietarioRoutes.delete('/usuarios/:id', proprietarioController.deleteUsuario);
 
 proprietarioRoutes.get('/boloes/:bolaoId/administradores', proprietarioController.listAdministradoresBolao);
 proprietarioRoutes.post('/boloes/:bolaoId/administradores', proprietarioController.vincularAdministrador);

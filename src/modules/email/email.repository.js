@@ -209,7 +209,8 @@ async function getParticipantContext(participanteId) {
         b.id as bolao_id,
         b.nome as bolao_nome,
         u.nome as usuario_nome,
-        u.email as usuario_email
+        u.email as usuario_email,
+        u.ativo as usuario_ativo
       from participantes p
       join boloes b on b.id = p.bolao_id
       left join usuarios u on u.id = p.usuario_id

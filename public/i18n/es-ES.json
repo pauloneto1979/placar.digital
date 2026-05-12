@@ -387,7 +387,33 @@
     "confirmNewPassword": "Confirmar nueva contraseña",
     "publicAppUrl": "URL pública de la app",
     "publicAppUrlHelp": "Dirección usada en los enlaces enviados por email.",
-    "notifyAdminByEmail": "Notificar al administrador por email"
+    "notifyAdminByEmail": "Notificar al administrador por email",
+    "noUsersInStatus": "No hay usuarios en este estado.",
+    "userStatusTabsLabel": "Estado de los usuarios",
+    "deactivateUser": "Inactivar usuario",
+    "reactivateUser": "Reactivar usuario",
+    "deleteUser": "Eliminar usuario",
+    "deleteUserConfirm": "Eliminar definitivamente",
+    "deleteUserWarning": "Este usuario se eliminará permanentemente. Esta acción no se puede deshacer.",
+    "deletePermanently": "Eliminar definitivamente",
+    "emptyUser": "Usuario sin historial operativo. Puede eliminarse con seguridad.",
+    "userDeactivated": "Usuario inactivado.",
+    "userReactivated": "Usuario reactivado.",
+    "userDeleted": "Usuario eliminado definitivamente.",
+    "userTabs": {
+      "ativo": "Activos",
+      "inativo": "Inactivos"
+    },
+    "userDeleteBlocks": {
+      "ownedPools": "bolones como propietario",
+      "participations": "participaciones",
+      "predictions": "apuestas",
+      "payments": "pagos",
+      "adminLinks": "administraciones de bolones",
+      "notifications": "notificaciones",
+      "audit": "auditoría",
+      "usedInvites": "invitaciones utilizadas"
+    }
   },
   "admin": {
     "participants": "Participantes",

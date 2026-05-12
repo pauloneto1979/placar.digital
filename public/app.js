@@ -36,6 +36,13 @@
     rodada: '',
     grupo: ''
   },
+  usuarioStatusTab: 'ativo',
+  usuarioDeleteModal: {
+    open: false,
+    loading: false,
+    usuario: null,
+    error: ''
+  },
   betGuessesModal: {
     open: false,
     loading: false,
@@ -1902,6 +1909,59 @@ function editableRow(kind, row, title, subtitle, badge = '') {
   `;
 }
 
+const USUARIO_STATUS_TABS = ['ativo', 'inativo'];
+
+function usuarioStatusTabs(rows = []) {
+  return `
+    <div class="status-tabs" role="tablist" aria-label="${escapeHtml(t('owner.userStatusTabsLabel'))}">
+      ${USUARIO_STATUS_TABS.map((status) => {
+        const total = rows.filter((row) => (row.ativo !== false ? 'ativo' : 'inativo') === status).length;
+        const active = state.usuarioStatusTab === status;
+        return `
+          <button class="status-tab ${active ? 'active' : ''}" type="button" role="tab" aria-selected="${active ? 'true' : 'false'}" data-usuario-status-tab="${escapeHtml(status)}">
+            <span>${escapeHtml(t(`owner.userTabs.${status}`))}</span>
+            <strong>${total}</strong>
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function usuarioDeleteSummary(usuario) {
+  const counts = usuario?.deleteCounts || {};
+  const blocks = [
+    ['boloesProprietario', t('owner.userDeleteBlocks.ownedPools')],
+    ['participantes', t('owner.userDeleteBlocks.participations')],
+    ['apostas', t('owner.userDeleteBlocks.predictions')],
+    ['pagamentos', t('owner.userDeleteBlocks.payments')],
+    ['administracao', t('owner.userDeleteBlocks.adminLinks')],
+    ['notificacoes', t('owner.userDeleteBlocks.notifications')],
+    ['auditoria', t('owner.userDeleteBlocks.audit')],
+    ['convitesUtilizados', t('owner.userDeleteBlocks.usedInvites')]
+  ].filter(([key]) => Number(counts[key] || 0) > 0);
+  if (!blocks.length) return t('owner.emptyUser');
+  return blocks.map(([key, label]) => `${label}: ${counts[key]}`).join(' · ');
+}
+
+function usuarioLifecycleActions(row) {
+  const actions = [];
+  const active = row.ativo !== false;
+  actions.push(`
+    <button class="ghost" type="button" data-usuario-status-action="${active ? 'inativo' : 'ativo'}" data-id="${escapeHtml(row.id)}">
+      ${escapeHtml(active ? t('owner.deactivateUser') : t('owner.reactivateUser'))}
+    </button>
+  `);
+  if (row.podeExcluir && String(row.id) !== String(state.user?.id)) {
+    actions.push(`
+      <button class="ghost danger" type="button" data-open-usuario-delete="${escapeHtml(row.id)}">
+        ${escapeHtml(t('owner.deleteUser'))}
+      </button>
+    `);
+  }
+  return actions.join('');
+}
+
 function usuarioRow(row, boloes) {
   const poolMap = new Map((boloes || []).map((bolao) => [String(bolao.id), bolao.nome]));
   const linkedPools = (row.bolaoIds || [])
@@ -1915,7 +1975,7 @@ function usuarioRow(row, boloes) {
         <p class="muted">${escapeHtml(row.email || '')}</p>
         <div class="pill-list">
           <span class="pill">${escapeHtml(badgeLabel(row.perfil || row.status))}</span>
-          <span class="pill">${escapeHtml(statusLabel(row.ativo !== false ? 'ativo' : 'inativo'))}</span>
+          <span class="pill user-status-pill ${row.ativo !== false ? 'user-status-pill--active' : 'user-status-pill--inactive'}">${escapeHtml(statusLabel(row.ativo !== false ? 'ativo' : 'inativo'))}</span>
           ${isAdmin
             ? (linkedPools.length
               ? linkedPools.map((nome) => `<span class="pill admin-pool-pill">${escapeHtml(nome)}</span>`).join('')
@@ -1925,8 +1985,40 @@ function usuarioRow(row, boloes) {
       </div>
       <div class="actions">
         <button class="secondary" type="button" data-edit-kind="usuarios" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
+        ${usuarioLifecycleActions(row)}
       </div>
     </article>
+  `;
+}
+
+function renderUsuarioDeleteModal() {
+  const modal = state.usuarioDeleteModal;
+  const usuario = modal.usuario;
+  if (!modal.open || !usuario) return '';
+  return `
+    <div class="modal-backdrop" data-close-usuario-delete>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="usuarioDeleteTitle" data-modal-card>
+        <div class="card-title">
+          <div>
+            <h2 id="usuarioDeleteTitle">${escapeHtml(t('owner.deleteUser'))}</h2>
+            <p class="muted">${escapeHtml(usuario.nome || usuario.email || '')}</p>
+          </div>
+          ${iconOnlyButton('x', t('common.close'), 'data-close-usuario-delete')}
+        </div>
+        <div class="danger-zone">
+          <strong>${escapeHtml(t('owner.deleteUserWarning'))}</strong>
+          <p>${escapeHtml(t('owner.deleteUserConfirm'))}</p>
+          <p class="muted">${escapeHtml(usuarioDeleteSummary(usuario))}</p>
+        </div>
+        ${modal.error ? `<p class="message error">${escapeHtml(modal.error)}</p>` : ''}
+        <div class="form-actions">
+          <button class="ghost" type="button" data-close-usuario-delete>${escapeHtml(t('common.cancel'))}</button>
+          <button class="danger" type="button" data-confirm-usuario-delete="${escapeHtml(usuario.id)}" ${modal.loading ? 'disabled' : ''}>
+            ${escapeHtml(modal.loading ? t('common.loading') : t('owner.deletePermanently'))}
+          </button>
+        </div>
+      </section>
+    </div>
   `;
 }
 
@@ -2076,6 +2168,7 @@ async function renderUsuariosOwner() {
   state.data.usuarios = rows;
   state.data.boloes = boloes;
   const activeBoloes = selectableBoloes(boloes);
+  const selectedRows = rows.filter((row) => (row.ativo !== false ? 'ativo' : 'inativo') === state.usuarioStatusTab);
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>${escapeHtml(t('owner.users'))}</h2><span class="pill">${escapeHtml(t('common.owner'))}</span></div>
@@ -2104,8 +2197,12 @@ async function renderUsuariosOwner() {
         ${scopedMessage('usuarios')}
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => usuarioRow(row, activeBoloes)).join('') || empty(t('owner.noUsers'))}</div></section>
+    <section class="card">
+      ${usuarioStatusTabs(rows)}
+      <div class="list">${selectedRows.map((row) => usuarioRow(row, activeBoloes)).join('') || empty(t('owner.noUsersInStatus'))}</div>
+    </section>
     ${renderUsuarioEditorModal(findById(rows, state.userEditorId), activeBoloes)}
+    ${renderUsuarioDeleteModal()}
   `;
 }
 
@@ -2942,7 +3039,10 @@ async function navigate(routeId) {
   const route = routes.find((item) => item.id === routeId && routeAllowed(item));
   state.route = route ? route.id : 'home';
   state.mobileMoreOpen = false;
-  if (state.route !== 'usuarios') state.userEditorId = '';
+  if (state.route !== 'usuarios') {
+    state.userEditorId = '';
+    state.usuarioDeleteModal = { open: false, loading: false, usuario: null, error: '' };
+  }
   renderChrome();
   content.innerHTML = loadingMarkup();
   try {
@@ -3334,6 +3434,27 @@ async function sendParticipantInvite(participanteId) {
   await renderParticipantesAdmin();
 }
 
+async function updateUsuarioStatus(id, status) {
+  await api(`/proprietario/usuarios/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status })
+  });
+  showMessage(status === 'ativo' ? t('owner.userReactivated') : t('owner.userDeactivated'), 'success');
+  state.usuarioStatusTab = status;
+  await navigate('usuarios');
+}
+
+async function deleteUsuario(id) {
+  const usuario = findById(state.data.usuarios || [], id);
+  if (!usuario) return;
+  state.usuarioDeleteModal = { open: true, loading: true, usuario, error: '' };
+  await navigate('usuarios');
+  await api(`/proprietario/usuarios/${id}`, { method: 'DELETE' });
+  state.usuarioDeleteModal = { open: false, loading: false, usuario: null, error: '' };
+  showMessage(t('owner.userDeleted'), 'success');
+  await navigate('usuarios');
+}
+
 async function init() {
   if (!state.token) {
     redirectLogin();
@@ -3467,6 +3588,57 @@ content.addEventListener('click', (event) => {
       state.participantInviteModal = { open: true, loading: false, participante, error: '' };
       navigate('participantes');
     }
+    return;
+  }
+
+  const usuarioStatusTab = event.target.closest('[data-usuario-status-tab]');
+  if (usuarioStatusTab) {
+    state.usuarioStatusTab = usuarioStatusTab.dataset.usuarioStatusTab || 'ativo';
+    navigate('usuarios');
+    return;
+  }
+
+  const usuarioStatusAction = event.target.closest('[data-usuario-status-action]');
+  if (usuarioStatusAction) {
+    updateUsuarioStatus(usuarioStatusAction.dataset.id, usuarioStatusAction.dataset.usuarioStatusAction).catch((error) => {
+      showMessage(error.message || t('messages.apiError'), 'error');
+    });
+    return;
+  }
+
+  const openUsuarioDelete = event.target.closest('[data-open-usuario-delete]');
+  if (openUsuarioDelete) {
+    const usuario = findById(state.data.usuarios || [], openUsuarioDelete.dataset.openUsuarioDelete);
+    if (usuario) {
+      state.usuarioDeleteModal = { open: true, loading: false, usuario, error: '' };
+      navigate('usuarios');
+    }
+    return;
+  }
+
+  const closeUsuarioDelete = event.target.closest('[data-close-usuario-delete]');
+  if (closeUsuarioDelete && !event.target.closest('[data-modal-card]')) {
+    state.usuarioDeleteModal = { open: false, loading: false, usuario: null, error: '' };
+    navigate('usuarios');
+    return;
+  }
+
+  if (event.target.closest('button[data-close-usuario-delete]')) {
+    state.usuarioDeleteModal = { open: false, loading: false, usuario: null, error: '' };
+    navigate('usuarios');
+    return;
+  }
+
+  const confirmUsuarioDelete = event.target.closest('[data-confirm-usuario-delete]');
+  if (confirmUsuarioDelete) {
+    deleteUsuario(confirmUsuarioDelete.dataset.confirmUsuarioDelete).catch((error) => {
+      state.usuarioDeleteModal = {
+        ...state.usuarioDeleteModal,
+        loading: false,
+        error: error.message || t('messages.apiError')
+      };
+      navigate('usuarios');
+    });
     return;
   }
 

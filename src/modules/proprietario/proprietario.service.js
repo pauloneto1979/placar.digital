@@ -409,6 +409,13 @@ function createProprietarioService(repository, options = {}) {
         throw new HttpError(400, 'invalid_user_status', 'Informe ativo boolean ou status ativo/inativo.');
       }
 
+      if (!ativo && existing.perfil === 'proprietario') {
+        const activeOwnersAfterChange = await repository.countActiveOwners(id);
+        if (activeOwnersAfterChange < 1) {
+          throw new HttpError(409, 'last_owner_cannot_be_deactivated', 'Nao e possivel inativar o ultimo proprietario ativo do sistema.');
+        }
+      }
+
       const usuario = await repository.updateUsuarioStatus(id, ativo);
 
       await audit(auth, context, {
@@ -420,6 +427,35 @@ function createProprietarioService(repository, options = {}) {
       });
 
       return usuario;
+    },
+
+    async deleteUsuario(id, auth, context) {
+      const existing = await ensureUsuarioSistema(id);
+      if (String(auth.usuarioId) === String(id)) {
+        throw new HttpError(409, 'cannot_delete_current_user', 'Nao e possivel excluir o proprio usuario logado.');
+      }
+
+      if (existing.perfil === 'proprietario') {
+        const activeOwnersAfterDelete = await repository.countActiveOwners(id);
+        if (activeOwnersAfterDelete < 1) {
+          throw new HttpError(409, 'last_owner_cannot_be_deleted', 'Nao e possivel excluir o ultimo proprietario ativo do sistema.');
+        }
+      }
+
+      const deleteInfo = await repository.getUsuarioDeleteInfo(id);
+      if (!deleteInfo || !deleteInfo.podeExcluir) {
+        throw new HttpError(409, 'user_not_empty', 'Este usuario possui historico operacional e nao pode ser excluido definitivamente.');
+      }
+
+      await audit(auth, context, {
+        entidade: 'usuarios',
+        entidadeId: existing.id,
+        acao: 'proprietario.usuario.excluido',
+        dadosAnteriores: existing,
+        dadosNovos: { deleteCounts: deleteInfo.deleteCounts }
+      });
+      await repository.deleteUsuario(id);
+      return { deleted: true, id };
     },
 
     async vincularAdministrador(bolaoId, payload, auth, context) {

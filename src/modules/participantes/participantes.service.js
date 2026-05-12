@@ -162,6 +162,10 @@ function createParticipantesService(repository, options = {}) {
       if (participante.status === 'ativo') {
         throw new HttpError(409, 'participant_access_already_active', 'Participante ja possui acesso ativo.');
       }
+      const usuario = await repository.findUsuarioByEmail(participante.email);
+      if (usuario && !usuario.ativo) {
+        throw new HttpError(409, 'inactive_bettor_credential', 'Credencial de apostador existente esta inativa.');
+      }
       const emailConvite = await tentarEnviarConvite(participante);
       if (!emailConvite.sent) {
         throw new HttpError(422, 'participant_invite_not_sent', 'Nao foi possivel enviar o convite por e-mail.');

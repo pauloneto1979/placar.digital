@@ -1322,6 +1322,18 @@ select option {
   width: min(920px, 100%);
 }
 
+.user-status-pill--active {
+  background: rgba(60, 255, 147, 0.08);
+  border-color: rgba(60, 255, 147, 0.34);
+  color: var(--success);
+}
+
+.user-status-pill--inactive {
+  background: rgba(255, 93, 124, 0.09);
+  border-color: rgba(255, 93, 124, 0.34);
+  color: #ff9aa8;
+}
+
 .user-editor-modal .form-card {
   margin-top: 14px;
 }

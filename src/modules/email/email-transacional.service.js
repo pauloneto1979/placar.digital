@@ -168,6 +168,13 @@ function createTransactionalEmailService(repository, options = {}) {
   }
 
   async function sendTemplate({ usuarioId, bolaoId, destinatario, tipoEvento, tipo = 'sistema', templateCode, idioma = 'pt-BR', variables = {}, payload = {} }) {
+    if (usuarioId) {
+      const usuario = await repository.findUserById(usuarioId);
+      if (usuario && !usuario.ativo) {
+        return { sent: false, reason: 'inactive_recipient' };
+      }
+    }
+
     const template = await repository.getTemplate(templateCode, idioma);
     if (!template) {
       throw new HttpError(500, 'email_template_missing', 'Template de e-mail nao encontrado.');
@@ -220,6 +227,7 @@ function createTransactionalEmailService(repository, options = {}) {
   async function enviarConviteParticipante(participanteId) {
     const context = await repository.getParticipantContext(participanteId);
     if (!context || !context.usuario_id) return { sent: false, reason: 'participant_context_missing' };
+    if (context.usuario_ativo === false) return { sent: false, reason: 'inactive_recipient' };
     const { rawToken } = await createToken(context.usuario_id, 'convite', {
       participanteId: context.participante_id,
       bolaoId: context.bolao_id

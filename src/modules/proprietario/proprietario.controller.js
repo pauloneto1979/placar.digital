@@ -64,6 +64,14 @@ function createProprietarioController(service) {
       }
     },
 
+    async deleteUsuario(req, res, next) {
+      try {
+        res.json(await service.deleteUsuario(req.params.id, req.auth, req.context));
+      } catch (error) {
+        next(error);
+      }
+    },
+
     async vincularAdministrador(req, res, next) {
       try {
         res.status(201).json(await service.vincularAdministrador(req.params.bolaoId, req.body, req.auth, req.context));

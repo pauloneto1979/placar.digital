@@ -387,7 +387,33 @@
     "confirmNewPassword": "Confirm new password",
     "publicAppUrl": "Public app URL",
     "publicAppUrlHelp": "Address used in links sent by email.",
-    "notifyAdminByEmail": "Notify administrator by email"
+    "notifyAdminByEmail": "Notify administrator by email",
+    "noUsersInStatus": "No users in this status.",
+    "userStatusTabsLabel": "User status",
+    "deactivateUser": "Deactivate user",
+    "reactivateUser": "Reactivate user",
+    "deleteUser": "Delete user",
+    "deleteUserConfirm": "Delete permanently",
+    "deleteUserWarning": "This user will be permanently removed. This action cannot be undone.",
+    "deletePermanently": "Delete permanently",
+    "emptyUser": "User has no operational history and can be safely deleted.",
+    "userDeactivated": "User deactivated.",
+    "userReactivated": "User reactivated.",
+    "userDeleted": "User permanently deleted.",
+    "userTabs": {
+      "ativo": "Active",
+      "inativo": "Inactive"
+    },
+    "userDeleteBlocks": {
+      "ownedPools": "owned pools",
+      "participations": "participations",
+      "predictions": "predictions",
+      "payments": "payments",
+      "adminLinks": "pool administration links",
+      "notifications": "notifications",
+      "audit": "audit",
+      "usedInvites": "used invites"
+    }
   },
   "admin": {
     "participants": "Participants",
