@@ -9,6 +9,9 @@ function createParticipantesController(service) {
     async create(req, res, next) {
       try { res.status(201).json(await service.create(req.params.bolaoId, req.body, req.auth)); } catch (error) { next(error); }
     },
+    async invite(req, res, next) {
+      try { res.status(201).json(await service.invite(req.params.bolaoId, req.body, req.auth)); } catch (error) { next(error); }
+    },
     async update(req, res, next) {
       try { res.json(await service.update(req.params.bolaoId, req.params.id, req.body, req.auth)); } catch (error) { next(error); }
     },

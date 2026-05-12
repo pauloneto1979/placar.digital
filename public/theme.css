@@ -2120,6 +2120,23 @@ button.danger:hover,
   width: min(560px, calc(100vw - 32px));
 }
 
+.quick-invite-modal {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.participants-title {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.participants-title .muted {
+  margin: 4px 0 0;
+}
+
+.participants-main-invite {
+  flex: 0 0 auto;
+}
+
 .invite-confirm {
   background: rgba(5, 14, 23, 0.54);
   border: 1px solid rgba(159, 188, 215, 0.13);
@@ -2149,8 +2166,36 @@ button.danger:hover,
   justify-content: flex-end;
 }
 
+.participant-row {
+  align-items: flex-start;
+}
+
+.participant-row__main {
+  min-width: 0;
+}
+
+.participant-row__head {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.participant-row__head strong {
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.participant-row__email {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+
 .participant-access-pill {
   font-weight: 850;
+  white-space: nowrap;
 }
 
 .participant-invite-button {
@@ -2173,6 +2218,67 @@ button.danger:hover,
 .participant-invite-button:disabled {
   cursor: not-allowed;
   opacity: 0.48;
+}
+
+.participant-edit-button {
+  color: var(--muted);
+  min-height: 40px;
+}
+
+.quick-invite-form {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.quick-invite-submit {
+  justify-content: center;
+  min-height: 48px;
+  width: 100%;
+}
+
+.quick-invite-secondary {
+  justify-content: center;
+  width: 100%;
+}
+
+.quick-invite-success {
+  border: 1px solid rgba(33, 212, 253, 0.22);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 16px;
+}
+
+.quick-invite-success[data-tone="success"] {
+  background: rgba(200, 255, 46, 0.08);
+  border-color: rgba(200, 255, 46, 0.22);
+}
+
+.quick-invite-success[data-tone="warning"] {
+  background: rgba(255, 207, 102, 0.08);
+  border-color: rgba(255, 207, 102, 0.24);
+}
+
+.quick-invite-success strong {
+  color: var(--text);
+}
+
+.quick-invite-success p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.quick-invite-actions {
+  align-items: stretch;
+}
+
+.quick-invite-page {
+  display: grid;
+  gap: 16px;
+  padding-bottom: 92px;
 }
 
 .pool-guesses-list {
@@ -3208,6 +3314,26 @@ button[data-reset-form]:not(.icon-action)::before {
   .pool-status-pill {
     justify-self: start;
   }
+
+  .participants-title {
+    align-items: stretch;
+  }
+
+  .participants-main-invite,
+  .quick-invite-actions button {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .participant-row__head {
+    display: grid;
+    gap: 8px;
+  }
+
+  .participant-access-pill {
+    justify-self: start;
+  }
+
 
   .mobile-bottom-nav {
     align-items: center;

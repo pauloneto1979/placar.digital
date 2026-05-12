@@ -57,6 +57,15 @@
     participante: null,
     error: ''
   },
+  participantQuickInvite: {
+    open: false,
+    loading: false,
+    mode: 'form',
+    form: { nome: '', email: '' },
+    result: null,
+    error: ''
+  },
+
   emailConfigSecret: {
     visible: false,
     value: ''
@@ -157,6 +166,7 @@ const routes = [
   { id: 'regras', labelKey: 'nav.regras', subtitleKey: 'subtitles.regras' },
   { id: 'notificacoes', labelKey: 'nav.notificacoes', subtitleKey: 'subtitles.notificacoes', roles: ['proprietario', 'administrador'] },
   { id: 'participantes', labelKey: 'nav.participantes', subtitleKey: 'subtitles.participantes', admin: true },
+  { id: 'participantes-convite', labelKey: 'admin.inviteParticipantTitle', subtitleKey: 'subtitles.participantes', admin: true, hidden: true },
   { id: 'pagamentos', labelKey: 'nav.pagamentos', subtitleKey: 'subtitles.pagamentos', admin: true },
   { id: 'fases', labelKey: 'nav.fases', subtitleKey: 'subtitles.fases', admin: true },
   { id: 'times', labelKey: 'nav.times', subtitleKey: 'subtitles.times', admin: true },
@@ -2224,6 +2234,16 @@ function accessStatusTone(status) {
   })[status] || 'bet-status--pending';
 }
 
+function accessStatusIcon(status) {
+  return ({
+    acesso_ativo: '🟢',
+    convite_enviado: '🟡',
+    expirado: '🔴',
+    pendente: '⚪'
+  })[status] || '⚪';
+}
+
+
 function participantInviteButton(row) {
   const hasEmail = Boolean(String(row.email || '').trim());
   if (row.acessoStatus === 'acesso_ativo') {
@@ -2242,17 +2262,16 @@ function participantRow(row) {
   const status = row.acessoStatus || 'pendente';
   return `
     <article class="row-card participant-row">
-      <div>
-        <strong>${escapeHtml(row.nome)}</strong>
-        <p class="muted">${escapeHtml([row.email, row.telefone || ''].filter(Boolean).join(' · '))}</p>
-        <div class="row-badges">
-          <span class="pill">${escapeHtml(statusLabel(row.status))}</span>
-          <span class="pill bet-status-pill participant-access-pill ${accessStatusTone(status)}">${escapeHtml(accessStatusLabel(status))}</span>
+      <div class="participant-row__main">
+        <div class="participant-row__head">
+          <strong>${escapeHtml(row.nome)}</strong>
+          <span class="pill bet-status-pill participant-access-pill ${accessStatusTone(status)}">${escapeHtml(`${accessStatusIcon(status)} ${accessStatusLabel(status)}`)}</span>
         </div>
+        <p class="muted participant-row__email">${escapeHtml(row.email || t('admin.noParticipantEmail'))}</p>
       </div>
       <div class="actions">
         ${participantInviteButton(row)}
-        <button class="secondary" type="button" data-edit-kind="participantes" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
+        <button class="ghost participant-edit-button" type="button" data-edit-kind="participantes" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
       </div>
     </article>
   `;
@@ -2287,6 +2306,92 @@ function renderParticipantInviteModal() {
     </div>
   `;
 }
+
+function quickInviteFeedback(result) {
+  if (!result) return '';
+  return ({
+    created_invited: t('admin.inviteCreatedSuccess'),
+    existing_user_invited: t('admin.inviteExistingUserSuccess'),
+    invite_resent: t('admin.inviteResentSuccess'),
+    active_access_resent: t('admin.inviteAccessResentSuccess'),
+    already_in_pool: t('admin.inviteAlreadyInPool'),
+    active_access: t('admin.inviteAlreadyActive')
+  })[result.status] || t('admin.inviteSent');
+}
+
+function quickInviteNeedsResend(result) {
+  return result?.status === 'already_in_pool' || result?.status === 'active_access';
+}
+
+function renderQuickInviteSuccess(result) {
+  const needsResend = quickInviteNeedsResend(result);
+  return `
+    <div class="quick-invite-success" data-tone="${needsResend ? 'warning' : 'success'}">
+      <strong>${escapeHtml(needsResend ? quickInviteFeedback(result) : t('admin.inviteSuccessTitle'))}</strong>
+      <p>${escapeHtml(needsResend ? t('admin.inviteResendQuestion') : quickInviteFeedback(result))}</p>
+    </div>
+    <div class="form-actions quick-invite-actions">
+      ${needsResend ? `
+        <button class="participant-invite-button" type="button" data-quick-invite-resend>${escapeHtml(result.status === 'active_access' ? t('admin.resendAccess') : t('admin.resendInvite'))}</button>
+        <button class="ghost" type="button" data-quick-invite-back>${escapeHtml(t('common.cancel'))}</button>
+      ` : `
+        <button class="participant-invite-button" type="button" data-quick-invite-reset>${escapeHtml(t('admin.inviteAnother'))}</button>
+        <button class="ghost" type="button" data-quick-invite-back>${escapeHtml(t('admin.backToParticipants'))}</button>
+      `}
+    </div>
+  `;
+}
+
+function renderQuickParticipantInviteForm({ mobile = false } = {}) {
+  const model = state.participantQuickInvite;
+  if (model.mode === 'success' || model.mode === 'conflict') {
+    return renderQuickInviteSuccess(model.result);
+  }
+
+  return `
+    <form class="form-card quick-invite-form" data-participant-quick-invite>
+      <label>${escapeHtml(t('admin.inviteParticipantName'))}
+        <input name="nome" required autocomplete="name" value="${escapeHtml(model.form.nome || '')}" placeholder="${escapeHtml(t('admin.inviteParticipantNamePlaceholder'))}">
+      </label>
+      <label>${escapeHtml(t('auth.email'))}
+        <input name="email" type="email" required autocomplete="email" value="${escapeHtml(model.form.email || '')}" placeholder="${escapeHtml(t('admin.inviteParticipantEmailPlaceholder'))}">
+      </label>
+      ${model.error ? `<p class="message card-message" data-tone="error">${escapeHtml(model.error)}</p>` : ''}
+      <button class="participant-invite-button quick-invite-submit" type="submit" ${model.loading ? 'disabled' : ''}>${escapeHtml(model.loading ? t('common.loading') : t('admin.sendInvite'))}</button>
+      ${mobile ? `<button class="ghost quick-invite-secondary" type="button" data-quick-invite-back>${escapeHtml(t('admin.backToParticipants'))}</button>` : ''}
+    </form>
+  `;
+}
+
+function renderQuickParticipantInviteModal() {
+  if (!state.participantQuickInvite.open || isMobileViewport()) return '';
+  return `
+    <div class="modal-backdrop" data-close-participant-quick-invite>
+      <section class="modal-card participant-invite-modal quick-invite-modal" data-modal-card>
+        <div class="card-title">
+          <h2>${escapeHtml(t('admin.inviteParticipantTitle'))}</h2>
+          <button class="ghost icon-action" type="button" data-close-participant-quick-invite aria-label="${escapeHtml(t('common.close'))}" title="${escapeHtml(t('common.close'))}">&times;</button>
+        </div>
+        <p class="muted">${escapeHtml(t('admin.inviteParticipantIntro'))}</p>
+        ${renderQuickParticipantInviteForm()}
+      </section>
+    </div>
+  `;
+}
+
+async function renderParticipantInviteView() {
+  content.innerHTML = `
+    <section class="quick-invite-page">
+      <div class="mobile-page-header">
+        <button class="ghost" type="button" data-quick-invite-back>${escapeHtml(t('common.back'))}</button>
+        <h2>${escapeHtml(t('admin.inviteParticipantTitle'))}</h2>
+      </div>
+      <p class="muted">${escapeHtml(t('admin.inviteParticipantIntro'))}</p>
+      ${renderQuickParticipantInviteForm({ mobile: true })}
+    </section>
+  `;
+}
+
 
 const BOLAO_STATUS_TABS = ['ativo', 'finalizado'];
 
@@ -2381,7 +2486,13 @@ async function renderParticipantesAdmin() {
   state.data.participantes = rows;
   content.innerHTML = `
     <section class="card">
-      <div class="card-title"><h2>${escapeHtml(t('admin.participants'))}</h2><span class="pill">${escapeHtml(t('common.administration'))}</span></div>
+      <div class="card-title participants-title">
+        <div>
+          <h2>${escapeHtml(t('admin.participants'))}</h2>
+          <p class="muted">${escapeHtml(t('admin.participantsInviteHint'))}</p>
+        </div>
+        <button class="participant-invite-button participants-main-invite" type="button" data-open-participant-quick-invite>${escapeHtml(`+ ${t('admin.sendInvite')}`)}</button>
+      </div>
       <form class="form-card" data-crud-form="participantes">
         <input name="id" type="hidden">
         <label>${escapeHtml(t('owner.name'))} <input name="nome" required></label>
@@ -2404,6 +2515,7 @@ async function renderParticipantesAdmin() {
       </form>
     </section>
     <section class="card"><div class="list">${rows.map(participantRow).join('') || empty(t('admin.noParticipants'))}</div></section>
+    ${renderQuickParticipantInviteModal()}
     ${renderParticipantInviteModal()}
   `;
 }
@@ -3118,6 +3230,7 @@ const renderers = {
   regras: renderRegras,
   notificacoes: renderNotificacoes,
   participantes: renderParticipantesAdmin,
+  'participantes-convite': renderParticipantInviteView,
   pagamentos: renderPagamentosAdmin,
   fases: renderFasesAdmin,
   times: renderTimesAdmin,
@@ -3570,6 +3683,62 @@ async function deleteUsuario(id) {
   await navigate('usuarios');
 }
 
+function resetQuickParticipantInvite() {
+  state.participantQuickInvite = {
+    open: false,
+    loading: false,
+    mode: 'form',
+    form: { nome: '', email: '' },
+    result: null,
+    error: ''
+  };
+}
+
+async function openQuickParticipantInvite() {
+  resetQuickParticipantInvite();
+  state.participantQuickInvite.open = true;
+  await navigate(isMobileViewport() ? 'participantes-convite' : 'participantes');
+}
+
+async function closeQuickParticipantInvite() {
+  resetQuickParticipantInvite();
+  await navigate('participantes');
+}
+
+async function submitQuickParticipantInvite(form, resend = false) {
+  const data = form
+    ? formPayload(form)
+    : { ...state.participantQuickInvite.form };
+  state.participantQuickInvite = {
+    ...state.participantQuickInvite,
+    loading: true,
+    error: '',
+    form: {
+      nome: data.nome || '',
+      email: data.email || ''
+    }
+  };
+  await navigate(isMobileViewport() ? 'participantes-convite' : 'participantes');
+  const result = await api(`/participantes/boloes/${state.activeBolaoId}/convite`, {
+    method: 'POST',
+    body: JSON.stringify({
+      nome: data.nome,
+      email: data.email,
+      reenviar: resend
+    })
+  });
+  state.participantQuickInvite = {
+    ...state.participantQuickInvite,
+    loading: false,
+    mode: quickInviteNeedsResend(result) ? 'conflict' : 'success',
+    result,
+    error: ''
+  };
+  state.data.participantes = await api(`/participantes/boloes/${state.activeBolaoId}`);
+  await navigate(isMobileViewport() ? 'participantes-convite' : 'participantes');
+}
+
+
 async function init() {
   if (!state.token) {
     redirectLogin();
@@ -3807,6 +3976,43 @@ content.addEventListener('click', (event) => {
     });
     return;
   }
+
+  const closeQuickInvite = event.target.closest('[data-close-participant-quick-invite]');
+  if (closeQuickInvite && !event.target.closest('[data-modal-card]')) {
+    closeQuickParticipantInvite();
+    return;
+  }
+
+  if (event.target.closest('button[data-close-participant-quick-invite], [data-quick-invite-back]')) {
+    closeQuickParticipantInvite();
+    return;
+  }
+
+  if (event.target.closest('[data-quick-invite-reset]')) {
+    state.participantQuickInvite = {
+      ...state.participantQuickInvite,
+      loading: false,
+      mode: 'form',
+      result: null,
+      error: '',
+      form: { nome: '', email: '' }
+    };
+    navigate(isMobileViewport() ? 'participantes-convite' : 'participantes');
+    return;
+  }
+
+  if (event.target.closest('[data-quick-invite-resend]')) {
+    submitQuickParticipantInvite(null, true).catch((error) => {
+      state.participantQuickInvite = {
+        ...state.participantQuickInvite,
+        loading: false,
+        error: error.message || t('messages.apiError')
+      };
+      navigate(isMobileViewport() ? 'participantes-convite' : 'participantes');
+    });
+    return;
+  }
+
 
   const closeParticipantInvite = event.target.closest('[data-close-participant-invite]');
   if (closeParticipantInvite && !event.target.closest('[data-modal-card]')) {
@@ -4116,6 +4322,20 @@ content.addEventListener('submit', (event) => {
     event.preventDefault();
     searchExternalMatches(externalMatchSearchForm).catch((error) => {
       setFormMessage('externalMatchLink', error.message, 'error');
+    });
+    return;
+  }
+
+  const participantQuickInviteForm = event.target.closest('[data-participant-quick-invite]');
+  if (participantQuickInviteForm) {
+    event.preventDefault();
+    submitQuickParticipantInvite(participantQuickInviteForm).catch((error) => {
+      state.participantQuickInvite = {
+        ...state.participantQuickInvite,
+        loading: false,
+        error: error.message || t('messages.apiError')
+      };
+      navigate(isMobileViewport() ? 'participantes-convite' : 'participantes');
     });
     return;
   }

@@ -14,6 +14,7 @@ participantesRoutes.use(authMiddleware);
 participantesRoutes.get('/', controller.status);
 participantesRoutes.get('/boloes/:bolaoId', controller.list);
 participantesRoutes.post('/boloes/:bolaoId', controller.create);
+participantesRoutes.post('/boloes/:bolaoId/convite', controller.invite);
 participantesRoutes.put('/boloes/:bolaoId/:id', controller.update);
 participantesRoutes.patch('/boloes/:bolaoId/:id/status', controller.updateStatus);
 participantesRoutes.post('/boloes/:bolaoId/:id/convite', controller.sendInvite);

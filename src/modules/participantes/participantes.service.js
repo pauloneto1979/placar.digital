@@ -63,7 +63,7 @@ function createParticipantesService(repository, options = {}) {
       );
     }
 
-    if (existing && !existing.ativo) {
+    if (existing && !existing.ativo && !data.allowInactiveCredential) {
       throw new HttpError(409, 'inactive_bettor_credential', 'Credencial de apostador existente esta inativa.');
     }
 
@@ -122,6 +122,42 @@ function createParticipantesService(repository, options = {}) {
     };
   }
 
+  function invitePayload(body = {}) {
+    const nome = clean(body.nome);
+    const email = normalizeEmail(body.email);
+    const reenviar = body.reenviar === true || body.resend === true;
+
+    if (!nome || !email) throw new HttpError(400, 'invalid_invite_payload', 'Nome e email sao obrigatorios.');
+    if (!email.includes('@')) throw new HttpError(400, 'invalid_participant_email', 'Email invalido.');
+
+    return { nome, email, reenviar };
+  }
+
+  async function sendInviteForExisting(participante, status, reenviar) {
+    if (!reenviar) {
+      return {
+        status,
+        participante,
+        emailConvite: null
+      };
+    }
+
+    const usuario = await repository.findUsuarioByEmail(participante.email);
+    if (usuario && !usuario.ativo) {
+      throw new HttpError(409, 'inactive_bettor_credential', 'Credencial de apostador existente esta inativa.');
+    }
+
+    const emailConvite = await tentarEnviarConvite(participante);
+    if (!emailConvite.sent) {
+      throw new HttpError(422, 'participant_invite_not_sent', 'Nao foi possivel enviar o convite por e-mail.');
+    }
+    return {
+      status: status === 'active_access' ? 'active_access_resent' : 'invite_resent',
+      participante,
+      emailConvite
+    };
+  }
+
   return {
     getStatus() {
       return { module: 'participantes', implemented: true };
@@ -139,6 +175,34 @@ function createParticipantesService(repository, options = {}) {
       const result = attachCredencialInfo(participante, credencial);
       const shouldInvite = !data.senhaInicial || data.enviarConvite;
       return { ...result, emailConvite: shouldInvite ? await tentarEnviarConvite(participante) : null };
+    },
+    async invite(bolaoId, body, auth) {
+      await ensureCanAdminBolao(auth, bolaoId);
+      const data = invitePayload(body);
+      const existingParticipant = await repository.findByEmail(bolaoId, data.email);
+      if (existingParticipant) {
+        const active = existingParticipant.status === 'ativo';
+        return sendInviteForExisting(existingParticipant, active ? 'active_access' : 'already_in_pool', data.reenviar);
+      }
+
+      const credencial = await resolveCredencialApostador({ ...data, senhaInicial: '' });
+      const participante = await repository.create({
+        bolaoId,
+        usuarioId: credencial.usuario.id,
+        nome: data.nome,
+        email: data.email,
+        telefone: '',
+        status: 'convidado'
+      });
+      const emailConvite = await tentarEnviarConvite(participante);
+      if (!emailConvite.sent) {
+        throw new HttpError(422, 'participant_invite_not_sent', 'Nao foi possivel enviar o convite por e-mail.');
+      }
+      return {
+        status: credencial.credencialCriada ? 'created_invited' : 'existing_user_invited',
+        participante: attachCredencialInfo(participante, credencial),
+        emailConvite
+      };
     },
     async update(bolaoId, id, body, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
