@@ -351,7 +351,8 @@ function isApostador() {
 function isSelectableBolao(bolao) {
   if (!bolao) return false;
   if (bolao.ativo === false) return false;
-  if (bolao.status && String(bolao.status).toLowerCase() !== 'ativo') return false;
+  const status = String(bolao.status || 'ativo').toLowerCase();
+  if (!['ativo', 'finalizado', 'fechado'].includes(status)) return false;
   return true;
 }
 
@@ -2134,6 +2135,7 @@ async function renderMeuPerfil() {
 async function renderBoloesOwner() {
   const rows = await api('/proprietario/boloes');
   state.data.boloes = rows;
+  const selectedRows = rows.filter((row) => normalizedBolaoStatus(row.status) === state.bolaoStatusTab);
   content.innerHTML = `
     <section class="card">
       <div class="card-title"><h2>${escapeHtml(t('owner.pools'))}</h2><span class="pill">${escapeHtml(t('common.owner'))}</span></div>
@@ -2146,8 +2148,7 @@ async function renderBoloesOwner() {
         <label>${escapeHtml(t('owner.status'))}
           <select name="status">
             <option value="ativo">${escapeHtml(statusLabel('ativo'))}</option>
-            <option value="fechado">${escapeHtml(statusLabel('fechado'))}</option>
-            <option value="inativo">${escapeHtml(statusLabel('inativo'))}</option>
+            <option value="finalizado">${escapeHtml(statusLabel('finalizado'))}</option>
           </select>
         </label>
         <div class="form-actions">
@@ -2156,7 +2157,11 @@ async function renderBoloesOwner() {
         </div>
       </form>
     </section>
-    <section class="card"><div class="list">${rows.map((row) => editableRow('boloes', row, row.nome, row.descricao, row.status)).join('') || empty(t('owner.noPools'))}</div></section>
+    <section class="card">
+      ${bolaoStatusTabs(rows)}
+      <div class="list">${selectedRows.map(bolaoRow).join('') || empty(t('owner.noPoolsInStatus'))}</div>
+    </section>
+    ${renderBolaoDeleteModal()}
   `;
 }
 
@@ -2277,6 +2282,94 @@ function renderParticipantInviteModal() {
         <div class="form-actions">
           <button class="ghost" type="button" data-close-participant-invite>${escapeHtml(t('common.cancel'))}</button>
           <button type="button" data-confirm-participant-invite="${escapeHtml(row.id)}" ${modal.loading ? 'disabled' : ''}>${escapeHtml(modal.loading ? t('common.loading') : actionLabel)}</button>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+const BOLAO_STATUS_TABS = ['ativo', 'finalizado'];
+
+function normalizedBolaoStatus(status) {
+  if (status === 'fechado') return 'finalizado';
+  if (status === 'inativo') return 'finalizado';
+  return status || 'ativo';
+}
+
+function bolaoStatusTabs(rows) {
+  const counts = BOLAO_STATUS_TABS.reduce((acc, status) => ({ ...acc, [status]: 0 }), {});
+  rows.forEach((row) => {
+    const status = normalizedBolaoStatus(row.status);
+    if (counts[status] !== undefined) counts[status] += 1;
+  });
+  return `
+    <div class="status-tabs pool-status-tabs" role="tablist">
+      ${BOLAO_STATUS_TABS.map((status) => `
+        <button class="status-tab ${state.bolaoStatusTab === status ? 'active' : ''}" type="button" data-bolao-status-tab="${escapeHtml(status)}">
+          <span>${escapeHtml(t(`owner.poolTabs.${status}`))}</span>
+          <strong>${counts[status] || 0}</strong>
+        </button>
+      `).join('')}
+    </div>
+  `;
+}
+
+function bolaoDeleteSummary(bolao) {
+  const counts = bolao?.deleteCounts || {};
+  return Object.entries(counts)
+    .filter(([, value]) => Number(value) > 0)
+    .map(([key, value]) => `${t(`owner.poolDeleteBlocks.${key}`, {}, key)}: ${value}`)
+    .join(' · ');
+}
+
+function bolaoLifecycleActions(row) {
+  const status = normalizedBolaoStatus(row.status);
+  return `
+    ${status === 'ativo' ? `<button class="ghost" type="button" data-bolao-action="finalizar" data-id="${escapeHtml(row.id)}">${escapeHtml(t('owner.finishPool'))}</button>` : ''}
+    ${status === 'finalizado' ? `<button class="ghost" type="button" data-bolao-action="reativar" data-id="${escapeHtml(row.id)}">${escapeHtml(t('owner.reactivatePool'))}</button>` : ''}
+    ${row.podeExcluir === true ? `<button class="ghost danger" type="button" data-open-bolao-delete="${escapeHtml(row.id)}">${escapeHtml(t('owner.deletePool'))}</button>` : ''}
+  `;
+}
+
+function bolaoRow(row) {
+  const status = normalizedBolaoStatus(row.status);
+  const deleteInfo = row.podeExcluir ? t('owner.emptyPool') : bolaoDeleteSummary(row);
+  return `
+    <article class="row-card pool-row">
+      <div>
+        <div class="pool-row__head">
+          <strong>${escapeHtml(row.nome)}</strong>
+          <span class="pill pool-status-pill pool-status-pill--${escapeHtml(status)}">${escapeHtml(statusLabel(status))}</span>
+        </div>
+        <p class="muted">${escapeHtml(row.descricao || t('owner.noPoolDescription'))}</p>
+        <p class="muted pool-row__meta">${escapeHtml(deleteInfo || t('owner.poolHasOperationalData'))}</p>
+      </div>
+      <div class="actions">
+        <button class="ghost" type="button" data-edit-kind="boloes" data-id="${escapeHtml(row.id)}">${escapeHtml(t('common.edit'))}</button>
+        ${bolaoLifecycleActions(row)}
+      </div>
+    </article>
+  `;
+}
+
+function renderBolaoDeleteModal() {
+  const modal = state.bolaoDeleteModal;
+  if (!modal.open || !modal.bolao) return '';
+  return `
+    <div class="modal-backdrop" data-close-bolao-delete>
+      <section class="modal-card bolao-delete-modal" data-modal-card>
+        <div class="card-title">
+          <h2>${escapeHtml(t('owner.deletePool'))}</h2>
+          <button class="ghost icon-action" type="button" data-close-bolao-delete aria-label="${escapeHtml(t('common.close'))}" title="${escapeHtml(t('common.close'))}">&times;</button>
+        </div>
+        <div class="danger-zone">
+          <strong>${escapeHtml(modal.bolao.nome)}</strong>
+          <p>${escapeHtml(t('owner.deletePoolWarning'))}</p>
+        </div>
+        ${modal.error ? `<p class="message card-message" data-tone="error">${escapeHtml(modal.error)}</p>` : ''}
+        <div class="form-actions">
+          <button class="ghost" type="button" data-close-bolao-delete>${escapeHtml(t('common.cancel'))}</button>
+          <button class="danger" type="button" data-confirm-bolao-delete="${escapeHtml(modal.bolao.id)}" ${modal.loading ? 'disabled' : ''}>${escapeHtml(modal.loading ? t('common.loading') : t('owner.deletePoolConfirm'))}</button>
         </div>
       </section>
     </div>
@@ -3434,6 +3527,28 @@ async function sendParticipantInvite(participanteId) {
   await renderParticipantesAdmin();
 }
 
+async function updateBolaoLifecycle(id, action) {
+  const confirmKey = action === 'reativar' ? 'owner.reactivatePoolConfirm' : 'owner.finishPoolConfirm';
+  if (!window.confirm(t(confirmKey))) return;
+  const path = action === 'reativar'
+    ? `/proprietario/boloes/${id}/reativar`
+    : `/proprietario/boloes/${id}/fechar`;
+  await api(path, { method: 'POST', body: JSON.stringify({}) });
+  showMessage(action === 'reativar' ? t('owner.poolReactivated') : t('owner.poolFinished'), 'success');
+  await navigate('boloes');
+}
+
+async function deleteBolao(id) {
+  const bolao = findById(state.data.boloes || [], id);
+  if (!bolao) return;
+  state.bolaoDeleteModal = { open: true, loading: true, bolao, error: '' };
+  await navigate('boloes');
+  await api(`/proprietario/boloes/${id}`, { method: 'DELETE' });
+  state.bolaoDeleteModal = { open: false, loading: false, bolao: null, error: '' };
+  showMessage(t('owner.poolDeleted'), 'success');
+  await navigate('boloes');
+}
+
 async function updateUsuarioStatus(id, status) {
   await api(`/proprietario/usuarios/${id}/status`, {
     method: 'PATCH',
@@ -3588,6 +3703,57 @@ content.addEventListener('click', (event) => {
       state.participantInviteModal = { open: true, loading: false, participante, error: '' };
       navigate('participantes');
     }
+    return;
+  }
+
+  const bolaoStatusTab = event.target.closest('[data-bolao-status-tab]');
+  if (bolaoStatusTab) {
+    state.bolaoStatusTab = bolaoStatusTab.dataset.bolaoStatusTab || 'ativo';
+    navigate('boloes');
+    return;
+  }
+
+  const bolaoAction = event.target.closest('[data-bolao-action]');
+  if (bolaoAction) {
+    updateBolaoLifecycle(bolaoAction.dataset.id, bolaoAction.dataset.bolaoAction).catch((error) => {
+      showMessage(error.message || t('messages.apiError'), 'error');
+    });
+    return;
+  }
+
+  const openBolaoDelete = event.target.closest('[data-open-bolao-delete]');
+  if (openBolaoDelete) {
+    const bolao = findById(state.data.boloes || [], openBolaoDelete.dataset.openBolaoDelete);
+    if (bolao) {
+      state.bolaoDeleteModal = { open: true, loading: false, bolao, error: '' };
+      navigate('boloes');
+    }
+    return;
+  }
+
+  const closeBolaoDelete = event.target.closest('[data-close-bolao-delete]');
+  if (closeBolaoDelete && !event.target.closest('[data-modal-card]')) {
+    state.bolaoDeleteModal = { open: false, loading: false, bolao: null, error: '' };
+    navigate('boloes');
+    return;
+  }
+
+  if (event.target.closest('button[data-close-bolao-delete]')) {
+    state.bolaoDeleteModal = { open: false, loading: false, bolao: null, error: '' };
+    navigate('boloes');
+    return;
+  }
+
+  const confirmBolaoDelete = event.target.closest('[data-confirm-bolao-delete]');
+  if (confirmBolaoDelete) {
+    deleteBolao(confirmBolaoDelete.dataset.confirmBolaoDelete).catch((error) => {
+      state.bolaoDeleteModal = {
+        ...state.bolaoDeleteModal,
+        loading: false,
+        error: error.message || t('messages.apiError')
+      };
+      navigate('boloes');
+    });
     return;
   }
 

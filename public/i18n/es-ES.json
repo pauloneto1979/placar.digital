@@ -154,7 +154,8 @@
     "POSTPONED": "Aplazada",
     "SUSPENDED": "Suspendida",
     "CANCELLED": "Cancelada",
-    "AWARDED": "Confirmada"
+    "AWARDED": "Confirmada",
+    "finalizado": "finalizado"
   },
   "home": {
     "dashboardTitle": "Panel de la porra",
@@ -413,6 +414,34 @@
       "notifications": "notificaciones",
       "audit": "auditoría",
       "usedInvites": "invitaciones utilizadas"
+    },
+    "noPoolsInStatus": "Ninguna porra en este estado.",
+    "noPoolDescription": "Sin descripción.",
+    "poolHasOperationalData": "Tiene datos operativos.",
+    "emptyPool": "Porra vacía. Puede eliminarse con seguridad.",
+    "finishPool": "Finalizar",
+    "reactivatePool": "Reactivar",
+    "deletePool": "Eliminar porra",
+    "deletePoolConfirm": "Eliminar definitivamente",
+    "deletePoolWarning": "Esta porra será eliminada permanentemente. Esta acción no se puede deshacer.",
+    "poolFinished": "Porra finalizada.",
+    "poolReactivated": "Porra reactivada.",
+    "poolDeleted": "Porra eliminada definitivamente.",
+    "finishPoolConfirm": "¿Deseas finalizar esta porra? Quedará solo lectura y no aceptará nuevas apuestas.",
+    "reactivatePoolConfirm": "¿Deseas reactivar esta porra? Volverá a aceptar operaciones normalmente.",
+    "poolTabs": {
+      "ativo": "Activas",
+      "finalizado": "Finalizadas"
+    },
+    "poolDeleteBlocks": {
+      "participantes": "participantes",
+      "apostas": "apuestas",
+      "partidas": "partidos",
+      "pagamentos": "pagos",
+      "convites": "invitaciones",
+      "administradores": "administradores",
+      "notificacoes": "notificaciones",
+      "ranking": "ranking"
     }
   },
   "admin": {

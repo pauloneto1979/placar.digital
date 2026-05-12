@@ -60,8 +60,8 @@ async function listUserBoloes(usuarioId) {
         and bu.perfil = 'administrador'
         and u.perfil_global = 'administrador'
         and u.ativo = true
-        and b.ativo = true
-        and b.status = 'ativo'
+             and b.ativo = true
+             and b.status in ('ativo', 'finalizado', 'fechado')
       union all
       select
         p.id as participante_id,
@@ -80,8 +80,8 @@ async function listUserBoloes(usuarioId) {
         and p.papel = 'apostador'
         and u.perfil_global = 'apostador'
         and u.ativo = true
-        and b.ativo = true
-        and b.status = 'ativo'
+             and b.ativo = true
+             and b.status in ('ativo', 'finalizado', 'fechado')
       order by bolao_nome asc
     `,
     [usuarioId]
@@ -111,8 +111,8 @@ async function findUserBolao(usuarioId, bolaoId) {
         and bu.perfil = 'administrador'
         and u.perfil_global = 'administrador'
         and u.ativo = true
-        and b.ativo = true
-        and b.status = 'ativo'
+             and b.ativo = true
+             and b.status in ('ativo', 'finalizado', 'fechado')
       union all
       select
         p.id as participante_id,
@@ -132,8 +132,8 @@ async function findUserBolao(usuarioId, bolaoId) {
         and p.papel = 'apostador'
         and u.perfil_global = 'apostador'
         and u.ativo = true
-        and b.ativo = true
-        and b.status = 'ativo'
+             and b.ativo = true
+             and b.status in ('ativo', 'finalizado', 'fechado')
       limit 1
     `,
     [usuarioId, bolaoId]
@@ -151,9 +151,9 @@ async function findBolaoById(bolaoId) {
         slug as bolao_slug,
         status as bolao_status
       from boloes
-      where id = $1
-        and ativo = true
-        and status = 'ativo'
+     where id = $1
+       and ativo = true
+       and status in ('ativo', 'finalizado', 'fechado')
       limit 1
     `,
     [bolaoId]

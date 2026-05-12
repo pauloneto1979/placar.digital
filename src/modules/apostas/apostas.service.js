@@ -141,6 +141,10 @@ function createApostasService(repository) {
 
     async apostar(bolaoId, body, auth) {
       ensureApostadorSelecionado(auth, bolaoId);
+      const bolao = await repository.findBolaoById(bolaoId);
+      if (!bolao || !['ativo'].includes(bolao.status)) {
+        throw new HttpError(422, 'pool_not_open_for_bets', 'Este bolao nao permite novas apostas.');
+      }
       const partidaId = body.partidaId || body.partida_id;
       if (!partidaId) throw new HttpError(400, 'missing_match_id', 'partida_id e obrigatorio.');
       const partida = await repository.findPartidaById(partidaId);

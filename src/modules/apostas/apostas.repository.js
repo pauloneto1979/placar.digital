@@ -201,6 +201,11 @@ async function findPartidaById(partidaId) {
   return result.rows[0] || null;
 }
 
+async function findBolaoById(bolaoId) {
+  const result = await query('select id, status, ativo from boloes where id = $1 limit 1', [bolaoId]);
+  return result.rows[0] || null;
+}
+
 async function getMinutosAntecedencia(bolaoId) {
   const result = await query(
     `
@@ -336,6 +341,7 @@ module.exports = {
   getTop3Ranking,
   getJogosDoDia,
   listJogos,
+  findBolaoById,
   findPartidaById,
   getMinutosAntecedencia,
   findAposta,

@@ -1,6 +1,7 @@
 const { query, transaction } = require('../../shared/database/client');
 
 function mapBolao(row) {
+  const deleteCounts = row.delete_counts || {};
   return {
     id: row.id,
     proprietarioId: row.proprietario_id,
@@ -9,9 +10,11 @@ function mapBolao(row) {
     descricao: row.descricao,
     dataInicio: row.data_inicio,
     dataFim: row.data_fim,
-    status: row.status,
+    status: ['fechado', 'inativo'].includes(row.status) ? 'finalizado' : row.status,
     ativo: row.ativo,
     administradorIds: row.administrador_ids || [],
+    podeExcluir: row.pode_excluir === undefined ? undefined : Boolean(row.pode_excluir),
+    deleteCounts,
     criadoAt: row.criado_at,
     atualizadoAt: row.atualizado_at
   };
@@ -62,6 +65,8 @@ async function listBoloes() {
         b.status,
         b.ativo,
         coalesce(admins.administrador_ids, '{}'::uuid[]) as administrador_ids,
+        coalesce(delete_info.delete_counts, '{}'::jsonb) as delete_counts,
+        coalesce(delete_info.pode_excluir, false) as pode_excluir,
         b.criado_at,
         b.atualizado_at
       from boloes b
@@ -75,6 +80,27 @@ async function listBoloes() {
           and u.perfil_global = 'administrador'
           and u.ativo = true
       ) admins on true
+      left join lateral (
+        select
+          jsonb_build_object(
+            'participantes', (select count(*) from participantes p where p.bolao_id = b.id),
+            'apostas', (select count(*) from apostas a where a.bolao_id = b.id),
+            'partidas', (select count(*) from partidas pa where pa.bolao_id = b.id),
+            'pagamentos', (select count(*) from pagamentos pg where pg.bolao_id = b.id),
+            'convites', (select count(*) from auth_tokens at where at.tipo = 'convite' and at.metadata->>'bolaoId' = b.id::text),
+            'administradores', (select count(*) from boloes_usuarios bu where bu.bolao_id = b.id and bu.perfil = 'administrador' and bu.ativo = true),
+            'notificacoes', (select count(*) from notificacoes n where n.bolao_id = b.id),
+            'ranking', (select count(*) from ranking r where r.bolao_id = b.id)
+          ) as delete_counts,
+          not exists (select 1 from participantes p where p.bolao_id = b.id)
+          and not exists (select 1 from apostas a where a.bolao_id = b.id)
+          and not exists (select 1 from partidas pa where pa.bolao_id = b.id)
+          and not exists (select 1 from pagamentos pg where pg.bolao_id = b.id)
+          and not exists (select 1 from auth_tokens at where at.tipo = 'convite' and at.metadata->>'bolaoId' = b.id::text)
+          and not exists (select 1 from boloes_usuarios bu where bu.bolao_id = b.id and bu.perfil = 'administrador' and bu.ativo = true)
+          and not exists (select 1 from notificacoes n where n.bolao_id = b.id)
+          and not exists (select 1 from ranking r where r.bolao_id = b.id) as pode_excluir
+      ) delete_info on true
       order by b.criado_at desc
     `
   );
@@ -290,11 +316,25 @@ async function updateBolao(id, data) {
   return result.rows[0] ? mapBolao(result.rows[0]) : null;
 }
 
+async function updateBolaoStatus(id, status, ativo) {
+  const result = await query(
+    `
+      update boloes
+      set status = $2, ativo = $3
+      where id = $1
+      returning id, proprietario_id, nome, slug, descricao, data_inicio, data_fim, status, ativo, criado_at, atualizado_at
+    `,
+    [id, status, ativo]
+  );
+
+  return result.rows[0] ? mapBolao(result.rows[0]) : null;
+}
+
 async function fecharBolao(id) {
   const result = await query(
     `
       update boloes
-      set status = 'fechado', ativo = false
+      set status = 'finalizado', ativo = true
       where id = $1
       returning id, proprietario_id, nome, slug, descricao, data_inicio, data_fim, status, ativo, criado_at, atualizado_at
     `,
@@ -302,6 +342,52 @@ async function fecharBolao(id) {
   );
 
   return result.rows[0] ? mapBolao(result.rows[0]) : null;
+}
+
+async function getBolaoDeleteInfo(id) {
+  const result = await query(
+    `
+      select
+        b.id,
+        jsonb_build_object(
+          'participantes', (select count(*) from participantes p where p.bolao_id = b.id),
+          'apostas', (select count(*) from apostas a where a.bolao_id = b.id),
+          'partidas', (select count(*) from partidas pa where pa.bolao_id = b.id),
+          'pagamentos', (select count(*) from pagamentos pg where pg.bolao_id = b.id),
+          'convites', (select count(*) from auth_tokens at where at.tipo = 'convite' and at.metadata->>'bolaoId' = b.id::text),
+          'administradores', (select count(*) from boloes_usuarios bu where bu.bolao_id = b.id and bu.perfil = 'administrador' and bu.ativo = true),
+          'notificacoes', (select count(*) from notificacoes n where n.bolao_id = b.id),
+          'ranking', (select count(*) from ranking r where r.bolao_id = b.id)
+        ) as delete_counts
+      from boloes b
+      where b.id = $1
+      limit 1
+    `,
+    [id]
+  );
+
+  if (!result.rows[0]) return null;
+  const counts = result.rows[0].delete_counts || {};
+  return {
+    deleteCounts: counts,
+    podeExcluir: Object.values(counts).every((value) => Number(value) === 0)
+  };
+}
+
+async function deleteBolao(id) {
+  return transaction(async (client) => {
+    const executor = (text, params) => client.query(text, params);
+    await executor('delete from boloes_usuarios where bolao_id = $1', [id]);
+    await executor('delete from configuracoes_principais_bolao where bolao_id = $1', [id]);
+    await executor('delete from regras_pontuacao where bolao_id = $1', [id]);
+    await executor('delete from criterios_desempate where bolao_id = $1', [id]);
+    await executor('delete from distribuicao_premios where bolao_id = $1', [id]);
+    await executor('delete from configuracoes_bolao where bolao_id = $1', [id]);
+    await executor('delete from fases where bolao_id = $1', [id]);
+    await executor('delete from boloes_times where bolao_id = $1', [id]);
+    const result = await executor('delete from boloes where id = $1 returning id', [id]);
+    return result.rowCount > 0;
+  });
 }
 
 async function listUsuarios() {
@@ -744,7 +830,10 @@ module.exports = {
   ensureDefaultSportContext,
   createBolaoWithDefaults,
   updateBolao,
+  updateBolaoStatus,
   fecharBolao,
+  getBolaoDeleteInfo,
+  deleteBolao,
   listUsuarios,
   findUsuarioById,
   findUsuarioByEmail,

@@ -32,6 +32,22 @@ function createProprietarioController(service) {
       }
     },
 
+    async reativarBolao(req, res, next) {
+      try {
+        res.json(await service.reativarBolao(req.params.id, req.auth, req.context));
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    async deleteBolao(req, res, next) {
+      try {
+        res.json(await service.deleteBolao(req.params.id, req.auth, req.context));
+      } catch (error) {
+        next(error);
+      }
+    },
+
     async listUsuarios(req, res, next) {
       try {
         res.json(await service.listUsuarios());

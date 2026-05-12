@@ -2008,6 +2008,64 @@ button[data-provider-toggle]:hover {
   overflow-wrap: anywhere;
 }
 
+.pool-status-tabs {
+  margin-bottom: 16px;
+}
+
+.pool-row__head {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.pool-row__meta {
+  font-size: 0.78rem;
+  margin-top: 8px;
+}
+
+.pool-status-pill {
+  flex: 0 0 auto;
+  font-weight: 900;
+}
+
+.pool-status-pill--ativo {
+  border-color: rgba(200, 255, 46, 0.28);
+  color: var(--accent);
+}
+
+.pool-status-pill--finalizado {
+  border-color: rgba(33, 212, 253, 0.32);
+  color: var(--accent-2);
+}
+
+.danger-zone {
+  background: rgba(255, 91, 91, 0.08);
+  border: 1px solid rgba(255, 91, 91, 0.24);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 16px;
+}
+
+.danger-zone p {
+  color: var(--muted);
+  margin: 0;
+}
+
+button.danger,
+.ghost.danger {
+  border-color: rgba(255, 91, 91, 0.34);
+  color: #ff8b8b;
+}
+
+button.danger:hover,
+.ghost.danger:hover {
+  border-color: rgba(255, 91, 91, 0.58);
+  box-shadow: 0 0 0 1px rgba(255, 91, 91, 0.12), 0 0 24px rgba(255, 91, 91, 0.16);
+}
+
 .pool-guesses-list {
   max-height: min(58vh, 440px);
   overflow: auto;
@@ -3140,6 +3198,15 @@ button[data-reset-form]:not(.icon-action)::before {
   .form-actions button,
   .actions button {
     min-height: 46px;
+  }
+
+  .pool-row__head {
+    display: grid;
+    gap: 8px;
+  }
+
+  .pool-status-pill {
+    justify-self: start;
   }
 
   .mobile-bottom-nav {

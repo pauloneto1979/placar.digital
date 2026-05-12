@@ -154,7 +154,8 @@
     "POSTPONED": "Adiada",
     "SUSPENDED": "Suspensa",
     "CANCELLED": "Cancelada",
-    "AWARDED": "Confirmada"
+    "AWARDED": "Confirmada",
+    "finalizado": "finalizado"
   },
   "home": {
     "dashboardTitle": "Painel do bolão",
@@ -413,6 +414,34 @@
       "notifications": "notificações",
       "audit": "auditoria",
       "usedInvites": "convites utilizados"
+    },
+    "noPoolsInStatus": "Nenhum bolão neste status.",
+    "noPoolDescription": "Sem descrição.",
+    "poolHasOperationalData": "Possui dados operacionais.",
+    "emptyPool": "Bolão vazio. Pode ser excluído com segurança.",
+    "finishPool": "Finalizar",
+    "reactivatePool": "Reativar",
+    "deletePool": "Excluir bolão",
+    "deletePoolConfirm": "Excluir definitivamente",
+    "deletePoolWarning": "Este bolão será removido permanentemente. Esta ação não poderá ser desfeita.",
+    "poolFinished": "Bolão finalizado.",
+    "poolReactivated": "Bolão reativado.",
+    "poolDeleted": "Bolão excluído definitivamente.",
+    "finishPoolConfirm": "Deseja finalizar este bolão? Ele ficará somente leitura e não aceitará novas apostas.",
+    "reactivatePoolConfirm": "Deseja reativar este bolão? Ele voltará a aceitar operações normalmente.",
+    "poolTabs": {
+      "ativo": "Ativos",
+      "finalizado": "Finalizados"
+    },
+    "poolDeleteBlocks": {
+      "participantes": "participantes",
+      "apostas": "apostas",
+      "partidas": "partidas",
+      "pagamentos": "pagamentos",
+      "convites": "convites",
+      "administradores": "administradores",
+      "notificacoes": "notificações",
+      "ranking": "ranking"
     }
   },
   "admin": {

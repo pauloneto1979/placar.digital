@@ -20,6 +20,8 @@ proprietarioRoutes.get('/boloes', proprietarioController.listBoloes);
 proprietarioRoutes.post('/boloes', proprietarioController.createBolao);
 proprietarioRoutes.put('/boloes/:id', proprietarioController.updateBolao);
 proprietarioRoutes.post('/boloes/:id/fechar', proprietarioController.fecharBolao);
+proprietarioRoutes.post('/boloes/:id/reativar', proprietarioController.reativarBolao);
+proprietarioRoutes.delete('/boloes/:id', proprietarioController.deleteBolao);
 
 proprietarioRoutes.get('/usuarios', proprietarioController.listUsuarios);
 proprietarioRoutes.post('/usuarios', proprietarioController.createUsuario);

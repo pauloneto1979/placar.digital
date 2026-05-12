@@ -3,7 +3,7 @@ const { hashPassword } = require('../../shared/utils/password');
 const { assertSystemPassword } = require('../../shared/utils/password-policy');
 
 const PERFIS_USUARIO_SISTEMA = ['proprietario', 'administrador'];
-const STATUS_BOLOES = ['ativo', 'fechado', 'inativo'];
+const STATUS_BOLOES = ['ativo', 'finalizado', 'fechado', 'inativo'];
 const CONFIG_KEYS = {
   tempoSessao: 'sessao.tempo_segundos',
   emailRemetente: 'email.remetente',
@@ -61,7 +61,13 @@ function assertValidDateRange(dataInicio, dataFim) {
 }
 
 function parseAtivoFromStatus(status) {
-  return status === 'ativo';
+  return ['ativo', 'finalizado'].includes(status);
+}
+
+function normalizeBolaoStatus(status) {
+  if (status === 'fechado') return 'finalizado';
+  if (status === 'inativo') return 'finalizado';
+  return status;
 }
 
 function mapConfigRows(rows) {
@@ -189,7 +195,7 @@ function createProprietarioService(repository, options = {}) {
     const descricao = normalizeText(payload.descricao);
     const dataInicio = payload.dataInicio || payload.data_inicio || null;
     const dataFim = payload.dataFim || payload.data_fim || null;
-    const status = payload.status || existingBolao?.status || 'ativo';
+    const status = normalizeBolaoStatus(payload.status || existingBolao?.status || 'ativo');
     const slug = payload.slug ? createSlug(payload.slug) : createSlug(nome);
 
     if (!nome) {
@@ -197,7 +203,7 @@ function createProprietarioService(repository, options = {}) {
     }
 
     if (!STATUS_BOLOES.includes(status)) {
-      throw new HttpError(400, 'invalid_bolao_status', 'Status do bolao deve ser ativo, fechado ou inativo.');
+      throw new HttpError(400, 'invalid_bolao_status', 'Status do bolao deve ser ativo ou finalizado.');
     }
 
     if (!slug) {
@@ -268,19 +274,69 @@ function createProprietarioService(repository, options = {}) {
       return repository.findBolaoById(bolao.id);
     },
 
-    async fecharBolao(id, auth, context) {
+    async updateBolaoStatus(id, status, auth, context) {
       const existing = await ensureBolaoExists(id);
-      const bolao = await repository.fecharBolao(id);
+      const normalizedStatus = normalizeBolaoStatus(status);
+      if (!['ativo', 'finalizado'].includes(normalizedStatus)) {
+        throw new HttpError(400, 'invalid_bolao_status', 'Status do bolao deve ser ativo ou finalizado.');
+      }
+      const bolao = await repository.updateBolaoStatus(id, normalizedStatus, parseAtivoFromStatus(normalizedStatus));
       await audit(auth, context, {
         bolaoId: bolao.id,
         entidade: 'boloes',
         entidadeId: bolao.id,
-        acao: 'proprietario.bolao.fechado',
+        acao: `proprietario.bolao.${normalizedStatus}`,
+        dadosAnteriores: existing,
+        dadosNovos: bolao
+      });
+      return repository.findBolaoById(bolao.id);
+    },
+
+    async fecharBolao(id, auth, context) {
+      const existing = await ensureBolaoExists(id);
+      const bolao = await repository.updateBolaoStatus(id, 'finalizado', true);
+      await audit(auth, context, {
+        bolaoId: bolao.id,
+        entidade: 'boloes',
+        entidadeId: bolao.id,
+        acao: 'proprietario.bolao.finalizado',
         dadosAnteriores: existing,
         dadosNovos: bolao
       });
 
       return bolao;
+    },
+
+    async reativarBolao(id, auth, context) {
+      const existing = await ensureBolaoExists(id);
+      const bolao = await repository.updateBolaoStatus(id, 'ativo', true);
+      await audit(auth, context, {
+        bolaoId: bolao.id,
+        entidade: 'boloes',
+        entidadeId: bolao.id,
+        acao: 'proprietario.bolao.reativado',
+        dadosAnteriores: existing,
+        dadosNovos: bolao
+      });
+      return bolao;
+    },
+
+    async deleteBolao(id, auth, context) {
+      const existing = await ensureBolaoExists(id);
+      const deleteInfo = await repository.getBolaoDeleteInfo(id);
+      if (!deleteInfo?.podeExcluir) {
+        throw new HttpError(409, 'bolao_not_empty', 'Este bolao possui dados operacionais e nao pode ser excluido definitivamente.');
+      }
+      await audit(auth, context, {
+        bolaoId: existing.id,
+        entidade: 'boloes',
+        entidadeId: existing.id,
+        acao: 'proprietario.bolao.excluido',
+        dadosAnteriores: existing,
+        dadosNovos: { deleteCounts: deleteInfo.deleteCounts }
+      });
+      await repository.deleteBolao(id);
+      return { deleted: true, id };
     },
 
     async listUsuarios() {

@@ -154,7 +154,8 @@
     "POSTPONED": "Postponed",
     "SUSPENDED": "Suspended",
     "CANCELLED": "Cancelled",
-    "AWARDED": "Awarded"
+    "AWARDED": "Awarded",
+    "finalizado": "finalized"
   },
   "home": {
     "dashboardTitle": "Pool dashboard",
@@ -413,6 +414,34 @@
       "notifications": "notifications",
       "audit": "audit",
       "usedInvites": "used invites"
+    },
+    "noPoolsInStatus": "No pools in this status.",
+    "noPoolDescription": "No description.",
+    "poolHasOperationalData": "Has operational data.",
+    "emptyPool": "Empty pool. It can be safely deleted.",
+    "finishPool": "Finalize",
+    "reactivatePool": "Reactivate",
+    "deletePool": "Delete pool",
+    "deletePoolConfirm": "Delete permanently",
+    "deletePoolWarning": "This pool will be permanently removed. This action cannot be undone.",
+    "poolFinished": "Pool finalized.",
+    "poolReactivated": "Pool reactivated.",
+    "poolDeleted": "Pool permanently deleted.",
+    "finishPoolConfirm": "Do you want to finalize this pool? It will be read-only and will not accept new bets.",
+    "reactivatePoolConfirm": "Do you want to reactivate this pool? It will accept operations normally again.",
+    "poolTabs": {
+      "ativo": "Active",
+      "finalizado": "Finalized"
+    },
+    "poolDeleteBlocks": {
+      "participantes": "participants",
+      "apostas": "bets",
+      "partidas": "matches",
+      "pagamentos": "payments",
+      "convites": "invites",
+      "administradores": "administrators",
+      "notificacoes": "notifications",
+      "ranking": "ranking"
     }
   },
   "admin": {
