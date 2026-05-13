@@ -2066,6 +2066,16 @@ button.danger:hover,
   box-shadow: 0 0 0 1px rgba(255, 91, 91, 0.12), 0 0 24px rgba(255, 91, 91, 0.16);
 }
 
+.mobile-page-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.mobile-page-header h2 {
+  margin: 0;
+}
+
 .pool-guesses-list {
   max-height: min(58vh, 440px);
   overflow: auto;

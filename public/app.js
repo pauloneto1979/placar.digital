@@ -43,6 +43,13 @@
     usuario: null,
     error: ''
   },
+  bolaoStatusTab: 'ativo',
+  bolaoDeleteModal: {
+    open: false,
+    loading: false,
+    bolao: null,
+    error: ''
+  },
   betGuessesModal: {
     open: false,
     loading: false,
@@ -3872,6 +3879,11 @@ content.addEventListener('click', (event) => {
       state.participantInviteModal = { open: true, loading: false, participante, error: '' };
       navigate('participantes');
     }
+    return;
+  }
+
+  if (event.target.closest('[data-open-participant-quick-invite]')) {
+    openQuickParticipantInvite();
     return;
   }
 
