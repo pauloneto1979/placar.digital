@@ -518,6 +518,11 @@
     "inviteEmailFailedPartial": "Participante cadastrado, mas não foi possível enviar o e-mail de convite.",
     "inviteEmailFailedInactiveRecipient": "Participante cadastrado, mas o convite não pôde ser enviado porque o destinatário está inativo.",
     "inviteExistingUserSuccess": "Usuário já possuía cadastro no sistema. O convite para este bolão foi enviado.",
+    "inactiveCredentialQuestion": "Este apostador possui um acesso desativado. Deseja reativar e reenviar o acesso?",
+    "reactivateAndSendAccess": "Reativar e enviar acesso",
+    "reactivatingAccess": "Reativando acesso...",
+    "inactiveAccessReactivatedSuccess": "Acesso reativado com sucesso.",
+    "inactiveAccessReactivatedEmailFailed": "Acesso reativado, mas não foi possível enviar o e-mail de convite.",
     "inviteResentSuccess": "Convite reenviado com sucesso.",
     "inviteAccessResentSuccess": "Acesso reenviado com sucesso.",
     "inviteAlreadyInPool": "Este participante já faz parte deste bolão.",
@@ -711,6 +716,7 @@
     "pendente": "Sem acesso",
     "convite_enviado": "Convite enviado",
     "acesso_ativo": "Acesso ativo",
+    "credencial_inativa": "Acesso desativado",
     "expirado": "Convite expirado"
   }
 }

@@ -35,6 +35,7 @@ async function listByBolao(bolaoId) {
         convite.expiracao as convite_expiracao,
         convite.created_at as convite_enviado_at,
         case
+          when u.id is not null and u.ativo = false then 'credencial_inativa'
           when u.ativo = true and p.status = 'ativo' then 'acesso_ativo'
           when convite.id is null then 'pendente'
           when convite.utilizado_em is not null then 'acesso_ativo'
@@ -111,6 +112,20 @@ async function updateUsuarioApostadorPassword(id, senhaHash) {
   return result.rows[0] ? mapUsuario(result.rows[0]) : null;
 }
 
+async function activateUsuarioApostador(id) {
+  const result = await query(
+    `
+      update usuarios
+      set ativo = true
+      where id = $1 and perfil_global = 'apostador'
+      returning id, nome, email, perfil_global, ativo
+    `,
+    [id]
+  );
+
+  return result.rows[0] ? mapUsuario(result.rows[0]) : null;
+}
+
 async function create(data) {
   const result = await query(
     `
@@ -151,6 +166,7 @@ module.exports = {
   findUsuarioByEmail,
   createUsuarioApostador,
   updateUsuarioApostadorPassword,
+  activateUsuarioApostador,
   create,
   update,
   updateStatus

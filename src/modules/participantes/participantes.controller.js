@@ -10,7 +10,10 @@ function createParticipantesController(service) {
       try { res.status(201).json(await service.create(req.params.bolaoId, req.body, req.auth)); } catch (error) { next(error); }
     },
     async invite(req, res, next) {
-      try { res.status(201).json(await service.invite(req.params.bolaoId, req.body, req.auth)); } catch (error) { next(error); }
+      try {
+        const result = await service.invite(req.params.bolaoId, req.body, req.auth);
+        res.status(result?.actionRequired ? 200 : 201).json(result);
+      } catch (error) { next(error); }
     },
     async update(req, res, next) {
       try { res.json(await service.update(req.params.bolaoId, req.params.id, req.body, req.auth)); } catch (error) { next(error); }
@@ -19,7 +22,7 @@ function createParticipantesController(service) {
       try { res.json(await service.updateStatus(req.params.bolaoId, req.params.id, req.body, req.auth)); } catch (error) { next(error); }
     },
     async sendInvite(req, res, next) {
-      try { res.json(await service.sendInvite(req.params.bolaoId, req.params.id, req.auth)); } catch (error) { next(error); }
+      try { res.json(await service.sendInvite(req.params.bolaoId, req.params.id, req.body, req.auth)); } catch (error) { next(error); }
     }
   };
 }

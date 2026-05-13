@@ -518,6 +518,11 @@
     "inviteEmailFailedPartial": "Participant was registered, but the invitation email could not be sent.",
     "inviteEmailFailedInactiveRecipient": "Participant was registered, but the invitation could not be sent because the recipient is inactive.",
     "inviteExistingUserSuccess": "The user already had an account. The invite for this pool was sent.",
+    "inactiveCredentialQuestion": "This bettor has a disabled access. Do you want to reactivate and resend access?",
+    "reactivateAndSendAccess": "Reactivate and send access",
+    "reactivatingAccess": "Reactivating access...",
+    "inactiveAccessReactivatedSuccess": "Access reactivated successfully.",
+    "inactiveAccessReactivatedEmailFailed": "Access reactivated, but the invitation email could not be sent.",
     "inviteResentSuccess": "Invite resent successfully.",
     "inviteAccessResentSuccess": "Access resent successfully.",
     "inviteAlreadyInPool": "This participant is already in this pool.",
@@ -711,6 +716,7 @@
     "pendente": "No access",
     "convite_enviado": "Invite sent",
     "acesso_ativo": "Active access",
+    "credencial_inativa": "Access disabled",
     "expirado": "Invite expired"
   }
 }

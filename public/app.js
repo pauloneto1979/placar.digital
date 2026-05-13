@@ -2237,6 +2237,7 @@ function accessStatusTone(status) {
     acesso_ativo: 'bet-status--saved',
     convite_enviado: 'bet-status--info',
     expirado: 'bet-status--locked',
+    credencial_inativa: 'bet-status--locked',
     pendente: 'bet-status--pending'
   })[status] || 'bet-status--pending';
 }
@@ -2246,6 +2247,7 @@ function accessStatusIcon(status) {
     acesso_ativo: '🟢',
     convite_enviado: '🟡',
     expirado: '🔴',
+    credencial_inativa: '🔴',
     pendente: '⚪'
   })[status] || '⚪';
 }
@@ -2255,6 +2257,8 @@ function participantInviteButton(row) {
   const hasEmail = Boolean(String(row.email || '').trim());
   const label = row.acessoStatus === 'acesso_ativo'
     ? t('admin.resendAccess')
+    : row.acessoStatus === 'credencial_inativa'
+    ? t('admin.reactivateAndSendAccess')
     : row.acessoStatus === 'convite_enviado' || row.acessoStatus === 'expirado'
     ? t('admin.resendInvite')
     : t('admin.sendInvite');
@@ -2289,6 +2293,8 @@ function renderParticipantInviteModal() {
   const row = modal.participante;
   const actionLabel = row.acessoStatus === 'convite_enviado' || row.acessoStatus === 'expirado'
     ? t('admin.resendInvite')
+    : row.acessoStatus === 'credencial_inativa'
+    ? t('admin.reactivateAndSendAccess')
     : t('admin.sendInvite');
   return `
     <div class="modal-backdrop" data-close-participant-invite>
@@ -2306,7 +2312,7 @@ function renderParticipantInviteModal() {
         ${modal.error ? `<p class="message card-message" data-tone="error">${escapeHtml(modal.error)}</p>` : ''}
         <div class="form-actions">
           <button class="ghost" type="button" data-close-participant-invite>${escapeHtml(t('common.cancel'))}</button>
-          <button type="button" data-confirm-participant-invite="${escapeHtml(row.id)}" ${modal.loading ? 'disabled' : ''}>${escapeHtml(modal.loading ? t('common.loading') : actionLabel)}</button>
+          <button type="button" data-confirm-participant-invite="${escapeHtml(row.id)}" ${modal.loading ? 'disabled' : ''}>${escapeHtml(modal.loading && row.acessoStatus === 'credencial_inativa' ? t('admin.reactivatingAccess') : modal.loading ? t('common.loading') : actionLabel)}</button>
         </div>
       </section>
     </div>
@@ -2315,10 +2321,14 @@ function renderParticipantInviteModal() {
 
 function quickInviteFeedback(result) {
   if (!result) return '';
+  if (result.action === 'reactivate_bettor_credential') return t('admin.inactiveCredentialQuestion');
   if (quickInviteEmailFailed(result)) return quickInviteEmailFailureMessage(result);
   return ({
     created_invited: t('admin.inviteCreatedSuccess'),
     existing_user_invited: t('admin.inviteExistingUserSuccess'),
+    inactive_credential: t('admin.inactiveCredentialQuestion'),
+    inactive_access_reactivated: t('admin.inactiveAccessReactivatedSuccess'),
+    inactive_access_reactivated_email_failed: t('admin.inactiveAccessReactivatedEmailFailed'),
     invite_resent: t('admin.inviteResentSuccess'),
     active_access_resent: t('admin.inviteAccessResentSuccess'),
     invite_resend_failed: t('admin.inviteEmailFailedPartial'),
@@ -2329,6 +2339,9 @@ function quickInviteFeedback(result) {
 }
 
 function quickInviteEmailFailureMessage(result) {
+  if (result?.status === 'inactive_access_reactivated_email_failed') {
+    return t('admin.inactiveAccessReactivatedEmailFailed');
+  }
   if (result?.emailConvite?.reason === 'inactive_recipient') {
     return t('admin.inviteEmailFailedInactiveRecipient');
   }
@@ -2340,11 +2353,24 @@ function quickInviteEmailFailed(result) {
 }
 
 function quickInviteNeedsResend(result) {
-  return quickInviteEmailFailed(result) || result?.status === 'already_in_pool' || result?.status === 'active_access';
+  return quickInviteEmailFailed(result) || result?.action === 'reactivate_bettor_credential' || result?.status === 'inactive_credential' || result?.status === 'already_in_pool' || result?.status === 'active_access';
+}
+
+function quickInvitePrimaryActionLabel(result) {
+  if (result?.action === 'reactivate_bettor_credential' || result?.status === 'inactive_credential') return t('admin.reactivateAndSendAccess');
+  if (result?.status === 'inactive_access_reactivated_email_failed') return t('admin.resendAccess');
+  if (result?.status === 'active_access' || result?.status === 'active_access_resend_failed') return t('admin.resendAccess');
+  return t('admin.resendInvite');
 }
 
 function renderQuickInviteSuccess(result) {
   const needsResend = quickInviteNeedsResend(result);
+  const loading = state.participantQuickInvite.loading;
+  const actionLabel = loading && (result?.action === 'reactivate_bettor_credential' || result?.status === 'inactive_credential')
+    ? t('admin.reactivatingAccess')
+    : loading
+    ? t('common.loading')
+    : quickInvitePrimaryActionLabel(result);
   return `
     <div class="quick-invite-success" data-tone="${needsResend ? 'warning' : 'success'}">
       <strong>${escapeHtml(needsResend ? quickInviteFeedback(result) : t('admin.inviteSuccessTitle'))}</strong>
@@ -2352,7 +2378,7 @@ function renderQuickInviteSuccess(result) {
     </div>
     <div class="form-actions quick-invite-actions">
       ${needsResend ? `
-        <button class="participant-invite-button" type="button" data-quick-invite-resend>${escapeHtml(result.status === 'active_access' || result.status === 'active_access_resend_failed' ? t('admin.resendAccess') : t('admin.resendInvite'))}</button>
+        <button class="participant-invite-button" type="button" data-quick-invite-resend ${loading ? 'disabled' : ''}>${escapeHtml(actionLabel)}</button>
         <button class="ghost" type="button" data-quick-invite-back>${escapeHtml(t('common.cancel'))}</button>
       ` : `
         <button class="participant-invite-button" type="button" data-quick-invite-reset>${escapeHtml(t('admin.inviteAnother'))}</button>
@@ -3665,9 +3691,10 @@ async function sendParticipantInvite(participanteId) {
   if (!participante) return;
   state.participantInviteModal = { open: true, loading: true, participante, error: '' };
   await renderParticipantesAdmin();
+  const reativar = participante.acessoStatus === 'credencial_inativa';
   const result = await api(`/participantes/boloes/${state.activeBolaoId}/${participanteId}/convite`, {
     method: 'POST',
-    body: JSON.stringify({})
+    body: JSON.stringify({ reativar })
   });
   state.participantInviteModal = { open: false, loading: false, participante: null, error: '' };
   showMessage(quickInviteFeedback(result), quickInviteEmailFailed(result) ? 'warning' : 'success');
@@ -3739,7 +3766,7 @@ async function closeQuickParticipantInvite() {
   await navigate('participantes');
 }
 
-async function submitQuickParticipantInvite(form, resend = false) {
+async function submitQuickParticipantInvite(form, resend = false, reactivate = false) {
   const data = form
     ? formPayload(form)
     : { ...state.participantQuickInvite.form };
@@ -3758,7 +3785,8 @@ async function submitQuickParticipantInvite(form, resend = false) {
     body: JSON.stringify({
       nome: data.nome,
       email: data.email,
-      reenviar: resend
+      reenviar: resend,
+      reativar: reactivate
     })
   });
   state.participantQuickInvite = {
@@ -4041,7 +4069,9 @@ content.addEventListener('click', (event) => {
   }
 
   if (event.target.closest('[data-quick-invite-resend]')) {
-    submitQuickParticipantInvite(null, true).catch((error) => {
+    const reactivate = state.participantQuickInvite.result?.action === 'reactivate_bettor_credential'
+      || state.participantQuickInvite.result?.status === 'inactive_credential';
+    submitQuickParticipantInvite(null, true, reactivate).catch((error) => {
       state.participantQuickInvite = {
         ...state.participantQuickInvite,
         loading: false,

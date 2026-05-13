@@ -53,7 +53,7 @@ function createParticipantesService(repository, options = {}) {
   }
 
   async function resolveCredencialApostador(data) {
-    const existing = await repository.findUsuarioByEmail(data.email);
+    let existing = await repository.findUsuarioByEmail(data.email);
 
     if (existing && existing.perfilGlobal !== 'apostador') {
       throw new HttpError(
@@ -63,11 +63,17 @@ function createParticipantesService(repository, options = {}) {
       );
     }
 
-    if (existing && !existing.ativo && !data.allowInactiveCredential) {
-      throw new HttpError(409, 'inactive_bettor_credential', 'Credencial de apostador existente esta inativa.');
-    }
-
     if (existing) {
+      const shouldReactivate = data.reativarCredencial || Boolean(data.senhaInicial);
+      let credencialReativada = false;
+      if (!existing.ativo && shouldReactivate) {
+        existing = await repository.activateUsuarioApostador(existing.id);
+        credencialReativada = Boolean(existing);
+        console.info('[participantes] credencial_apostador_reativada', {
+          usuarioId: existing?.id || null,
+          contexto: data.contextoReativacao || 'convite'
+        });
+      }
       let senhaAtualizada = false;
       if (data.senhaInicial) {
         await repository.updateUsuarioApostadorPassword(existing.id, hashPassword(data.senhaInicial));
@@ -77,6 +83,7 @@ function createParticipantesService(repository, options = {}) {
         usuario: existing,
         credencialCriada: false,
         senhaTemporaria: null,
+        credencialReativada,
         senhaAtualizada
       };
     }
@@ -144,6 +151,7 @@ function createParticipantesService(repository, options = {}) {
         usuarioId: credencial.usuario.id,
         email: credencial.usuario.email,
         criada: credencial.credencialCriada,
+        reativada: Boolean(credencial.credencialReativada),
         senhaTemporaria: credencial.senhaTemporaria,
         senhaAtualizada: Boolean(credencial.senhaAtualizada)
       }
@@ -154,26 +162,58 @@ function createParticipantesService(repository, options = {}) {
     const nome = clean(body.nome);
     const email = normalizeEmail(body.email);
     const reenviar = body.reenviar === true || body.resend === true;
+    const reativar = body.reativar === true || body.reactivate === true;
 
     if (!nome || !email) throw new HttpError(400, 'invalid_invite_payload', 'Nome e email sao obrigatorios.');
     if (!email.includes('@')) throw new HttpError(400, 'invalid_participant_email', 'Email invalido.');
 
-    return { nome, email, reenviar };
+    return { nome, email, reenviar, reativar };
   }
 
-  async function sendInviteForExisting(participante, status, reenviar) {
-    if (!reenviar) {
+  function inactiveCredentialResponse(participante, extra = {}) {
+    return {
+      success: false,
+      actionRequired: true,
+      action: 'reactivate_bettor_credential',
+      status: 'inactive_credential',
+      participante,
+      participant: participante,
+      emailConvite: null,
+      emailSent: null,
+      warning: false,
+      requiresReactivation: true,
+      ...extra
+    };
+  }
+
+  async function sendInviteForExisting(participante, status, data = {}) {
+    const reenviar = data.reenviar === true;
+    const reativar = data.reativar === true;
+    if (!reenviar && !reativar) {
       return conviteResultado(status, participante, null);
     }
 
     const usuario = await repository.findUsuarioByEmail(participante.email);
     if (usuario && !usuario.ativo) {
-      throw new HttpError(409, 'inactive_bettor_credential', 'Credencial de apostador existente esta inativa.');
+      if (!reativar) {
+        return inactiveCredentialResponse(participante, { participanteId: participante.id });
+      }
+
+      await repository.activateUsuarioApostador(usuario.id);
+      console.info('[participantes] credencial_apostador_reativada', {
+        usuarioId: usuario.id,
+        participanteId: participante.id,
+        contexto: 'reenviar_convite_existente'
+      });
     }
 
     const emailConvite = await tentarEnviarConvite(participante);
     return conviteResultado(
-      emailConvite.sent
+      reativar && emailConvite.sent
+        ? 'inactive_access_reactivated'
+        : reativar
+        ? 'inactive_access_reactivated_email_failed'
+        : emailConvite.sent
         ? (status === 'active_access' ? 'active_access_resent' : 'invite_resent')
         : (status === 'active_access' ? 'active_access_resend_failed' : 'invite_resend_failed'),
       participante,
@@ -207,10 +247,20 @@ function createParticipantesService(repository, options = {}) {
       const existingParticipant = await repository.findByEmail(bolaoId, data.email);
       if (existingParticipant) {
         const active = existingParticipant.status === 'ativo';
-        return sendInviteForExisting(existingParticipant, active ? 'active_access' : 'already_in_pool', data.reenviar);
+        return sendInviteForExisting(existingParticipant, active ? 'active_access' : 'already_in_pool', data);
       }
 
-      const credencial = await resolveCredencialApostador({ ...data, senhaInicial: '' });
+      const usuarioExistente = await repository.findUsuarioByEmail(data.email);
+      if (usuarioExistente && usuarioExistente.perfilGlobal === 'apostador' && !usuarioExistente.ativo && !data.reativar) {
+        return inactiveCredentialResponse({ nome: data.nome, email: data.email });
+      }
+
+      const credencial = await resolveCredencialApostador({
+        ...data,
+        senhaInicial: '',
+        reativarCredencial: data.reativar,
+        contextoReativacao: 'convite_novo_vinculo'
+      });
       const participante = await repository.create({
         bolaoId,
         usuarioId: credencial.usuario.id,
@@ -221,7 +271,11 @@ function createParticipantesService(repository, options = {}) {
       });
       const emailConvite = await tentarEnviarConvite(participante);
       return conviteResultado(
-        credencial.credencialCriada ? 'created_invited' : 'existing_user_invited',
+        credencial.credencialReativada
+          ? (emailConvite.sent ? 'inactive_access_reactivated' : 'inactive_access_reactivated_email_failed')
+          : credencial.credencialCriada
+          ? 'created_invited'
+          : 'existing_user_invited',
         attachCredencialInfo(participante, credencial),
         emailConvite,
         {},
@@ -244,16 +298,29 @@ function createParticipantesService(repository, options = {}) {
       if (!STATUS.includes(body.status)) throw new HttpError(400, 'invalid_participant_status', 'Status invalido.');
       return repository.updateStatus(id, body.status);
     },
-    async sendInvite(bolaoId, id, auth) {
+    async sendInvite(bolaoId, id, body = {}, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
       const participante = await ensureResource(id, bolaoId);
       const usuario = await repository.findUsuarioByEmail(participante.email);
+      const reativar = body.reativar === true || body.reactivate === true;
       if (usuario && !usuario.ativo) {
-        throw new HttpError(409, 'inactive_bettor_credential', 'Credencial de apostador existente esta inativa.');
+        if (!reativar) {
+          return inactiveCredentialResponse(participante, { participanteId: participante.id });
+        }
+        await repository.activateUsuarioApostador(usuario.id);
+        console.info('[participantes] credencial_apostador_reativada', {
+          usuarioId: usuario.id,
+          participanteId: participante.id,
+          contexto: 'reenviar_convite_participante'
+        });
       }
       const emailConvite = await tentarEnviarConvite(participante);
       return conviteResultado(
-        emailConvite.sent
+        reativar && emailConvite.sent
+          ? 'inactive_access_reactivated'
+          : reativar
+          ? 'inactive_access_reactivated_email_failed'
+          : emailConvite.sent
           ? (participante.status === 'ativo' ? 'active_access_resent' : 'invite_resent')
           : (participante.status === 'ativo' ? 'active_access_resend_failed' : 'invite_resend_failed'),
         participante,
