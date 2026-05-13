@@ -2144,7 +2144,51 @@ button.danger:hover,
 }
 
 .participants-main-invite {
+  align-items: center;
+  display: inline-flex;
   flex: 0 0 auto;
+  gap: 8px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.participants-invite-cta {
+  align-items: center;
+  background: linear-gradient(135deg, rgba(33, 212, 253, 0.1), rgba(200, 255, 46, 0.06));
+  border: 1px solid rgba(33, 212, 253, 0.2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin: 16px 0;
+  padding: 16px;
+}
+
+.participants-invite-cta strong {
+  color: var(--text);
+  display: block;
+  font-size: 1rem;
+}
+
+.participants-invite-cta p {
+  margin: 4px 0 0;
+}
+
+.participants-manual-heading {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 14px 0 8px;
+}
+
+.participants-manual-heading strong {
+  color: var(--text);
+}
+
+.participants-manual-heading span {
+  color: var(--muted);
+  font-size: 0.88rem;
 }
 
 .invite-confirm {
@@ -3333,6 +3377,11 @@ button[data-reset-form]:not(.icon-action)::before {
   .quick-invite-actions button {
     justify-content: center;
     width: 100%;
+  }
+
+  .participants-invite-cta {
+    align-items: stretch;
+    display: grid;
   }
 
   .participant-row__head {

@@ -2253,10 +2253,9 @@ function accessStatusIcon(status) {
 
 function participantInviteButton(row) {
   const hasEmail = Boolean(String(row.email || '').trim());
-  if (row.acessoStatus === 'acesso_ativo') {
-    return `<span class="pill bet-status-pill participant-access-pill ${accessStatusTone(row.acessoStatus)}">${escapeHtml(accessStatusLabel(row.acessoStatus))}</span>`;
-  }
-  const label = row.acessoStatus === 'convite_enviado' || row.acessoStatus === 'expirado'
+  const label = row.acessoStatus === 'acesso_ativo'
+    ? t('admin.resendAccess')
+    : row.acessoStatus === 'convite_enviado' || row.acessoStatus === 'expirado'
     ? t('admin.resendInvite')
     : t('admin.sendInvite');
   const disabledAttrs = hasEmail
@@ -2498,7 +2497,21 @@ async function renderParticipantesAdmin() {
           <h2>${escapeHtml(t('admin.participants'))}</h2>
           <p class="muted">${escapeHtml(t('admin.participantsInviteHint'))}</p>
         </div>
-        <button class="participant-invite-button participants-main-invite" type="button" data-open-participant-quick-invite>${escapeHtml(`+ ${t('admin.sendInvite')}`)}</button>
+      </div>
+      <!-- participants-invite-cta-rendered -->
+      <div class="participants-invite-cta">
+        <div>
+          <strong>${escapeHtml(t('admin.sendInvite'))}</strong>
+          <p class="muted">${escapeHtml(t('admin.inviteByEmailHint'))}</p>
+        </div>
+        <button class="participant-invite-button participants-main-invite" type="button" data-open-participant-quick-invite aria-label="${escapeHtml(t('admin.sendInvite'))}">
+          <span aria-hidden="true">+</span>
+          <span>${escapeHtml(t('admin.sendInvite'))}</span>
+        </button>
+      </div>
+      <div class="participants-manual-heading">
+        <strong>${escapeHtml(t('admin.manualParticipantRegistration'))}</strong>
+        <span>${escapeHtml(t('admin.manualParticipantHint'))}</span>
       </div>
       <form class="form-card" data-crud-form="participantes">
         <input name="id" type="hidden">
@@ -2517,7 +2530,7 @@ async function renderParticipantesAdmin() {
         </label>
         <div class="form-actions">
           ${submitIconButton('save', t('admin.saveParticipant'))}
-          ${iconOnlyButton('plus', t('common.new'), 'data-reset-form="participantes"')}
+          <button class="ghost" type="button" data-reset-form="participantes">${escapeHtml(t('admin.newManualParticipant'))}</button>
         </div>
       </form>
     </section>
