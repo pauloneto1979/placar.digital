@@ -2315,18 +2315,25 @@ function renderParticipantInviteModal() {
 
 function quickInviteFeedback(result) {
   if (!result) return '';
+  if (quickInviteEmailFailed(result)) return t('admin.inviteEmailFailedPartial');
   return ({
     created_invited: t('admin.inviteCreatedSuccess'),
     existing_user_invited: t('admin.inviteExistingUserSuccess'),
     invite_resent: t('admin.inviteResentSuccess'),
     active_access_resent: t('admin.inviteAccessResentSuccess'),
+    invite_resend_failed: t('admin.inviteEmailFailedPartial'),
+    active_access_resend_failed: t('admin.inviteEmailFailedPartial'),
     already_in_pool: t('admin.inviteAlreadyInPool'),
     active_access: t('admin.inviteAlreadyActive')
   })[result.status] || t('admin.inviteSent');
 }
 
+function quickInviteEmailFailed(result) {
+  return result?.warning === true || result?.emailSent === false || result?.emailConvite?.sent === false;
+}
+
 function quickInviteNeedsResend(result) {
-  return result?.status === 'already_in_pool' || result?.status === 'active_access';
+  return quickInviteEmailFailed(result) || result?.status === 'already_in_pool' || result?.status === 'active_access';
 }
 
 function renderQuickInviteSuccess(result) {
@@ -2338,7 +2345,7 @@ function renderQuickInviteSuccess(result) {
     </div>
     <div class="form-actions quick-invite-actions">
       ${needsResend ? `
-        <button class="participant-invite-button" type="button" data-quick-invite-resend>${escapeHtml(result.status === 'active_access' ? t('admin.resendAccess') : t('admin.resendInvite'))}</button>
+        <button class="participant-invite-button" type="button" data-quick-invite-resend>${escapeHtml(result.status === 'active_access' || result.status === 'active_access_resend_failed' ? t('admin.resendAccess') : t('admin.resendInvite'))}</button>
         <button class="ghost" type="button" data-quick-invite-back>${escapeHtml(t('common.cancel'))}</button>
       ` : `
         <button class="participant-invite-button" type="button" data-quick-invite-reset>${escapeHtml(t('admin.inviteAnother'))}</button>
@@ -3651,12 +3658,12 @@ async function sendParticipantInvite(participanteId) {
   if (!participante) return;
   state.participantInviteModal = { open: true, loading: true, participante, error: '' };
   await renderParticipantesAdmin();
-  await api(`/participantes/boloes/${state.activeBolaoId}/${participanteId}/convite`, {
+  const result = await api(`/participantes/boloes/${state.activeBolaoId}/${participanteId}/convite`, {
     method: 'POST',
     body: JSON.stringify({})
   });
   state.participantInviteModal = { open: false, loading: false, participante: null, error: '' };
-  showMessage(t('admin.inviteSent'), 'success');
+  showMessage(quickInviteFeedback(result), quickInviteEmailFailed(result) ? 'warning' : 'success');
   await renderParticipantesAdmin();
 }
 

@@ -515,6 +515,7 @@
     "inviteParticipantEmailPlaceholder": "apostador@email.com",
     "inviteSuccessTitle": "Convite enviado com sucesso.",
     "inviteCreatedSuccess": "Participante criado e convite enviado.",
+    "inviteEmailFailedPartial": "Participante cadastrado, mas não foi possível enviar o e-mail de convite.",
     "inviteExistingUserSuccess": "Usuário já possuía cadastro no sistema. O convite para este bolão foi enviado.",
     "inviteResentSuccess": "Convite reenviado com sucesso.",
     "inviteAccessResentSuccess": "Acesso reenviado com sucesso.",

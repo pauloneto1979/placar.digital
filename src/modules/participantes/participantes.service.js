@@ -109,6 +109,34 @@ function createParticipantesService(repository, options = {}) {
     }
   }
 
+  function registrarFalhaConviteEmail(contexto, participante, emailConvite) {
+    console.warn('[participantes] falha_envio_convite_email', {
+      contexto,
+      participanteId: participante?.id || null,
+      motivo: emailConvite?.reason || 'email_error'
+    });
+  }
+
+  function conviteResultado(status, participante, emailConvite = null, extra = {}, contexto = 'convite') {
+    const emailTentado = Boolean(emailConvite);
+    const emailSent = emailTentado ? Boolean(emailConvite.sent) : null;
+    const warning = emailTentado && !emailSent;
+
+    if (warning) {
+      registrarFalhaConviteEmail(contexto, participante, emailConvite);
+    }
+
+    return {
+      success: true,
+      status,
+      participante,
+      emailConvite,
+      emailSent,
+      warning,
+      ...extra
+    };
+  }
+
   function attachCredencialInfo(participante, credencial) {
     return {
       ...participante,
@@ -135,11 +163,7 @@ function createParticipantesService(repository, options = {}) {
 
   async function sendInviteForExisting(participante, status, reenviar) {
     if (!reenviar) {
-      return {
-        status,
-        participante,
-        emailConvite: null
-      };
+      return conviteResultado(status, participante, null);
     }
 
     const usuario = await repository.findUsuarioByEmail(participante.email);
@@ -148,14 +172,15 @@ function createParticipantesService(repository, options = {}) {
     }
 
     const emailConvite = await tentarEnviarConvite(participante);
-    if (!emailConvite.sent) {
-      throw new HttpError(422, 'participant_invite_not_sent', 'Nao foi possivel enviar o convite por e-mail.');
-    }
-    return {
-      status: status === 'active_access' ? 'active_access_resent' : 'invite_resent',
+    return conviteResultado(
+      emailConvite.sent
+        ? (status === 'active_access' ? 'active_access_resent' : 'invite_resent')
+        : (status === 'active_access' ? 'active_access_resend_failed' : 'invite_resend_failed'),
       participante,
-      emailConvite
-    };
+      emailConvite,
+      {},
+      'reenviar_convite_existente'
+    );
   }
 
   return {
@@ -195,14 +220,13 @@ function createParticipantesService(repository, options = {}) {
         status: 'convidado'
       });
       const emailConvite = await tentarEnviarConvite(participante);
-      if (!emailConvite.sent) {
-        throw new HttpError(422, 'participant_invite_not_sent', 'Nao foi possivel enviar o convite por e-mail.');
-      }
-      return {
-        status: credencial.credencialCriada ? 'created_invited' : 'existing_user_invited',
-        participante: attachCredencialInfo(participante, credencial),
-        emailConvite
-      };
+      return conviteResultado(
+        credencial.credencialCriada ? 'created_invited' : 'existing_user_invited',
+        attachCredencialInfo(participante, credencial),
+        emailConvite,
+        {},
+        credencial.credencialCriada ? 'novo_participante' : 'usuario_existente_vinculado'
+      );
     },
     async update(bolaoId, id, body, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
@@ -223,18 +247,20 @@ function createParticipantesService(repository, options = {}) {
     async sendInvite(bolaoId, id, auth) {
       await ensureCanAdminBolao(auth, bolaoId);
       const participante = await ensureResource(id, bolaoId);
-      if (participante.status === 'ativo') {
-        throw new HttpError(409, 'participant_access_already_active', 'Participante ja possui acesso ativo.');
-      }
       const usuario = await repository.findUsuarioByEmail(participante.email);
       if (usuario && !usuario.ativo) {
         throw new HttpError(409, 'inactive_bettor_credential', 'Credencial de apostador existente esta inativa.');
       }
       const emailConvite = await tentarEnviarConvite(participante);
-      if (!emailConvite.sent) {
-        throw new HttpError(422, 'participant_invite_not_sent', 'Nao foi possivel enviar o convite por e-mail.');
-      }
-      return { participanteId: participante.id, emailConvite };
+      return conviteResultado(
+        emailConvite.sent
+          ? (participante.status === 'ativo' ? 'active_access_resent' : 'invite_resent')
+          : (participante.status === 'ativo' ? 'active_access_resend_failed' : 'invite_resend_failed'),
+        participante,
+        emailConvite,
+        { participanteId: participante.id },
+        'reenviar_convite_participante'
+      );
     }
   };
 }
