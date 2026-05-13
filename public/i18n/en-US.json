@@ -516,6 +516,7 @@
     "inviteSuccessTitle": "Invite sent successfully.",
     "inviteCreatedSuccess": "Participant created and invite sent.",
     "inviteEmailFailedPartial": "Participant was registered, but the invitation email could not be sent.",
+    "inviteEmailFailedInactiveRecipient": "Participant was registered, but the invitation could not be sent because the recipient is inactive.",
     "inviteExistingUserSuccess": "The user already had an account. The invite for this pool was sent.",
     "inviteResentSuccess": "Invite resent successfully.",
     "inviteAccessResentSuccess": "Access resent successfully.",

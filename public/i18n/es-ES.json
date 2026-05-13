@@ -516,6 +516,7 @@
     "inviteSuccessTitle": "Invitación enviada con éxito.",
     "inviteCreatedSuccess": "Participante creado e invitación enviada.",
     "inviteEmailFailedPartial": "Participante registrado, pero no fue posible enviar el email de invitación.",
+    "inviteEmailFailedInactiveRecipient": "Participante registrado, pero la invitación no pudo enviarse porque el destinatario está inactivo.",
     "inviteExistingUserSuccess": "El usuario ya tenía cuenta en el sistema. La invitación para esta porra fue enviada.",
     "inviteResentSuccess": "Invitación reenviada con éxito.",
     "inviteAccessResentSuccess": "Acceso reenviado con éxito.",

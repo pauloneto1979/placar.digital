@@ -2315,7 +2315,7 @@ function renderParticipantInviteModal() {
 
 function quickInviteFeedback(result) {
   if (!result) return '';
-  if (quickInviteEmailFailed(result)) return t('admin.inviteEmailFailedPartial');
+  if (quickInviteEmailFailed(result)) return quickInviteEmailFailureMessage(result);
   return ({
     created_invited: t('admin.inviteCreatedSuccess'),
     existing_user_invited: t('admin.inviteExistingUserSuccess'),
@@ -2326,6 +2326,13 @@ function quickInviteFeedback(result) {
     already_in_pool: t('admin.inviteAlreadyInPool'),
     active_access: t('admin.inviteAlreadyActive')
   })[result.status] || t('admin.inviteSent');
+}
+
+function quickInviteEmailFailureMessage(result) {
+  if (result?.emailConvite?.reason === 'inactive_recipient') {
+    return t('admin.inviteEmailFailedInactiveRecipient');
+  }
+  return t('admin.inviteEmailFailedPartial');
 }
 
 function quickInviteEmailFailed(result) {

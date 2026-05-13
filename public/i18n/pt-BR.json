@@ -516,6 +516,7 @@
     "inviteSuccessTitle": "Convite enviado com sucesso.",
     "inviteCreatedSuccess": "Participante criado e convite enviado.",
     "inviteEmailFailedPartial": "Participante cadastrado, mas não foi possível enviar o e-mail de convite.",
+    "inviteEmailFailedInactiveRecipient": "Participante cadastrado, mas o convite não pôde ser enviado porque o destinatário está inativo.",
     "inviteExistingUserSuccess": "Usuário já possuía cadastro no sistema. O convite para este bolão foi enviado.",
     "inviteResentSuccess": "Convite reenviado com sucesso.",
     "inviteAccessResentSuccess": "Acesso reenviado com sucesso.",
